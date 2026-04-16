@@ -14,18 +14,28 @@ function StatCard({ title, value, sub }) {
   )
 }
 
+function BarRow({ label, count, max, color = 'bg-gray-900' }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-sm text-gray-700 w-36 truncate shrink-0">{label}</span>
+      <div className="flex-1 bg-gray-100 rounded-full h-2">
+        <div className={`${color} h-2 rounded-full transition-all`}
+          style={{ width: `${(count / max) * 100}%` }} />
+      </div>
+      <span className="text-xs text-gray-500 w-8 text-right shrink-0">{count}</span>
+    </div>
+  )
+}
+
 export default function AdminPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const [authed, setAuthed] = useState(false)
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState(null)
 
-  // 驗證 URL token（HashRouter: query string 在 location.search 或 hash 後面）
   useEffect(() => {
-    // In HashRouter, location.search holds the query string after the hash path
-    // e.g. /#/admin?key=klland → location.search = "?key=klland"
-    // Fallback: parse from window.location.hash directly
     const search = location.search
       || (window.location.hash.includes('?') ? '?' + window.location.hash.split('?')[1] : '')
     const params = new URLSearchParams(search)
@@ -51,6 +61,14 @@ export default function AdminPage() {
     setLoading(false)
   }
 
+  async function deleteRow(id) {
+    if (!window.confirm('確定刪除這筆資料？')) return
+    setDeleting(id)
+    const { error } = await supabase.from('transactions').delete().eq('id', id)
+    if (!error) setData(prev => prev.filter(r => r.id !== id))
+    setDeleting(null)
+  }
+
   if (!authed) return null
 
   // 統計
@@ -63,14 +81,45 @@ export default function AdminPage() {
   const fromReport = data.filter(r => r.source === 'report').length
   const fromPost = data.filter(r => r.source === 'post').length
 
-  // 各型號排行
-  const modelCount = {}
+  // 各型號均價排行
+  const modelPrices = {}
   for (const r of data) {
-    modelCount[r.model] = (modelCount[r.model] || 0) + 1
+    if (!modelPrices[r.model]) modelPrices[r.model] = []
+    modelPrices[r.model].push(r.price)
   }
-  const topModels = Object.entries(modelCount)
-    .sort((a, b) => b[1] - a[1])
+  const modelAvg = Object.entries(modelPrices)
+    .map(([model, prices]) => ({
+      model,
+      avg: Math.round(prices.reduce((a, b) => a + b, 0) / prices.length),
+      count: prices.length,
+    }))
+    .sort((a, b) => b.count - a.count)
     .slice(0, 10)
+
+  // 成色分布
+  const conditionCount = {}
+  for (const r of data) {
+    if (r.condition) conditionCount[r.condition] = (conditionCount[r.condition] || 0) + 1
+  }
+  const conditionEntries = Object.entries(conditionCount).sort((a, b) => b[1] - a[1])
+  const maxCondition = Math.max(...conditionEntries.map(e => e[1])) || 1
+
+  // 交易方式分布
+  const tradeCount = {}
+  for (const r of data) {
+    if (r.trade_method) tradeCount[r.trade_method] = (tradeCount[r.trade_method] || 0) + 1
+  }
+  const tradeEntries = Object.entries(tradeCount).sort((a, b) => b[1] - a[1])
+  const maxTrade = Math.max(...tradeEntries.map(e => e[1])) || 1
+
+  // 地區分布
+  const locationCount = {}
+  for (const r of data) {
+    const loc = r.location?.split(' ')[0]
+    if (loc) locationCount[loc] = (locationCount[loc] || 0) + 1
+  }
+  const locationEntries = Object.entries(locationCount).sort((a, b) => b[1] - a[1]).slice(0, 8)
+  const maxLocation = Math.max(...locationEntries.map(e => e[1])) || 1
 
   // 每小時分布
   const hourCount = Array(24).fill(0)
@@ -80,7 +129,7 @@ export default function AdminPage() {
   }
   const maxHour = Math.max(...hourCount) || 1
 
-  // 最近 7 天每日
+  // 近 7 天每日
   const dailyCount = {}
   for (let i = 6; i >= 0; i--) {
     const d = new Date(); d.setDate(d.getDate() - i)
@@ -93,118 +142,165 @@ export default function AdminPage() {
   const maxDay = Math.max(...Object.values(dailyCount)) || 1
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-10">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">管理員後台</h1>
-          <p className="text-xs text-gray-400 mt-1">蘋果二手行情網站數據總覽</p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-5xl mx-auto px-6 py-10">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">管理員後台</h1>
+            <p className="text-xs text-gray-400 mt-1">蘋果二手行情網站數據總覽</p>
+          </div>
+          <button onClick={fetchData}
+            className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-full hover:bg-gray-50 bg-white">
+            重新整理
+          </button>
         </div>
-        <button onClick={fetchData}
-          className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-full hover:bg-gray-50">
-          重新整理
-        </button>
-      </div>
 
-      {loading ? (
-        <p className="text-center text-gray-400 py-20">載入中...</p>
-      ) : (
-        <>
-          {/* KPI */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <StatCard title="總回報筆數" value={total} sub="自開站累計" />
-            <StatCard title="今日新增" value={today} sub={new Date().toLocaleDateString('zh-TW')} />
-            <StatCard title="近 7 天" value={thisWeek} />
-            <StatCard title="來源分布" value={`${fromReport} / ${fromPost}`} sub="成交回報 / 貼文產生器" />
-          </div>
-
-          {/* 近 7 天趨勢 */}
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6">
-            <p className="text-sm font-semibold text-gray-700 mb-4">近 7 天每日提交數</p>
-            <div className="flex items-end gap-2 h-28">
-              {Object.entries(dailyCount).map(([day, count]) => (
-                <div key={day} className="flex-1 flex flex-col items-center gap-1">
-                  <span className="text-xs text-gray-500">{count}</span>
-                  <div className="w-full rounded-t-md bg-gray-900 transition-all"
-                    style={{ height: `${(count / maxDay) * 80}px`, minHeight: count > 0 ? 4 : 0 }} />
-                  <span className="text-xs text-gray-400">{day.slice(5)}</span>
-                </div>
-              ))}
+        {loading ? (
+          <p className="text-center text-gray-400 py-20">載入中...</p>
+        ) : (
+          <>
+            {/* KPI */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <StatCard title="總回報筆數" value={total} sub="自開站累計" />
+              <StatCard title="今日新增" value={today} sub={new Date().toLocaleDateString('zh-TW')} />
+              <StatCard title="近 7 天" value={thisWeek} />
+              <StatCard title="來源分布" value={`${fromReport} / ${fromPost}`} sub="成交回報 / 貼文產生器" />
             </div>
-          </div>
 
-          {/* 使用時段分布 */}
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6">
-            <p className="text-sm font-semibold text-gray-700 mb-4">使用時段分布（小時）</p>
-            <div className="flex items-end gap-0.5 h-20">
-              {hourCount.map((count, h) => (
-                <div key={h} className="flex-1 flex flex-col items-center">
-                  <div className="w-full rounded-t bg-blue-400"
-                    style={{ height: `${(count / maxHour) * 64}px`, minHeight: count > 0 ? 2 : 0 }} />
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>0時</span><span>6時</span><span>12時</span><span>18時</span><span>23時</span>
-            </div>
-          </div>
-
-          {/* 熱門型號 */}
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6">
-            <p className="text-sm font-semibold text-gray-700 mb-4">熱門型號 Top 10</p>
-            <div className="space-y-2">
-              {topModels.map(([model, count]) => (
-                <div key={model} className="flex items-center gap-3">
-                  <span className="text-sm text-gray-700 w-48 truncate">{model}</span>
-                  <div className="flex-1 bg-gray-100 rounded-full h-2">
-                    <div className="bg-gray-900 h-2 rounded-full"
-                      style={{ width: `${(count / (topModels[0]?.[1] || 1)) * 100}%` }} />
+            {/* 近 7 天趨勢 */}
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6">
+              <p className="text-sm font-semibold text-gray-700 mb-4">近 7 天每日提交數</p>
+              <div className="flex items-end gap-2 h-28">
+                {Object.entries(dailyCount).map(([day, count]) => (
+                  <div key={day} className="flex-1 flex flex-col items-center gap-1">
+                    <span className="text-xs text-gray-500">{count}</span>
+                    <div className="w-full rounded-t-md bg-gray-900 transition-all"
+                      style={{ height: `${(count / maxDay) * 80}px`, minHeight: count > 0 ? 4 : 0 }} />
+                    <span className="text-xs text-gray-400">{day.slice(5)}</span>
                   </div>
-                  <span className="text-xs text-gray-500 w-8 text-right">{count}</span>
-                </div>
-              ))}
-              {topModels.length === 0 && <p className="text-sm text-gray-400">尚無資料</p>}
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* 最新 20 筆明細 */}
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-            <p className="text-sm font-semibold text-gray-700 mb-4">最新 20 筆回報</p>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="text-gray-400 border-b border-gray-100">
-                    <th className="text-left pb-2">時間</th>
-                    <th className="text-left pb-2">型號</th>
-                    <th className="text-left pb-2">容量</th>
-                    <th className="text-right pb-2">價格</th>
-                    <th className="text-left pb-2">來源</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.slice(0, 20).map(r => (
-                    <tr key={r.id} className="border-b border-gray-50 hover:bg-gray-50">
-                      <td className="py-2 text-gray-400">
-                        {new Date(r.created_at).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                      </td>
-                      <td className="py-2 text-gray-700">{r.model}</td>
-                      <td className="py-2 text-gray-500">{r.storage}</td>
-                      <td className="py-2 text-right font-medium text-blue-600">${r.price?.toLocaleString()}</td>
-                      <td className="py-2">
-                        <span className={`px-2 py-0.5 rounded-full text-xs ${r.source === 'report' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'}`}>
-                          {r.source === 'report' ? '成交回報' : '貼文產生器'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {data.length === 0 && (
-                    <tr><td colSpan={5} className="py-8 text-center text-gray-400">尚無資料</td></tr>
-                  )}
-                </tbody>
-              </table>
+            {/* 使用時段 */}
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6">
+              <p className="text-sm font-semibold text-gray-700 mb-4">使用時段分布（小時）</p>
+              <div className="flex items-end gap-0.5 h-20">
+                {hourCount.map((count, h) => (
+                  <div key={h} className="flex-1 flex flex-col items-center">
+                    <div className="w-full rounded-t bg-blue-400"
+                      style={{ height: `${(count / maxHour) * 64}px`, minHeight: count > 0 ? 2 : 0 }} />
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between text-xs text-gray-400 mt-1">
+                <span>0時</span><span>6時</span><span>12時</span><span>18時</span><span>23時</span>
+              </div>
             </div>
-          </div>
-        </>
-      )}
+
+            {/* 各型號均價 + 成色分布 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <p className="text-sm font-semibold text-gray-700 mb-4">各型號均價排行</p>
+                <div className="space-y-3">
+                  {modelAvg.map(({ model, avg, count }) => (
+                    <div key={model} className="flex items-center justify-between">
+                      <div className="min-w-0">
+                        <p className="text-sm text-gray-800 truncate">{model}</p>
+                        <p className="text-xs text-gray-400">{count} 筆</p>
+                      </div>
+                      <span className="text-sm font-semibold text-blue-600 shrink-0 ml-2">
+                        ${avg.toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                  {modelAvg.length === 0 && <p className="text-sm text-gray-400">尚無資料</p>}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <p className="text-sm font-semibold text-gray-700 mb-4">成色分布</p>
+                <div className="space-y-2">
+                  {conditionEntries.map(([cond, count]) => (
+                    <BarRow key={cond} label={cond} count={count} max={maxCondition} color="bg-green-500" />
+                  ))}
+                  {conditionEntries.length === 0 && <p className="text-sm text-gray-400">尚無資料</p>}
+                </div>
+              </div>
+            </div>
+
+            {/* 交易方式 + 地區分布 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <p className="text-sm font-semibold text-gray-700 mb-4">交易方式分布</p>
+                <div className="space-y-2">
+                  {tradeEntries.map(([method, count]) => (
+                    <BarRow key={method} label={method} count={count} max={maxTrade} color="bg-purple-500" />
+                  ))}
+                  {tradeEntries.length === 0 && <p className="text-sm text-gray-400">尚無資料</p>}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <p className="text-sm font-semibold text-gray-700 mb-4">地區分布</p>
+                <div className="space-y-2">
+                  {locationEntries.map(([loc, count]) => (
+                    <BarRow key={loc} label={loc} count={count} max={maxLocation} color="bg-orange-400" />
+                  ))}
+                  {locationEntries.length === 0 && <p className="text-sm text-gray-400">尚無資料</p>}
+                </div>
+              </div>
+            </div>
+
+            {/* 最新明細 + 刪除 */}
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+              <p className="text-sm font-semibold text-gray-700 mb-4">所有回報明細（可刪除可疑資料）</p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-gray-400 border-b border-gray-100">
+                      <th className="text-left pb-2">時間</th>
+                      <th className="text-left pb-2">型號</th>
+                      <th className="text-left pb-2">容量</th>
+                      <th className="text-left pb-2">成色</th>
+                      <th className="text-right pb-2">價格</th>
+                      <th className="text-left pb-2">來源</th>
+                      <th className="text-center pb-2">刪除</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.map(r => (
+                      <tr key={r.id} className="border-b border-gray-50 hover:bg-gray-50">
+                        <td className="py-2 text-gray-400">
+                          {new Date(r.created_at).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td className="py-2 text-gray-700 max-w-[120px] truncate">{r.model}</td>
+                        <td className="py-2 text-gray-500">{r.storage}</td>
+                        <td className="py-2 text-gray-500">{r.condition}</td>
+                        <td className="py-2 text-right font-medium text-blue-600">${r.price?.toLocaleString()}</td>
+                        <td className="py-2">
+                          <span className={`px-2 py-0.5 rounded-full ${r.source === 'report' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'}`}>
+                            {r.source === 'report' ? '成交回報' : '貼文'}
+                          </span>
+                        </td>
+                        <td className="py-2 text-center">
+                          <button onClick={() => deleteRow(r.id)} disabled={deleting === r.id}
+                            className="text-red-400 hover:text-red-600 disabled:opacity-30 px-2 py-1 rounded hover:bg-red-50 transition">
+                            {deleting === r.id ? '...' : '刪除'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {data.length === 0 && (
+                      <tr><td colSpan={7} className="py-8 text-center text-gray-400">尚無資料</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   )
 }

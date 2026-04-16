@@ -249,23 +249,13 @@ export default function PostPage() {
         </div>
 
         {showMRT && (
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-2">面交縣市</label>
-              <select value={form.location} onChange={e => update('location', e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none">
-                <option value="">選擇縣市</option>
-                {LOCATIONS.map(l => <option key={l}>{l}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-2">面交地點</label>
-              <select value={form.mrtStation} onChange={e => update('mrtStation', e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none">
-                <option value="">選擇地點</option>
-                {MRT_STATIONS.map(s => <option key={s}>{s}</option>)}
-              </select>
-            </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-2">面交縣市</label>
+            <select value={form.location} onChange={e => update('location', e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none">
+              <option value="">選擇縣市</option>
+              {LOCATIONS.map(l => <option key={l}>{l}</option>)}
+            </select>
           </div>
         )}
 
