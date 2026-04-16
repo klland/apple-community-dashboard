@@ -2,6 +2,9 @@ import { Link, useLocation } from 'react-router-dom'
 
 export default function Layout({ children }) {
   const { pathname } = useLocation()
+
+  if (pathname === '/admin') return <>{children}</>
+
   const navItems = [
     { path: '/', label: '行情查詢' },
     { path: '/report', label: '成交回報' },
