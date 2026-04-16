@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { APPLE_PRODUCTS, CONDITIONS, TRADE_METHODS, LOCATIONS, MRT_STATIONS, PURCHASE_CHANNELS, COSMETIC_CONDITIONS, WARRANTY_STATUS } from '../data/mockData'
+import { submitTransaction } from '../lib/supabase'
 
 export default function PostPage() {
   const [form, setForm] = useState({
@@ -37,12 +38,33 @@ export default function PostPage() {
     })
   }
 
-  function generate() {
+  async function generate() {
     if (!form.productId || !form.storage) return
     setLoading(true)
+    const product = selectedProduct
+    const isSell = form.type === 'sell'
+
+    // 有填價格就送到 Supabase（不強制，非同步背景執行）
+    if (form.price && isSell) {
+      submitTransaction({
+        model: product.name,
+        storage: form.storage,
+        color: form.color,
+        condition: form.condition,
+        battery_health: form.batteryHealth ? parseInt(form.batteryHealth) : null,
+        has_damage: form.cosmeticCondition !== '' && form.cosmeticCondition !== '無損傷',
+        purchase_channel: form.purchaseChannel,
+        warranty_status: form.warrantyStatus,
+        warranty_months: form.warrantyMonthsLeft ? parseInt(form.warrantyMonthsLeft) : null,
+        price: parseInt(form.price),
+        trade_method: form.tradeMethod,
+        location: [form.location, form.mrtStation].filter(Boolean).join(' '),
+        source: 'post',
+        note: form.note,
+      }).catch(() => {}) // 靜默失敗，不影響貼文產生
+    }
+
     setTimeout(() => {
-      const product = selectedProduct
-      const isSell = form.type === 'sell'
       const priceStr = form.price ? `$${Number(form.price).toLocaleString()}` : '面議'
       const locationStr = [form.location, form.mrtStation].filter(Boolean).join(' ')
 

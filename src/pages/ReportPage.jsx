@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { APPLE_PRODUCTS, CONDITIONS, TRADE_METHODS, LOCATIONS, MRT_STATIONS, PURCHASE_CHANNELS, COSMETIC_CONDITIONS, WARRANTY_STATUS } from '../data/mockData'
+import { submitTransaction } from '../lib/supabase'
 
 export default function ReportPage() {
   const [form, setForm] = useState({
@@ -19,6 +20,8 @@ export default function ReportPage() {
     note: '',
   })
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const selectedProduct = APPLE_PRODUCTS.find(p => p.id === form.productId)
   const isIphone = selectedProduct?.category === 'iPhone'
@@ -33,15 +36,40 @@ export default function ReportPage() {
     })
   }
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault()
-    setSubmitted(true)
-    setTimeout(() => setSubmitted(false), 4000)
-    setForm({
-      productId: '', storage: '', color: '', condition: '', batteryHealth: '',
-      purchaseChannel: '', cosmeticCondition: '', warrantyStatus: '', warrantyMonthsLeft: '',
-      price: '', tradeMethod: '', location: '', mrtStation: '', note: '',
-    })
+    setLoading(true)
+    setError('')
+    try {
+      const product = selectedProduct
+      await submitTransaction({
+        model: product.name,
+        storage: form.storage,
+        color: form.color,
+        condition: form.condition,
+        battery_health: form.batteryHealth ? parseInt(form.batteryHealth) : null,
+        has_damage: form.cosmeticCondition !== '' && form.cosmeticCondition !== '無損傷',
+        purchase_channel: form.purchaseChannel,
+        warranty_status: form.warrantyStatus,
+        warranty_months: form.warrantyMonthsLeft ? parseInt(form.warrantyMonthsLeft) : null,
+        price: parseInt(form.price),
+        trade_method: form.tradeMethod,
+        location: [form.location, form.mrtStation].filter(Boolean).join(' '),
+        source: 'report',
+        note: form.note,
+      })
+      setSubmitted(true)
+      setTimeout(() => setSubmitted(false), 4000)
+      setForm({
+        productId: '', storage: '', color: '', condition: '', batteryHealth: '',
+        purchaseChannel: '', cosmeticCondition: '', warrantyStatus: '', warrantyMonthsLeft: '',
+        price: '', tradeMethod: '', location: '', mrtStation: '', note: '',
+      })
+    } catch (err) {
+      setError('送出失敗，請稍後再試')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -54,6 +82,11 @@ export default function ReportPage() {
           <p className="text-2xl mb-1">✅</p>
           <p className="text-sm font-semibold text-green-800">感謝你的回報！</p>
           <p className="text-xs text-green-600 mt-1">資料已加入行情資料庫，幫助了其他社員</p>
+        </div>
+      )}
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-100 rounded-2xl p-4 text-center">
+          <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
 
@@ -208,9 +241,9 @@ export default function ReportPage() {
             className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:border-gray-400" />
         </div>
 
-        <button type="submit"
-          className="w-full py-3 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-700 transition">
-          送出回報
+        <button type="submit" disabled={loading}
+          className="w-full py-3 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition">
+          {loading ? '送出中...' : '送出回報'}
         </button>
       </form>
     </div>
