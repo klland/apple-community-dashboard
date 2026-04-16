@@ -21,15 +21,15 @@ export default function AdminPage() {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // 驗證 URL token
+  // 驗證 URL token（HashRouter 的 query string 在 location.search）
   useEffect(() => {
-    const params = new URLSearchParams(location.search)
+    const params = new URLSearchParams(location.search || window.location.hash.split('?')[1] || '')
     if (params.get('key') === ADMIN_KEY) {
       setAuthed(true)
     } else {
       navigate('/', { replace: true })
     }
-  }, [location.search])
+  }, [])
 
   useEffect(() => {
     if (!authed) return
