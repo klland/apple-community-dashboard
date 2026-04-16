@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { APPLE_PRODUCTS, CONDITIONS, TRADE_METHODS, LOCATIONS, MRT_STATIONS, PURCHASE_CHANNELS, COSMETIC_CONDITIONS, WARRANTY_STATUS } from '../data/mockData'
+import { APPLE_PRODUCTS, CONDITIONS, TRADE_METHODS, PURCHASE_CHANNELS, COSMETIC_CONDITIONS, WARRANTY_STATUS } from '../data/mockData'
 import { submitTransaction } from '../lib/supabase'
 
 export default function PostPage() {
@@ -16,8 +16,6 @@ export default function PostPage() {
     purchaseChannel: '',
     price: '',
     tradeMethod: '',
-    location: '',
-    mrtStation: '',
     contact: '',
     note: '',
   })
@@ -28,7 +26,6 @@ export default function PostPage() {
   const selectedProduct = APPLE_PRODUCTS.find(p => p.id === form.productId)
   const isIphone = selectedProduct?.category === 'iPhone'
   const showWarrantyMonths = form.warrantyStatus === '原廠保固內' || form.warrantyStatus === '延長保固（AppleCare+）'
-  const showMRT = form.tradeMethod === '面交' || form.tradeMethod === '面交或郵寄皆可'
 
   function update(field, value) {
     setForm(prev => {
@@ -44,7 +41,6 @@ export default function PostPage() {
     const product = selectedProduct
     const isSell = form.type === 'sell'
 
-    // 有填價格就送到 Supabase（不強制，非同步背景執行）
     if (form.price && isSell) {
       submitTransaction({
         model: product.name,
@@ -58,15 +54,14 @@ export default function PostPage() {
         warranty_months: form.warrantyMonthsLeft ? parseInt(form.warrantyMonthsLeft) : null,
         price: parseInt(form.price),
         trade_method: form.tradeMethod,
-        location: [form.location, form.mrtStation].filter(Boolean).join(' '),
+        location: '',
         source: 'post',
         note: form.note,
-      }).catch(() => {}) // 靜默失敗，不影響貼文產生
+      }).catch(() => {})
     }
 
     setTimeout(() => {
       const priceStr = form.price ? `$${Number(form.price).toLocaleString()}` : '面議'
-      const locationStr = [form.location, form.mrtStation].filter(Boolean).join(' ')
 
       const batteryLine = form.batteryHealth ? `\n電池健康度：${form.batteryHealth}%` : ''
       const cosmeticLine = form.cosmeticCondition ? `\n外觀狀況：${form.cosmeticCondition}` : ''
@@ -82,7 +77,7 @@ export default function PostPage() {
 
 成色：${form.condition || '9成新'}${batteryLine}${cosmeticLine}${warrantyLine}${channelLine}
 售價：${priceStr}（可小議）
-交易方式：${form.tradeMethod || '面議'}${locationStr ? '\n面交地點：' + locationStr : ''}${noteLine}
+交易方式：${form.tradeMethod || '面議'}${noteLine}
 
 聯絡：${form.contact || '請私訊'}
 
@@ -95,7 +90,7 @@ export default function PostPage() {
 
 成色需求：${form.condition || '9成新'}以上${form.batteryHealth ? `\n電池健康度需求：${form.batteryHealth}% 以上` : ''}${form.warrantyStatus ? `\n保固：${form.warrantyStatus}` : ''}
 預算：${budget}
-交易方式：${form.tradeMethod || '面議'}${locationStr ? '\n面交地點：' + locationStr : ''}${noteLine}
+交易方式：${form.tradeMethod || '面議'}${noteLine}
 
 聯絡：${form.contact || '請私訊'}
 有意出售請附照片及開價，謝謝！`
@@ -112,178 +107,191 @@ export default function PostPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const inputCls = "w-full px-4 py-3 rounded-xl border border-[rgba(0,0,0,0.1)] text-[15px] bg-[#f5f5f7] focus:outline-none focus:border-[#0071e3] focus:bg-white text-[#1d1d1f] transition-all placeholder-[#6e6e73]"
+  const labelCls = "text-[13px] font-medium text-[#1d1d1f] block mb-1.5"
+
   return (
-    <div className="max-w-2xl mx-auto px-6 py-10">
-      <h1 className="text-3xl font-bold text-gray-900 mb-1">貼文產生器</h1>
-      <p className="text-gray-500 mb-8 text-sm">填入資訊，自動生成符合社團格式的貼文</p>
-
-      <div className="space-y-5">
-        {/* 類型 */}
-        <div>
-          <label className="text-sm font-medium text-gray-700 block mb-2">類型</label>
-          <div className="flex gap-2">
-            {[['sell','出售'],['buy','收購']].map(([val, label]) => (
-              <button key={val} onClick={() => update('type', val)}
-                className={`flex-1 py-2.5 rounded-xl border-2 text-sm font-medium transition ${form.type === val ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 text-gray-600 hover:border-gray-400'}`}>
-                {label}
-              </button>
-            ))}
-          </div>
+    <div>
+      {/* Hero */}
+      <section className="bg-[#f5f5f7] pt-14 pb-12 text-center border-b border-[rgba(0,0,0,0.06)]">
+        <div className="max-w-[560px] mx-auto px-5">
+          <h1 className="text-[40px] font-semibold text-[#1d1d1f] leading-tight tracking-tight mb-2">
+            貼文產生器
+          </h1>
+          <p className="text-[17px] text-[#6e6e73] font-light">
+            填入資訊，自動生成符合社團格式的貼文
+          </p>
         </div>
+      </section>
 
-        {/* 產品 */}
-        <div>
-          <label className="text-sm font-medium text-gray-700 block mb-2">產品型號 *</label>
-          <select value={form.productId} onChange={e => update('productId', e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none">
-            <option value="">選擇型號</option>
-            {['iPhone','MacBook','iPad','Apple Watch','AirPods','Mac','其他'].map(cat => (
-              <optgroup key={cat} label={cat}>
-                {APPLE_PRODUCTS.filter(p => p.category === cat).map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-        </div>
-
-        {selectedProduct && (
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-2">容量／規格</label>
-              <select value={form.storage} onChange={e => update('storage', e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none">
-                <option value="">選擇容量</option>
-                {selectedProduct.storages.map(s => <option key={s}>{s}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-2">顏色</label>
-              <select value={form.color} onChange={e => update('color', e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none">
-                <option value="">選擇顏色</option>
-                {selectedProduct.colors.map(c => <option key={c}>{c}</option>)}
-              </select>
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-2 gap-4">
+      <div className="max-w-[560px] mx-auto px-5 py-12">
+        <div className="space-y-5">
+          {/* 類型 */}
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-2">成色</label>
-            <select value={form.condition} onChange={e => update('condition', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none">
-              <option value="">選擇成色</option>
-              {CONDITIONS.map(c => <option key={c}>{c}</option>)}
+            <label className={labelCls}>類型</label>
+            <div className="flex gap-2 p-1 bg-[#f5f5f7] rounded-2xl">
+              {[['sell','出售'],['buy','收購']].map(([val, label]) => (
+                <button key={val} onClick={() => update('type', val)}
+                  className={`flex-1 py-2.5 rounded-xl text-[14px] font-medium transition-all duration-200 ${
+                    form.type === val
+                      ? 'bg-white text-[#1d1d1f] shadow-sm'
+                      : 'text-[#6e6e73] hover:text-[#1d1d1f]'
+                  }`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 產品型號 */}
+          <div>
+            <label className={labelCls}>產品型號 <span className="text-[#ff3b30]">*</span></label>
+            <select value={form.productId} onChange={e => update('productId', e.target.value)} className={inputCls}>
+              <option value="">選擇型號</option>
+              {['iPhone','MacBook','iPad','Apple Watch','AirPods','Mac','其他'].map(cat => (
+                <optgroup key={cat} label={cat}>
+                  {APPLE_PRODUCTS.filter(p => p.category === cat).map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
           </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 block mb-2">
-              電池健康度{isIphone ? '' : '（選填）'}
-            </label>
-            <div className="flex items-center gap-2">
-              <input type="number" min="1" max="100"
-                value={form.batteryHealth}
-                onChange={e => update('batteryHealth', e.target.value)}
-                placeholder="例如 92"
-                className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none" />
-              <span className="text-sm text-gray-400">%</span>
-            </div>
-          </div>
-        </div>
 
-        <div>
-          <label className="text-sm font-medium text-gray-700 block mb-2">外觀損傷狀況</label>
-          <select value={form.cosmeticCondition} onChange={e => update('cosmeticCondition', e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none">
-            <option value="">選擇損傷狀況</option>
-            {COSMETIC_CONDITIONS.map(c => <option key={c}>{c}</option>)}
-          </select>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 block mb-2">保固狀態</label>
-            <select value={form.warrantyStatus} onChange={e => update('warrantyStatus', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none">
-              <option value="">選擇保固狀態</option>
-              {WARRANTY_STATUS.map(w => <option key={w}>{w}</option>)}
-            </select>
-          </div>
-          {showWarrantyMonths && (
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-2">保固剩餘（月）</label>
-              <input type="number" min="1" max="36"
-                value={form.warrantyMonthsLeft}
-                onChange={e => update('warrantyMonthsLeft', e.target.value)}
-                placeholder="例如 8"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none" />
+          {selectedProduct && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>容量／規格</label>
+                <select value={form.storage} onChange={e => update('storage', e.target.value)} className={inputCls}>
+                  <option value="">選擇容量</option>
+                  {selectedProduct.storages.map(s => <option key={s}>{s}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>顏色</label>
+                <select value={form.color} onChange={e => update('color', e.target.value)} className={inputCls}>
+                  <option value="">選擇顏色</option>
+                  {selectedProduct.colors.map(c => <option key={c}>{c}</option>)}
+                </select>
+              </div>
             </div>
           )}
-        </div>
 
-        <div>
-          <label className="text-sm font-medium text-gray-700 block mb-2">購買管道（選填）</label>
-          <select value={form.purchaseChannel} onChange={e => update('purchaseChannel', e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none">
-            <option value="">選擇購買管道</option>
-            {PURCHASE_CHANNELS.map(c => <option key={c}>{c}</option>)}
-          </select>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 block mb-2">價格（TWD）</label>
-            <input type="number" value={form.price} onChange={e => update('price', e.target.value)}
-              placeholder="例如 28000"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none" />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>成色</label>
+              <select value={form.condition} onChange={e => update('condition', e.target.value)} className={inputCls}>
+                <option value="">選擇成色</option>
+                {CONDITIONS.map(c => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>
+                電池健康度 {isIphone ? '' : <span className="text-[#6e6e73]">（選填）</span>}
+              </label>
+              <div className="flex items-center gap-2">
+                <input type="number" min="1" max="100"
+                  value={form.batteryHealth}
+                  onChange={e => update('batteryHealth', e.target.value)}
+                  placeholder="例如 92"
+                  className="flex-1 px-4 py-3 rounded-xl border border-[rgba(0,0,0,0.1)] text-[15px] bg-[#f5f5f7] focus:outline-none focus:border-[#0071e3] focus:bg-white text-[#1d1d1f] transition-all placeholder-[#6e6e73]" />
+                <span className="text-[14px] text-[#6e6e73]">%</span>
+              </div>
+            </div>
           </div>
+
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-2">交易方式</label>
-            <select value={form.tradeMethod} onChange={e => update('tradeMethod', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none">
-              <option value="">選擇方式</option>
-              {TRADE_METHODS.map(m => <option key={m}>{m}</option>)}
+            <label className={labelCls}>外觀損傷狀況</label>
+            <select value={form.cosmeticCondition} onChange={e => update('cosmeticCondition', e.target.value)} className={inputCls}>
+              <option value="">選擇損傷狀況</option>
+              {COSMETIC_CONDITIONS.map(c => <option key={c}>{c}</option>)}
             </select>
           </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>保固狀態</label>
+              <select value={form.warrantyStatus} onChange={e => update('warrantyStatus', e.target.value)} className={inputCls}>
+                <option value="">選擇保固狀態</option>
+                {WARRANTY_STATUS.map(w => <option key={w}>{w}</option>)}
+              </select>
+            </div>
+            {showWarrantyMonths && (
+              <div>
+                <label className={labelCls}>保固剩餘（月）</label>
+                <input type="number" min="1" max="36"
+                  value={form.warrantyMonthsLeft}
+                  onChange={e => update('warrantyMonthsLeft', e.target.value)}
+                  placeholder="例如 8"
+                  className={inputCls} />
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className={labelCls}>購買管道 <span className="text-[#6e6e73]">（選填）</span></label>
+            <select value={form.purchaseChannel} onChange={e => update('purchaseChannel', e.target.value)} className={inputCls}>
+              <option value="">選擇購買管道</option>
+              {PURCHASE_CHANNELS.map(c => <option key={c}>{c}</option>)}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>價格（TWD）</label>
+              <input type="number" value={form.price} onChange={e => update('price', e.target.value)}
+                placeholder="例如 28000"
+                className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>交易方式</label>
+              <select value={form.tradeMethod} onChange={e => update('tradeMethod', e.target.value)} className={inputCls}>
+                <option value="">選擇方式</option>
+                {TRADE_METHODS.map(m => <option key={m}>{m}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className={labelCls}>聯絡方式</label>
+            <input type="text" value={form.contact} onChange={e => update('contact', e.target.value)}
+              placeholder="例如：請私訊 / Line: abc123"
+              className={inputCls} />
+          </div>
+
+          <div>
+            <label className={labelCls}>備註 <span className="text-[#6e6e73]">（選填）</span></label>
+            <input type="text" value={form.note} onChange={e => update('note', e.target.value)}
+              placeholder="例如：附原廠盒、序號可查"
+              className={inputCls} />
+          </div>
+
+          <button onClick={generate} disabled={!form.productId || !form.storage || loading}
+            className="w-full py-3.5 bg-[#0071e3] text-white rounded-2xl text-[15px] font-medium hover:bg-[#0077ed] disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200">
+            {loading ? '生成中…' : '生成貼文草稿'}
+          </button>
         </div>
 
-
-        <div>
-          <label className="text-sm font-medium text-gray-700 block mb-2">聯絡方式</label>
-          <input type="text" value={form.contact} onChange={e => update('contact', e.target.value)}
-            placeholder="例如：請私訊 / Line: abc123"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none" />
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-gray-700 block mb-2">備註（選填）</label>
-          <input type="text" value={form.note} onChange={e => update('note', e.target.value)}
-            placeholder="例如：附原廠盒、序號可查"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none" />
-        </div>
-
-        <button onClick={generate} disabled={!form.productId || !form.storage || loading}
-          className="w-full py-3 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition">
-          {loading ? '生成中...' : '✨ 生成貼文草稿'}
-        </button>
+        {generated && (
+          <div className="mt-10">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[13px] font-semibold text-[#1d1d1f]">生成結果</p>
+              <button onClick={copy}
+                className={`text-[13px] font-medium border px-4 py-1.5 rounded-full transition-all duration-200 ${
+                  copied
+                    ? 'bg-[#34c759] text-white border-[#34c759]'
+                    : 'text-[#0071e3] border-[rgba(0,113,227,0.3)] hover:border-[#0071e3]'
+                }`}>
+                {copied ? '已複製！' : '複製'}
+              </button>
+            </div>
+            <div className="bg-[#f5f5f7] rounded-2xl p-5 border border-[rgba(0,0,0,0.06)]">
+              <pre className="text-[14px] text-[#1d1d1f] whitespace-pre-wrap font-sans leading-relaxed">{generated}</pre>
+            </div>
+            <p className="text-[12px] text-[#6e6e73] mt-3 text-center">請確認內容後再發佈到社團</p>
+          </div>
+        )}
       </div>
-
-      {generated && (
-        <div className="mt-8">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-gray-700">生成結果</p>
-            <button onClick={copy}
-              className="text-xs text-gray-500 hover:text-gray-900 border border-gray-200 px-3 py-1 rounded-full transition">
-              {copied ? '已複製！' : '複製'}
-            </button>
-          </div>
-          <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
-            <pre className="text-sm text-gray-800 whitespace-pre-wrap font-sans leading-relaxed">{generated}</pre>
-          </div>
-          <p className="text-xs text-gray-400 mt-3 text-center">請確認內容後再發佈到社團</p>
-        </div>
-      )}
     </div>
   )
 }

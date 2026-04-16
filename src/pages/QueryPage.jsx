@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { APPLE_PRODUCTS, CATEGORIES, CONDITIONS, generateTransactions } from '../data/mockData'
 
 function generateChartData(basePrice, tradeInPrice, days = 30) {
@@ -15,13 +15,13 @@ function generateChartData(basePrice, tradeInPrice, days = 30) {
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white border border-gray-100 rounded-xl px-3 py-2 shadow-sm text-xs space-y-1">
-        <p className="text-gray-400 mb-1">{label}</p>
+      <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl px-4 py-3 shadow-xl text-xs space-y-1.5">
+        <p className="text-[#6e6e73] mb-1 font-medium">{label}</p>
         {payload.map(p => (
           <div key={p.dataKey} className="flex items-center gap-2">
             <span style={{ color: p.color }}>●</span>
-            <span className="text-gray-500">{p.dataKey === 'price' ? '社團均價' : '官方回收'}</span>
-            <span className="font-semibold text-gray-900">${p.value?.toLocaleString()}</span>
+            <span className="text-[#6e6e73]">{p.dataKey === 'price' ? '社團均價' : '官方回收'}</span>
+            <span className="font-semibold text-[#1d1d1f]">${p.value?.toLocaleString()}</span>
           </div>
         ))}
       </div>
@@ -101,211 +101,231 @@ export default function QueryPage() {
     : []
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10">
-      {/* Search */}
-      <div className="text-center mb-10">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">二手行情，一查就知</h1>
-        <p className="text-gray-500 mb-6 text-sm">基於社團真實成交資料，買賣不再吃虧</p>
-        <div className="flex gap-3 max-w-xl mx-auto mb-4">
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="搜尋型號，例如 iPhone 16 Pro"
-            className="flex-1 px-5 py-3 rounded-full border border-gray-200 text-sm focus:outline-none focus:border-gray-400 bg-gray-50"
-          />
+    <div>
+      {/* Hero */}
+      <section className="bg-[#f5f5f7] pt-16 pb-14 text-center">
+        <div className="max-w-[980px] mx-auto px-5">
+          <h1 className="text-[48px] font-semibold text-[#1d1d1f] leading-tight tracking-tight mb-3">
+            二手行情，一查就知
+          </h1>
+          <p className="text-[19px] text-[#6e6e73] mb-8 font-light">
+            基於社團真實成交資料，買賣不再吃虧
+          </p>
+          <div className="flex gap-3 max-w-[560px] mx-auto mb-5">
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="搜尋型號，例如 iPhone 16 Pro"
+              className="flex-1 px-5 py-3.5 rounded-2xl border border-[rgba(0,0,0,0.1)] text-[15px] focus:outline-none focus:border-[#0071e3] bg-white shadow-sm text-[#1d1d1f] placeholder-[#6e6e73] transition-colors"
+            />
+          </div>
+          <div className="flex gap-2 justify-center flex-wrap">
+            {CATEGORIES.map(cat => (
+              <button key={cat} onClick={() => setSelectedCategory(cat)}
+                className={`px-4 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200 ${
+                  selectedCategory === cat
+                    ? 'bg-[#1d1d1f] text-white'
+                    : 'bg-white text-[#6e6e73] hover:bg-[#e8e8ed] border border-[rgba(0,0,0,0.1)]'
+                }`}>
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex gap-2 justify-center flex-wrap">
-          {CATEGORIES.map(cat => (
-            <button key={cat} onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-1.5 rounded-full text-xs font-medium transition ${selectedCategory === cat ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-              {cat}
-            </button>
-          ))}
-        </div>
-      </div>
+      </section>
 
-      <div className="grid grid-cols-3 gap-6">
-        {/* Product list */}
-        <div className="col-span-1 space-y-2 max-h-[70vh] overflow-y-auto pr-1">
-          {filtered.length === 0 && (
-            <p className="text-sm text-gray-400 text-center py-8">找不到相關產品</p>
-          )}
-          {filtered.map(product => (
-            <button key={product.id} onClick={() => selectProduct(product)}
-              className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${selectedProduct?.id === product.id ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'}`}>
-              <div className="font-medium">{product.name}</div>
-              <div className={`text-xs mt-0.5 ${selectedProduct?.id === product.id ? 'text-gray-300' : 'text-gray-400'}`}>
-                均價 ${product.marketAvg[product.storages[0]]?.toLocaleString()}+
+      <div className="max-w-[980px] mx-auto px-5 py-10">
+        <div className="grid grid-cols-3 gap-8">
+          {/* Product list */}
+          <div className="col-span-1 space-y-1.5 max-h-[72vh] overflow-y-auto pr-1">
+            {filtered.length === 0 && (
+              <p className="text-[13px] text-[#6e6e73] text-center py-8">找不到相關產品</p>
+            )}
+            {filtered.map(product => (
+              <button key={product.id} onClick={() => selectProduct(product)}
+                className={`w-full text-left px-4 py-3.5 rounded-2xl text-sm transition-all duration-200 ${
+                  selectedProduct?.id === product.id
+                    ? 'bg-[#1d1d1f] text-white shadow-md'
+                    : 'bg-[#f5f5f7] text-[#1d1d1f] hover:bg-[#e8e8ed]'
+                }`}>
+                <div className="font-medium text-[14px]">{product.name}</div>
+                <div className={`text-[12px] mt-0.5 ${selectedProduct?.id === product.id ? 'text-[#a1a1a6]' : 'text-[#6e6e73]'}`}>
+                  均價 ${product.marketAvg[product.storages[0]]?.toLocaleString()}+
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Detail panel */}
+          <div className="col-span-2">
+            {!selectedProduct ? (
+              <div className="flex flex-col items-center justify-center h-64 text-[#6e6e73] text-[15px] gap-3">
+                <div className="text-4xl opacity-20">⌕</div>
+                <p>選擇左側產品查看行情</p>
               </div>
-            </button>
-          ))}
-        </div>
+            ) : (
+              <div className="space-y-5">
+                <h2 className="text-[28px] font-semibold text-[#1d1d1f] tracking-tight">{selectedProduct.name}</h2>
 
-        {/* Detail panel */}
-        <div className="col-span-2">
-          {!selectedProduct ? (
-            <div className="flex items-center justify-center h-64 text-gray-300 text-sm">
-              選擇左側產品查看行情
-            </div>
-          ) : (
-            <div className="space-y-5">
-              <h2 className="text-2xl font-bold text-gray-900">{selectedProduct.name}</h2>
+                {/* Storage selector */}
+                <div className="flex gap-2 flex-wrap">
+                  {selectedProduct.storages.map(s => (
+                    <button key={s} onClick={() => changeStorage(s)}
+                      className={`px-4 py-1.5 rounded-full text-[13px] font-medium border transition-all duration-200 ${
+                        selectedStorage === s
+                          ? 'border-[#1d1d1f] bg-[#1d1d1f] text-white'
+                          : 'border-[rgba(0,0,0,0.15)] text-[#1d1d1f] hover:border-[#1d1d1f]'
+                      }`}>
+                      {s}
+                    </button>
+                  ))}
+                </div>
 
-              {/* Storage selector */}
-              <div className="flex gap-2 flex-wrap">
-                {selectedProduct.storages.map(s => (
-                  <button key={s} onClick={() => changeStorage(s)}
-                    className={`px-4 py-1.5 rounded-full text-xs font-medium border transition ${selectedStorage === s ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 text-gray-600 hover:border-gray-400'}`}>
-                    {s}
-                  </button>
-                ))}
-              </div>
-
-              {/* KPI cards */}
-              <div className="grid grid-cols-4 gap-3">
-                <div className="bg-gray-50 rounded-2xl p-4">
-                  <p className="text-xs text-gray-400 mb-1">社團均價</p>
-                  <p className="text-2xl font-bold text-gray-900">${avg?.toLocaleString()}</p>
-                </div>
-                <div className="bg-gray-50 rounded-2xl p-4">
-                  <p className="text-xs text-gray-400 mb-1">原廠售價</p>
-                  <p className="text-2xl font-bold text-gray-400">${retail?.toLocaleString()}</p>
-                </div>
-                <div className="bg-green-50 rounded-2xl p-4">
-                  <p className="text-xs text-gray-400 mb-1">平均折扣</p>
-                  <p className="text-2xl font-bold text-green-600">{discount}% off</p>
-                </div>
-                <div className="bg-red-50 rounded-2xl p-4">
-                  <p className="text-xs text-gray-400 mb-1">官方回收價</p>
-                  <p className="text-2xl font-bold text-red-500">
-                    ${selectedProduct.tradeInPrice?.[selectedStorage]?.toLocaleString() || '—'}
-                  </p>
-                  <p className="text-xs text-red-300 mt-1">最高容量最高可達</p>
-                </div>
-              </div>
-
-              {/* 原廠開賣資訊 */}
-              {selectedProduct.launchDate && (
-                <div className="bg-gray-50 rounded-2xl p-4">
-                  <p className="text-xs font-semibold text-gray-500 mb-3">原廠開賣資訊</p>
-                  <div className="grid grid-cols-3 gap-3 text-sm">
-                    <div>
-                      <p className="text-xs text-gray-400 mb-1">開賣日期</p>
-                      <p className="font-medium text-gray-900">{selectedProduct.launchDate}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {Math.floor((new Date() - new Date(selectedProduct.launchDate)) / (1000*60*60*24*30))} 個月前
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 mb-1">原廠售價</p>
-                      <p className="font-medium text-gray-900">
-                        ${(selectedProduct.launchPrice?.[selectedStorage] || selectedProduct.basePrice[selectedStorage])?.toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 mb-1">目前折舊</p>
-                      {(() => {
-                        const launch = selectedProduct.launchPrice?.[selectedStorage] || selectedProduct.basePrice[selectedStorage]
-                        const current = selectedProduct.marketAvg[selectedStorage]
-                        const drop = launch - current
-                        const dropPct = Math.round((drop / launch) * 100)
-                        return (
-                          <div>
-                            <p className="font-medium text-red-500">-${drop.toLocaleString()}</p>
-                            <p className="text-xs text-red-400">跌了 {dropPct}%</p>
-                          </div>
-                        )
-                      })()}
-                    </div>
+                {/* KPI cards */}
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="bg-[#f5f5f7] rounded-2xl p-4">
+                    <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">社團均價</p>
+                    <p className="text-[22px] font-semibold text-[#1d1d1f] tracking-tight">${avg?.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-[#f5f5f7] rounded-2xl p-4">
+                    <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">原廠售價</p>
+                    <p className="text-[22px] font-semibold text-[#6e6e73] tracking-tight">${retail?.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-[#e3f2fd] rounded-2xl p-4">
+                    <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">平均折扣</p>
+                    <p className="text-[22px] font-semibold text-[#0071e3] tracking-tight">{discount}% off</p>
+                  </div>
+                  <div className="bg-[#fce4ec] rounded-2xl p-4">
+                    <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">官方回收價</p>
+                    <p className="text-[22px] font-semibold text-[#ff3b30] tracking-tight">
+                      ${selectedProduct.tradeInPrice?.[selectedStorage]?.toLocaleString() || '—'}
+                    </p>
                   </div>
                 </div>
-              )}
 
-              {/* Recharts 趨勢圖 */}
-              <div className="bg-gray-50 rounded-2xl p-5">
-                <p className="text-xs font-semibold text-gray-500 mb-4">近 30 天成交價趨勢</p>
-                <ResponsiveContainer width="100%" height={180}>
-                  <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 8 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} interval={4} />
-                    <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} width={40} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend
-                      verticalAlign="top"
-                      align="right"
-                      height={28}
-                      formatter={(value) => value === 'price' ? '社團成交價' : 'Apple 官方回收價'}
-                      wrapperStyle={{ fontSize: '11px', color: '#6b7280' }}
-                    />
-                    <Line type="monotone" dataKey="price" name="price" stroke="#1d1d1f" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="tradeIn" name="tradeIn" stroke="#ef4444" strokeWidth={1.5} dot={false} strokeDasharray="4 3" />
-                  </LineChart>
-                </ResponsiveContainer>
-                <p className="text-xs text-gray-400 mt-2">
-                  ⚠️ 紅色虛線為 Apple 官方回收估價（{selectedStorage} 最高可達），實際回收價依機況、電池健康度而異，請至
-                  <a href="https://www.apple.com/tw/trade-in/" target="_blank" rel="noreferrer" className="underline ml-1">Apple Trade In</a> 查詢正確金額。
-                </p>
-              </div>
-
-              {/* AI 分析 */}
-              <div className="border border-gray-100 rounded-2xl p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-semibold text-gray-500">AI 行情分析</p>
-                  <button onClick={fetchAiAnalysis} disabled={aiLoading}
-                    className="text-xs px-4 py-1.5 bg-gray-900 text-white rounded-full hover:bg-gray-700 disabled:opacity-50 transition">
-                    {aiLoading ? '分析中...' : aiAnalysis ? '重新分析' : '取得 AI 建議'}
-                  </button>
-                </div>
-                {aiError && <p className="text-xs text-red-500">{aiError}</p>}
-                {aiAnalysis && (
-                  <p className="text-sm text-gray-700 leading-relaxed">{aiAnalysis}</p>
-                )}
-                {!aiAnalysis && !aiError && !aiLoading && (
-                  <p className="text-xs text-gray-300">點擊右側按鈕取得 AI 買賣建議</p>
-                )}
-              </div>
-
-              {/* Condition price table */}
-              <div className="bg-gray-50 rounded-2xl p-4">
-                <p className="text-xs font-semibold text-gray-500 mb-3">各成色參考行情</p>
-                <div className="space-y-2">
-                  {conditionPrices.map(({ condition, price }) => (
-                    <div key={condition} className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">{condition}</span>
-                      <span className="font-semibold text-gray-900">${price.toLocaleString()}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Colors */}
-              <div>
-                <p className="text-xs font-semibold text-gray-500 mb-2">可選顏色</p>
-                <div className="flex flex-wrap gap-2">
-                  {selectedProduct.colors.map(color => (
-                    <span key={color} className="px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-600">{color}</span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Recent transactions */}
-              <div>
-                <p className="text-xs font-semibold text-gray-500 mb-2">近期成交紀錄</p>
-                <div className="border border-gray-100 rounded-xl overflow-hidden">
-                  {transactions.slice(0, 6).map((tx, i) => (
-                    <div key={i} className="flex items-center justify-between px-4 py-2.5 bg-white border-b border-gray-50 last:border-0 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-400">{tx.daysAgo === 0 ? '今天' : tx.daysAgo + '天前'}</span>
-                        <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">{tx.condition}</span>
-                        <span className="text-xs text-gray-400">{tx.tradeMethod}</span>
+                {/* 原廠開賣資訊 */}
+                {selectedProduct.launchDate && (
+                  <div className="bg-[#f5f5f7] rounded-2xl p-5">
+                    <p className="text-[11px] font-semibold text-[#6e6e73] mb-4 uppercase tracking-wider">原廠開賣資訊</p>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-[11px] text-[#6e6e73] mb-1">開賣日期</p>
+                        <p className="font-semibold text-[#1d1d1f] text-[14px]">{selectedProduct.launchDate}</p>
+                        <p className="text-[11px] text-[#6e6e73] mt-0.5">
+                          {Math.floor((new Date() - new Date(selectedProduct.launchDate)) / (1000*60*60*24*30))} 個月前
+                        </p>
                       </div>
-                      <span className="font-semibold text-gray-900">${tx.price.toLocaleString()}</span>
+                      <div>
+                        <p className="text-[11px] text-[#6e6e73] mb-1">原廠售價</p>
+                        <p className="font-semibold text-[#1d1d1f] text-[14px]">
+                          ${(selectedProduct.launchPrice?.[selectedStorage] || selectedProduct.basePrice[selectedStorage])?.toLocaleString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-[#6e6e73] mb-1">目前折舊</p>
+                        {(() => {
+                          const launch = selectedProduct.launchPrice?.[selectedStorage] || selectedProduct.basePrice[selectedStorage]
+                          const current = selectedProduct.marketAvg[selectedStorage]
+                          const drop = launch - current
+                          const dropPct = Math.round((drop / launch) * 100)
+                          return (
+                            <div>
+                              <p className="font-semibold text-[#ff3b30] text-[14px]">-${drop.toLocaleString()}</p>
+                              <p className="text-[11px] text-[#ff3b30]">跌了 {dropPct}%</p>
+                            </div>
+                          )
+                        })()}
+                      </div>
                     </div>
-                  ))}
+                  </div>
+                )}
+
+                {/* 趨勢圖 */}
+                <div className="bg-[#f5f5f7] rounded-2xl p-5">
+                  <p className="text-[11px] font-semibold text-[#6e6e73] mb-4 uppercase tracking-wider">近 30 天成交價趨勢</p>
+                  <ResponsiveContainer width="100%" height={180}>
+                    <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 8 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
+                      <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#6e6e73' }} tickLine={false} axisLine={false} interval={4} />
+                      <YAxis tick={{ fontSize: 10, fill: '#6e6e73' }} tickLine={false} axisLine={false} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} width={40} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend
+                        verticalAlign="top"
+                        align="right"
+                        height={28}
+                        formatter={(value) => value === 'price' ? '社團成交價' : 'Apple 官方回收價'}
+                        wrapperStyle={{ fontSize: '11px', color: '#6e6e73' }}
+                      />
+                      <Line type="monotone" dataKey="price" name="price" stroke="#1d1d1f" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="tradeIn" name="tradeIn" stroke="#ff3b30" strokeWidth={1.5} dot={false} strokeDasharray="4 3" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                  <p className="text-[11px] text-[#6e6e73] mt-3">
+                    ⚠️ 紅色虛線為 Apple 官方回收估價（{selectedStorage} 最高可達），實際回收價依機況、電池健康度而異，請至
+                    <a href="https://www.apple.com/tw/trade-in/" target="_blank" rel="noreferrer" className="text-[#0071e3] ml-1 hover:underline">Apple Trade In</a> 查詢正確金額。
+                  </p>
+                </div>
+
+                {/* AI 分析 */}
+                <div className="border border-[rgba(0,0,0,0.08)] rounded-2xl p-5 bg-white">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[11px] font-semibold text-[#6e6e73] uppercase tracking-wider">AI 行情分析</p>
+                    <button onClick={fetchAiAnalysis} disabled={aiLoading}
+                      className="text-[13px] px-4 py-1.5 bg-[#0071e3] text-white rounded-full hover:bg-[#0077ed] disabled:opacity-50 transition font-medium">
+                      {aiLoading ? '分析中…' : aiAnalysis ? '重新分析' : '取得 AI 建議'}
+                    </button>
+                  </div>
+                  {aiError && <p className="text-[13px] text-[#ff3b30]">{aiError}</p>}
+                  {aiAnalysis && (
+                    <p className="text-[14px] text-[#1d1d1f] leading-relaxed">{aiAnalysis}</p>
+                  )}
+                  {!aiAnalysis && !aiError && !aiLoading && (
+                    <p className="text-[13px] text-[#6e6e73]">點擊右側按鈕取得 AI 買賣建議</p>
+                  )}
+                </div>
+
+                {/* 各成色參考行情 */}
+                <div className="bg-[#f5f5f7] rounded-2xl p-5">
+                  <p className="text-[11px] font-semibold text-[#6e6e73] mb-4 uppercase tracking-wider">各成色參考行情</p>
+                  <div className="space-y-2.5">
+                    {conditionPrices.map(({ condition, price }) => (
+                      <div key={condition} className="flex justify-between items-center">
+                        <span className="text-[14px] text-[#1d1d1f]">{condition}</span>
+                        <span className="font-semibold text-[14px] text-[#1d1d1f]">${price.toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 可選顏色 */}
+                <div>
+                  <p className="text-[11px] font-semibold text-[#6e6e73] mb-3 uppercase tracking-wider">可選顏色</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedProduct.colors.map(color => (
+                      <span key={color} className="px-3 py-1.5 bg-[#f5f5f7] rounded-full text-[13px] text-[#1d1d1f] border border-[rgba(0,0,0,0.06)]">{color}</span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 近期成交 */}
+                <div>
+                  <p className="text-[11px] font-semibold text-[#6e6e73] mb-3 uppercase tracking-wider">近期成交紀錄</p>
+                  <div className="border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden bg-white">
+                    {transactions.slice(0, 6).map((tx, i) => (
+                      <div key={i} className="flex items-center justify-between px-5 py-3 border-b border-[rgba(0,0,0,0.05)] last:border-0">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-[12px] text-[#6e6e73]">{tx.daysAgo === 0 ? '今天' : tx.daysAgo + '天前'}</span>
+                          <span className="px-2.5 py-0.5 bg-[#f5f5f7] text-[#1d1d1f] rounded-full text-[12px]">{tx.condition}</span>
+                          <span className="text-[12px] text-[#6e6e73]">{tx.tradeMethod}</span>
+                        </div>
+                        <span className="font-semibold text-[15px] text-[#1d1d1f]">${tx.price.toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
