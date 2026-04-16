@@ -2,6 +2,31 @@ import { useState } from 'react'
 import { APPLE_PRODUCTS, CONDITIONS, TRADE_METHODS, PURCHASE_CHANNELS, COSMETIC_CONDITIONS, WARRANTY_STATUS } from '../data/mockData'
 import { submitTransaction } from '../lib/supabase'
 
+function QuickTemplate({ label, text }) {
+  const [copied, setCopied] = useState(false)
+  function copy() {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+  return (
+    <div className="flex items-start justify-between gap-3 bg-[#f5f5f7] rounded-2xl px-4 py-3.5 border border-[rgba(0,0,0,0.05)]">
+      <div className="flex-1 min-w-0">
+        <p className="text-[13px] font-medium text-[#1d1d1f] mb-1">{label}</p>
+        <p className="text-[12px] text-[#6e6e73] leading-relaxed line-clamp-2">{text}</p>
+      </div>
+      <button onClick={copy}
+        className={`shrink-0 text-[12px] font-medium px-3 py-1.5 rounded-full transition-all duration-200 ${
+          copied
+            ? 'bg-[#34c759] text-white'
+            : 'bg-white text-[#0071e3] border border-[rgba(0,113,227,0.3)] hover:border-[#0071e3]'
+        }`}>
+        {copied ? '已複製' : '複製'}
+      </button>
+    </div>
+  )
+}
+
 export default function PostPage() {
   const [form, setForm] = useState({
     type: 'sell',
@@ -125,6 +150,40 @@ export default function PostPage() {
       </section>
 
       <div className="max-w-[560px] mx-auto px-5 py-12">
+
+        {/* 快速範本庫 */}
+        <div className="mb-8">
+          <p className="text-[11px] font-semibold text-[#6e6e73] uppercase tracking-wider mb-3">快速範本（一鍵複製）</p>
+          <div className="grid grid-cols-1 gap-2">
+            {[
+              {
+                label: '🔍 徵收詢問',
+                text: '請問有人要出售 iPhone 嗎？狀況需 9成新以上，電池 85% 以上，有意者請附照片、電池健康度及開價，謝謝！',
+              },
+              {
+                label: '⚡ 急售',
+                text: '【急售】因急需資金，本人手機急售，價格可談，誠意買家請私訊，附上序號可查，謝謝！',
+              },
+              {
+                label: '🔧 驗機問題回報',
+                text: '驗機結果回報：外觀 ＿成新、電池健康度 ＿%、功能正常（Face ID / 喇叭 / 麥克風 / 相機 均正常），序號查詢正常，無維修紀錄。',
+              },
+              {
+                label: '💬 議價請求',
+                text: '您好，請問此商品是否有議價空間？社團均價大約落在 $＿，不知賣家是否可以考慮？感謝！',
+              },
+              {
+                label: '✅ 交貨確認',
+                text: '交易已完成，感謝賣家配合！商品與描述相符，推薦給需要的社員，是位有誠信的賣家 👍',
+              },
+            ].map(({ label, text }) => (
+              <QuickTemplate key={label} label={label} text={text} />
+            ))}
+          </div>
+        </div>
+
+        <div className="border-t border-[rgba(0,0,0,0.06)] mb-8" />
+
         <div className="space-y-5">
           {/* 類型 */}
           <div>

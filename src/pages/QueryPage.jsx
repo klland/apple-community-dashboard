@@ -195,11 +195,17 @@ export default function QueryPage() {
                     <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">平均折扣</p>
                     <p className="text-[22px] font-semibold text-[#0071e3] tracking-tight">{discount}% off</p>
                   </div>
-                  <div className="bg-[#fce4ec] rounded-2xl p-4">
-                    <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">官方回收價</p>
-                    <p className="text-[22px] font-semibold text-[#ff3b30] tracking-tight">
-                      ${selectedProduct.tradeInPrice?.[selectedStorage]?.toLocaleString() || '—'}
-                    </p>
+                  <div className="bg-[#fce4ec] rounded-2xl p-4 flex flex-col justify-between">
+                    <div>
+                      <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">官方回收價</p>
+                      <p className="text-[22px] font-semibold text-[#ff3b30] tracking-tight">
+                        ${selectedProduct.tradeInPrice?.[selectedStorage]?.toLocaleString() || '—'}
+                      </p>
+                    </div>
+                    <a href="https://www.apple.com/tw/trade-in/" target="_blank" rel="noreferrer"
+                      className="mt-2 text-[11px] text-[#ff3b30] underline underline-offset-2 hover:opacity-70 transition-opacity">
+                      前往 Apple 官網試算 →
+                    </a>
                   </div>
                 </div>
 
@@ -261,8 +267,9 @@ export default function QueryPage() {
                     </LineChart>
                   </ResponsiveContainer>
                   <p className="text-[11px] text-[#6e6e73] mt-3">
-                    ⚠️ 紅色虛線為 Apple 官方回收估價（{selectedStorage} 最高可達），實際回收價依機況、電池健康度而異，請至
-                    <a href="https://www.apple.com/tw/trade-in/" target="_blank" rel="noreferrer" className="text-[#0071e3] ml-1 hover:underline">Apple Trade In</a> 查詢正確金額。
+                    ⚠️ 紅色虛線為 Apple 官方回收估價（{selectedStorage} 最高可達），實際依機況而異。
+                    <strong className="text-[#ff3b30]"> 建議賣出前先至官網試算，避免低估賣給黃牛。</strong>
+                    <a href="https://www.apple.com/tw/trade-in/" target="_blank" rel="noreferrer" className="text-[#0071e3] ml-1 hover:underline">前往 Apple Trade In →</a>
                   </p>
                 </div>
 
