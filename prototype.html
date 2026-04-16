@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>蘋果二手行情助手</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif; }
+</style>
+</head>
+<body class="bg-white min-h-screen">
+
+<!-- Header -->
+<header class="border-b border-gray-100 sticky top-0 bg-white/80 backdrop-blur-md z-10">
+  <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <span class="text-xl font-bold text-gray-900"></span>
+      <span class="font-semibold text-gray-900">蘋果二手行情</span>
+    </div>
+    <nav class="flex gap-1">
+      <div id="nav-query" class="px-4 py-2 rounded-full text-sm font-medium cursor-pointer bg-gray-900 text-white transition-all" onclick="showPage('query')">行情查詢</div>
+      <div id="nav-report" class="px-4 py-2 rounded-full text-sm font-medium cursor-pointer text-gray-500 hover:bg-gray-100 transition-all" onclick="showPage('report')">成交回報</div>
+      <div id="nav-post" class="px-4 py-2 rounded-full text-sm font-medium cursor-pointer text-gray-500 hover:bg-gray-100 transition-all" onclick="showPage('post')">貼文產生器</div>
+    </nav>
+  </div>
+</header>
+
+<!-- Page: 行情查詢 -->
+<div id="page-query" class="max-w-5xl mx-auto px-6 py-12">
+  <div class="text-center mb-12">
+    <h1 class="text-4xl font-bold text-gray-900 mb-3">二手行情，一查就知</h1>
+    <p class="text-gray-500 mb-8">基於真實社團成交資料，不再買貴</p>
+    <div class="flex gap-3 max-w-xl mx-auto">
+      <input type="text" id="searchInput" placeholder="輸入型號，例如 iPhone 16 Pro"
+        class="flex-1 px-5 py-3 rounded-full border border-gray-200 text-sm focus:outline-none focus:border-gray-400 bg-gray-50"
+        onkeydown="if(event.key==='Enter') doSearch()">
+      <button onclick="doSearch()" class="px-6 py-3 bg-gray-900 text-white rounded-full text-sm font-medium hover:bg-gray-700 transition">查詢</button>
+    </div>
+    <div class="flex gap-2 mt-4 justify-center flex-wrap">
+      <span class="px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-600 cursor-pointer hover:bg-gray-200 transition" onclick="quickSearch('iPhone 16 Pro')">iPhone 16 Pro</span>
+      <span class="px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-600 cursor-pointer hover:bg-gray-200 transition" onclick="quickSearch('iPhone 15')">iPhone 15</span>
+      <span class="px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-600 cursor-pointer hover:bg-gray-200 transition" onclick="quickSearch('MacBook Air M3')">MacBook Air M3</span>
+      <span class="px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-600 cursor-pointer hover:bg-gray-200 transition" onclick="quickSearch('AirPods Pro 2')">AirPods Pro 2</span>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div id="result" class="hidden">
+    <div class="grid grid-cols-3 gap-4 mb-8">
+      <div class="bg-gray-50 rounded-2xl p-6">
+        <p class="text-xs text-gray-400 mb-1">近期均價</p>
+        <p class="text-3xl font-bold text-gray-900" id="avgPrice">$28,500</p>
+        <p class="text-xs text-green-500 mt-1" id="trend">↑ 較上週 +2%</p>
+      </div>
+      <div class="bg-gray-50 rounded-2xl p-6">
+        <p class="text-xs text-gray-400 mb-1">合理區間</p>
+        <p class="text-xl font-bold text-gray-900 mt-2" id="priceRange">$26,000 – $31,000</p>
+        <p class="text-xs text-gray-400 mt-1">依成色而異</p>
+      </div>
+      <div class="bg-gray-50 rounded-2xl p-6">
+        <p class="text-xs text-gray-400 mb-1">近 30 天成交</p>
+        <p class="text-3xl font-bold text-gray-900" id="txCount">42 筆</p>
+        <p class="text-xs text-gray-400 mt-1">資料持續更新中</p>
+      </div>
+    </div>
+
+    <div class="bg-blue-50 border border-blue-100 rounded-2xl p-5 mb-8 flex gap-4 items-start">
+      <span class="text-2xl">🤖</span>
+      <div>
+        <p class="text-sm font-semibold text-blue-900 mb-1">AI 行情分析</p>
+        <p class="text-sm text-blue-700" id="aiComment"></p>
+      </div>
+    </div>
+
+    <div class="bg-gray-50 rounded-2xl p-6 mb-8">
+      <p class="text-sm font-semibold text-gray-700 mb-4">近 30 天成交價趨勢</p>
+      <canvas id="priceChart" height="80"></canvas>
+    </div>
+
+    <div>
+      <p class="text-sm font-semibold text-gray-700 mb-4">近期成交紀錄</p>
+      <div class="space-y-0 border border-gray-100 rounded-2xl overflow-hidden" id="txList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Page: 成交回報 -->
+<div id="page-report" class="max-w-2xl mx-auto px-6 py-12 hidden">
+  <h1 class="text-3xl font-bold text-gray-900 mb-2">成交回報</h1>
+  <p class="text-gray-500 mb-8 text-sm">填入你的成交資訊，幫助社員掌握真實行情</p>
+
+  <div class="space-y-5">
+    <div>
+      <label class="text-sm font-medium text-gray-700 block mb-2">型號</label>
+      <select class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:border-gray-400">
+        <option>iPhone 16 Pro</option>
+        <option>iPhone 16 Pro Max</option>
+        <option>iPhone 15</option>
+        <option>iPhone 15 Pro</option>
+        <option>MacBook Air M3</option>
+        <option>MacBook Pro M3</option>
+        <option>AirPods Pro 2</option>
+        <option>iPad Pro M4</option>
+        <option>Apple Watch Series 10</option>
+      </select>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="text-sm font-medium text-gray-700 block mb-2">容量／規格</label>
+        <select class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none">
+          <option>128G</option>
+          <option selected>256G</option>
+          <option>512G</option>
+          <option>1T</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700 block mb-2">成色</label>
+        <select class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none">
+          <option>全新未拆</option>
+          <option>9.5成新</option>
+          <option selected>9成新</option>
+          <option>8成新</option>
+          <option>8成新以下</option>
+        </select>
+      </div>
+    </div>
+    <div>
+      <label class="text-sm font-medium text-gray-700 block mb-2">成交價格（TWD）</label>
+      <input type="number" placeholder="例如 28500"
+        class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:border-gray-400">
+    </div>
+    <div>
+      <label class="text-sm font-medium text-gray-700 block mb-2">備註（選填）</label>
+      <input type="text" placeholder="例如：附原廠盒、電池健康度 92%"
+        class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:border-gray-400">
+    </div>
+    <button onclick="submitReport()" class="w-full py-3 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-700 transition">
+      送出回報
+    </button>
+  </div>
+
+  <div id="successMsg" class="hidden mt-6 bg-green-50 border border-green-100 rounded-2xl p-5 text-center">
+    <p class="text-2xl mb-2">✅</p>
+    <p class="text-sm font-semibold text-green-800">感謝你的回報！</p>
+    <p class="text-xs text-green-600 mt-1">你的資料已加入行情資料庫，幫助了其他社員</p>
+  </div>
+</div>
+
+<!-- Page: 貼文產生器 -->
+<div id="page-post" class="max-w-2xl mx-auto px-6 py-12 hidden">
+  <h1 class="text-3xl font-bold text-gray-900 mb-2">貼文產生器</h1>
+  <p class="text-gray-500 mb-8 text-sm">輸入資訊，AI 自動生成符合社團格式的貼文</p>
+
+  <div class="space-y-5 mb-6">
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="text-sm font-medium text-gray-700 block mb-2">類型</label>
+        <div class="flex gap-2">
+          <button id="btn-sell" onclick="setType('sell')" class="flex-1 py-2 rounded-xl border-2 border-gray-900 bg-gray-900 text-white text-sm font-medium transition">出售</button>
+          <button id="btn-buy" onclick="setType('buy')" class="flex-1 py-2 rounded-xl border-2 border-gray-200 text-gray-600 text-sm font-medium hover:border-gray-400 transition">收購</button>
+        </div>
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700 block mb-2">型號</label>
+        <select id="postModel" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none">
+          <option>iPhone 16 Pro</option>
+          <option>iPhone 16 Pro Max</option>
+          <option>iPhone 15</option>
+          <option>MacBook Air M3</option>
+          <option>AirPods Pro 2</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid grid-cols-3 gap-3">
+      <div>
+        <label class="text-sm font-medium text-gray-700 block mb-2">容量</label>
+        <select id="postStorage" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none">
+          <option>128G</option>
+          <option selected>256G</option>
+          <option>512G</option>
+          <option>1T</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700 block mb-2">成色</label>
+        <select id="postCondition" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none">
+          <option>全新未拆</option>
+          <option>9.5成新</option>
+          <option selected>9成新</option>
+          <option>8成新</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700 block mb-2">價格</label>
+        <input type="number" id="postPrice" placeholder="28000" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none">
+      </div>
+    </div>
+    <div>
+      <label class="text-sm font-medium text-gray-700 block mb-2">聯絡方式</label>
+      <input type="text" id="postContact" placeholder="例如：請私訊 / Line: abc123"
+        class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none">
+    </div>
+    <button onclick="generatePost()" id="generateBtn" class="w-full py-3 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-700 transition">
+      ✨ AI 生成貼文草稿
+    </button>
+  </div>
+
+  <div id="generatedPost" class="hidden">
+    <div class="flex items-center justify-between mb-3">
+      <p class="text-sm font-semibold text-gray-700">生成結果</p>
+      <button onclick="copyPost()" id="copyBtn" class="text-xs text-gray-500 hover:text-gray-900 border border-gray-200 px-3 py-1 rounded-full transition">複製</button>
+    </div>
+    <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+      <pre id="postContent" class="text-sm text-gray-800 whitespace-pre-wrap font-sans leading-relaxed"></pre>
+    </div>
+    <p class="text-xs text-gray-400 mt-3 text-center">由 AI 生成，請確認內容後再發佈</p>
+  </div>
+</div>
+
+<script>
+const mockData = {
+  'iphone 16 pro': {
+    avg: '$28,500', range: '$26,000 – $31,000', count: '42 筆', trend: '↑ 較上週 +2%', trendColor: 'text-green-500',
+    ai: '目前市場供給偏多，建議買家從 $27,000 開始出價。9成新以上集中在 $28,000–$29,500，超過 $30,000 溢價明顯。',
+    basePrice: 28500
+  },
+  'iphone 16 pro max': {
+    avg: '$34,200', range: '$31,000 – $38,000', count: '28 筆', trend: '↑ 較上週 +1%', trendColor: 'text-green-500',
+    ai: '大螢幕需求穩定，保值性優於標準版。鈦色系機型溢價約 3-5%，黑色最易成交。',
+    basePrice: 34200
+  },
+  'iphone 15': {
+    avg: '$18,200', range: '$16,000 – $21,000', count: '67 筆', trend: '↓ 較上週 -1%', trendColor: 'text-red-500',
+    ai: '供給充足，價格下行壓力明顯。建議賣家不要拖，9成新 $18,000 左右是成交甜蜜點。',
+    basePrice: 18200
+  },
+  'macbook air m3': {
+    avg: '$32,800', range: '$30,000 – $36,000', count: '18 筆', trend: '— 較上週 持平', trendColor: 'text-gray-500',
+    ai: '行情穩定，M3 保值性佳。有盒裝且電池循環低於 100 的可以要求溢價 5-8%。',
+    basePrice: 32800
+  },
+  'airpods pro 2': {
+    avg: '$4,200', range: '$3,500 – $5,000', count: '31 筆', trend: '↓ 較上週 -3%', trendColor: 'text-red-500',
+    ai: '價格持續下滑，若非急用建議觀望。全新未拆封品仍有溢價空間，約 $4,800–$5,000。',
+    basePrice: 4200
+  }
+};
+
+function showPage(page) {
+  ['query','report','post'].forEach(p => {
+    document.getElementById('page-' + p).classList.add('hidden');
+    const nav = document.getElementById('nav-' + p);
+    nav.className = 'px-4 py-2 rounded-full text-sm font-medium cursor-pointer text-gray-500 hover:bg-gray-100 transition-all';
+  });
+  document.getElementById('page-' + page).classList.remove('hidden');
+  const activeNav = document.getElementById('nav-' + page);
+  activeNav.className = 'px-4 py-2 rounded-full text-sm font-medium cursor-pointer bg-gray-900 text-white transition-all';
+}
+
+function quickSearch(model) {
+  document.getElementById('searchInput').value = model;
+  doSearch();
+}
+
+function doSearch() {
+  const input = document.getElementById('searchInput').value.toLowerCase().trim();
+  const key = Object.keys(mockData).find(k => input.includes(k.split(' ')[0]) || input === k) || 'iphone 16 pro';
+  const d = mockData[key];
+
+  document.getElementById('avgPrice').textContent = d.avg;
+  document.getElementById('priceRange').textContent = d.range;
+  document.getElementById('txCount').textContent = d.count;
+  document.getElementById('trend').textContent = d.trend;
+  document.getElementById('trend').className = 'text-xs mt-1 ' + d.trendColor;
+  document.getElementById('aiComment').textContent = d.ai;
+  document.getElementById('result').classList.remove('hidden');
+  renderChart(d.basePrice);
+  renderTx(d.basePrice);
+}
+
+function renderChart(base) {
+  const ctx = document.getElementById('priceChart');
+  if (window._chart) window._chart.destroy();
+  const labels = Array.from({length: 30}, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - 29 + i);
+    return `${d.getMonth()+1}/${d.getDate()}`;
+  });
+  const data = labels.map((_, i) => Math.round((base + (Math.random()-0.5) * base * 0.12) / 100) * 100);
+  window._chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        borderColor: '#1d1d1f',
+        backgroundColor: 'rgba(29,29,31,0.05)',
+        borderWidth: 2,
+        pointRadius: 0,
+        tension: 0.4,
+        fill: true
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 6, font: { size: 11 }, color: '#9ca3af' } },
+        y: { grid: { color: '#f5f5f7' }, ticks: { font: { size: 11 }, color: '#9ca3af', callback: v => '$' + v.toLocaleString() } }
+      }
+    }
+  });
+}
+
+function renderTx(base) {
+  const conditions = ['全新未拆', '9.5成新', '9成新', '8成新'];
+  const colors = ['bg-purple-50 text-purple-600', 'bg-blue-50 text-blue-600', 'bg-green-50 text-green-600', 'bg-orange-50 text-orange-500'];
+  const rows = Array.from({length: 8}, () => {
+    const c = Math.floor(Math.random() * 4);
+    const price = Math.round((base + (Math.random()-0.5) * base * 0.15) / 100) * 100;
+    const daysAgo = Math.floor(Math.random() * 7);
+    const timeAgo = daysAgo === 0 ? '今天' : daysAgo + ' 天前';
+    return `<div class="flex items-center justify-between px-5 py-3 bg-white border-b border-gray-100 last:border-0">
+      <div class="flex items-center gap-3">
+        <span class="text-xs px-2 py-1 rounded-full ${colors[c]} font-medium">${conditions[c]}</span>
+        <span class="text-xs text-gray-400">${timeAgo}</span>
+      </div>
+      <span class="text-sm font-semibold text-gray-900">$${price.toLocaleString()}</span>
+    </div>`;
+  });
+  document.getElementById('txList').innerHTML = rows.join('');
+}
+
+function submitReport() {
+  const msg = document.getElementById('successMsg');
+  msg.classList.remove('hidden');
+  setTimeout(() => msg.classList.add('hidden'), 3000);
+}
+
+let postType = 'sell';
+function setType(type) {
+  postType = type;
+  if (type === 'sell') {
+    document.getElementById('btn-sell').className = 'flex-1 py-2 rounded-xl border-2 border-gray-900 bg-gray-900 text-white text-sm font-medium transition';
+    document.getElementById('btn-buy').className = 'flex-1 py-2 rounded-xl border-2 border-gray-200 text-gray-600 text-sm font-medium hover:border-gray-400 transition';
+  } else {
+    document.getElementById('btn-buy').className = 'flex-1 py-2 rounded-xl border-2 border-gray-900 bg-gray-900 text-white text-sm font-medium transition';
+    document.getElementById('btn-sell').className = 'flex-1 py-2 rounded-xl border-2 border-gray-200 text-gray-600 text-sm font-medium hover:border-gray-400 transition';
+  }
+}
+
+function generatePost() {
+  const btn = document.getElementById('generateBtn');
+  btn.textContent = '生成中...';
+  btn.disabled = true;
+
+  const model = document.getElementById('postModel').value;
+  const storage = document.getElementById('postStorage').value;
+  const condition = document.getElementById('postCondition').value;
+  const price = document.getElementById('postPrice').value || '面議';
+  const contact = document.getElementById('postContact').value || '請私訊';
+
+  setTimeout(() => {
+    let post = '';
+    if (postType === 'sell') {
+      post = `【出售】${model} ${storage}\n\n成色：${condition}\n售價：$${Number(price).toLocaleString() || price}（價格可小議）\n\n地點：台北市，可全家交寄（運費自付）\n聯絡：${contact}\n\n⚠️ 本社團禁止廣告，此為個人閒置出售`;
+    } else {
+      post = `【收購】${model} ${storage}\n\n成色需求：${condition}以上\n預算：$${price ? Math.round(Number(price) * 0.9).toLocaleString() + '–$' + Number(price).toLocaleString() : '面議'}\n\n地點：台北市可面交，外縣市可寄送\n聯絡：${contact}\n\n有意出售請附上照片及售價，謝謝！`;
+    }
+    document.getElementById('postContent').textContent = post;
+    document.getElementById('generatedPost').classList.remove('hidden');
+    btn.textContent = '✨ AI 生成貼文草稿';
+    btn.disabled = false;
+  }, 1000);
+}
+
+function copyPost() {
+  const text = document.getElementById('postContent').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '已複製！';
+    setTimeout(() => btn.textContent = '複製', 1500);
+  });
+}
+</script>
+</body>
+</html>
