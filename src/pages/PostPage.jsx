@@ -248,16 +248,6 @@ export default function PostPage() {
           </div>
         </div>
 
-        {showMRT && (
-          <div>
-            <label className="text-sm font-medium text-gray-700 block mb-2">面交縣市</label>
-            <select value={form.location} onChange={e => update('location', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:outline-none">
-              <option value="">選擇縣市</option>
-              {LOCATIONS.map(l => <option key={l}>{l}</option>)}
-            </select>
-          </div>
-        )}
 
         <div>
           <label className="text-sm font-medium text-gray-700 block mb-2">聯絡方式</label>
