@@ -1197,7 +1197,7 @@ export const APPLE_PRODUCTS = [
 export const CATEGORIES = ['全部', 'iPhone', 'MacBook', 'iPad', 'Apple Watch', 'AirPods', 'Mac', '其他']
 
 // 成色選項
-export const CONDITIONS = ['全新未拆', '9.5成新', '9成新', '8.5成新', '8成新', '8成新以下']
+export const CONDITIONS = ['全新未拆封', '外觀完美無痕', '輕微細紋（正常使用）', '邊框有小刮痕', '背蓋有明顯刮痕', '機身有缺陷／碰傷']
 
 // 交易方式
 export const TRADE_METHODS = ['面交', '郵寄（賣家出運費）', '郵寄（買家出運費）', '面交或郵寄皆可']
