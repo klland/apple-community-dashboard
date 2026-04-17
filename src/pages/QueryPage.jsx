@@ -1,6 +1,18 @@
 import { useState, useMemo } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { APPLE_PRODUCTS, CATEGORIES, CONDITIONS, generateTransactions } from '../data/mockData'
+import { Smartphone, Laptop, Tablet, Watch, Headphones, Monitor, Grid2x2, Package } from 'lucide-react'
+
+const CATEGORY_ICONS = {
+  '全部': Grid2x2,
+  'iPhone': Smartphone,
+  'MacBook': Laptop,
+  'iPad': Tablet,
+  'Apple Watch': Watch,
+  'AirPods': Headphones,
+  'Mac': Monitor,
+  '其他': Package,
+}
 
 function generateChartData(basePrice, tradeInPrice, days = 30) {
   return Array.from({ length: days }, (_, i) => {
@@ -105,6 +117,14 @@ export default function QueryPage() {
       {/* Hero */}
       <section className="bg-[#f5f5f7] pt-16 pb-14 text-center">
         <div className="max-w-[980px] mx-auto px-5">
+          {/* 裝飾 icon 群 */}
+          <div className="flex items-center justify-center gap-5 mb-6 opacity-20">
+            <Laptop size={28} strokeWidth={1.5} className="text-[#1d1d1f]" />
+            <Smartphone size={36} strokeWidth={1.5} className="text-[#1d1d1f]" />
+            <Watch size={26} strokeWidth={1.5} className="text-[#1d1d1f]" />
+            <Tablet size={30} strokeWidth={1.5} className="text-[#1d1d1f]" />
+            <Headphones size={26} strokeWidth={1.5} className="text-[#1d1d1f]" />
+          </div>
           <h1 className="text-[48px] font-semibold text-[#1d1d1f] leading-tight tracking-tight mb-3">
             二手行情，一查就知
           </h1>
@@ -120,16 +140,20 @@ export default function QueryPage() {
             />
           </div>
           <div className="flex gap-2 justify-center flex-wrap">
-            {CATEGORIES.map(cat => (
-              <button key={cat} onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200 ${
-                  selectedCategory === cat
-                    ? 'bg-[#1d1d1f] text-white'
-                    : 'bg-white text-[#6e6e73] hover:bg-[#e8e8ed] border border-[rgba(0,0,0,0.1)]'
-                }`}>
-                {cat}
-              </button>
-            ))}
+            {CATEGORIES.map(cat => {
+              const Icon = CATEGORY_ICONS[cat]
+              return (
+                <button key={cat} onClick={() => setSelectedCategory(cat)}
+                  className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200 ${
+                    selectedCategory === cat
+                      ? 'bg-[#1d1d1f] text-white'
+                      : 'bg-white text-[#6e6e73] hover:bg-[#e8e8ed] border border-[rgba(0,0,0,0.1)]'
+                  }`}>
+                  {Icon && <Icon size={13} strokeWidth={2} />}
+                  {cat}
+                </button>
+              )
+            })}
           </div>
         </div>
       </section>

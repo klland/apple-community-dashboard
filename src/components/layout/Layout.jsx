@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import { Apple } from 'lucide-react'
 
 export default function Layout({ children }) {
   const { pathname } = useLocation()
@@ -14,10 +15,10 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif" }}>
-      {/* Apple-style nav */}
       <header className="sticky top-0 z-50 bg-[rgba(255,255,255,0.82)] backdrop-blur-2xl border-b border-[rgba(0,0,0,0.08)]">
         <div className="max-w-[980px] mx-auto px-5 flex items-center justify-between h-12">
-          <Link to="/" className="text-[17px] font-semibold text-[#1d1d1f] tracking-tight hover:opacity-75 transition-opacity">
+          <Link to="/" className="flex items-center gap-2 text-[17px] font-semibold text-[#1d1d1f] tracking-tight hover:opacity-75 transition-opacity">
+            <Apple size={18} strokeWidth={2} className="text-[#1d1d1f]" />
             蘋果二手行情
           </Link>
           <nav className="flex items-center gap-0">
