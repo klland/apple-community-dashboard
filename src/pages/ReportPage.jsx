@@ -1,10 +1,15 @@
 import { useState } from 'react'
 import { APPLE_PRODUCTS, TRADE_METHODS, PURCHASE_CHANNELS, WARRANTY_STATUS } from '../data/mockData'
 import { submitTransaction } from '../lib/supabase'
+import SelectOrInput from '../components/SelectOrInput'
+
+const inputCls = "w-full px-4 py-3 rounded-xl border border-[rgba(0,0,0,0.1)] text-[15px] bg-[#f5f5f7] focus:outline-none focus:border-[#0071e3] focus:bg-white text-[#1d1d1f] transition-all placeholder-[#6e6e73]"
+const labelCls = "text-[13px] font-medium text-[#1d1d1f] block mb-1.5"
 
 export default function ReportPage() {
   const [form, setForm] = useState({
     productId: '',
+    customModel: '',
     storage: '',
     batteryHealth: '',
     purchaseChannel: '',
@@ -19,25 +24,34 @@ export default function ReportPage() {
   const [loading, setLoading] = useState(false)
 
   const selectedProduct = APPLE_PRODUCTS.find(p => p.id === form.productId)
+  const isOtherModel = form.productId === '__other__'
   const isIphone = selectedProduct?.category === 'iPhone'
   const showWarrantyMonths = form.warrantyStatus === '原廠保固內' || form.warrantyStatus === '延長保固（AppleCare+）'
 
   function update(field, value) {
     setForm(prev => {
       const next = { ...prev, [field]: value }
-      if (field === 'productId') { next.storage = '' }
+      if (field === 'productId') { next.storage = ''; next.customModel = '' }
       return next
     })
   }
 
+  function handleModelSelect(e) {
+    const v = e.target.value
+    setForm(prev => ({ ...prev, productId: v, storage: '', customModel: '' }))
+  }
+
+  const modelName = isOtherModel ? form.customModel : (selectedProduct?.name ?? '')
+  const canSubmit = modelName && form.storage && form.price && form.tradeMethod
+
   async function submit(e) {
     e.preventDefault()
+    if (!canSubmit) return
     setLoading(true)
     setError('')
     try {
-      const product = selectedProduct
       await submitTransaction({
-        model: product.name,
+        model: modelName,
         storage: form.storage,
         color: null,
         condition: null,
@@ -55,7 +69,7 @@ export default function ReportPage() {
       setSubmitted(true)
       setTimeout(() => setSubmitted(false), 4000)
       setForm({
-        productId: '', storage: '', batteryHealth: '',
+        productId: '', customModel: '', storage: '', batteryHealth: '',
         purchaseChannel: '', warrantyStatus: '', warrantyMonthsLeft: '',
         price: '', tradeMethod: '', note: '',
       })
@@ -66,20 +80,12 @@ export default function ReportPage() {
     }
   }
 
-  const inputCls = "w-full px-4 py-3 rounded-xl border border-[rgba(0,0,0,0.1)] text-[15px] bg-[#f5f5f7] focus:outline-none focus:border-[#0071e3] focus:bg-white text-[#1d1d1f] transition-all placeholder-[#6e6e73]"
-  const labelCls = "text-[13px] font-medium text-[#1d1d1f] block mb-1.5"
-
   return (
     <div>
-      {/* Hero */}
       <section className="bg-[#f5f5f7] pt-14 pb-12 text-center border-b border-[rgba(0,0,0,0.06)]">
         <div className="max-w-[560px] mx-auto px-5">
-          <h1 className="text-[40px] font-semibold text-[#1d1d1f] leading-tight tracking-tight mb-2">
-            成交回報
-          </h1>
-          <p className="text-[17px] text-[#6e6e73] font-light">
-            填入你的成交資訊，幫助社員掌握真實行情
-          </p>
+          <h1 className="text-[40px] font-semibold text-[#1d1d1f] leading-tight tracking-tight mb-2">成交回報</h1>
+          <p className="text-[17px] text-[#6e6e73] font-light">填入你的成交資訊，幫助社員掌握真實行情</p>
         </div>
       </section>
 
@@ -101,7 +107,12 @@ export default function ReportPage() {
           {/* 產品型號 */}
           <div>
             <label className={labelCls}>產品型號 <span className="text-[#ff3b30]">*</span></label>
-            <select required value={form.productId} onChange={e => update('productId', e.target.value)} className={inputCls}>
+            <select
+              required
+              value={form.productId}
+              onChange={handleModelSelect}
+              className={inputCls}
+            >
               <option value="">選擇型號</option>
               {['iPhone','MacBook','iPad','Apple Watch','AirPods','Mac','其他'].map(cat => (
                 <optgroup key={cat} label={cat}>
@@ -110,25 +121,41 @@ export default function ReportPage() {
                   ))}
                 </optgroup>
               ))}
+              <option value="__other__">其他（自填）</option>
             </select>
+            {isOtherModel && (
+              <input
+                autoFocus
+                required
+                value={form.customModel}
+                onChange={e => update('customModel', e.target.value)}
+                placeholder="輸入型號，例如：iPhone 18 Pro"
+                className={`${inputCls} mt-2`}
+              />
+            )}
           </div>
 
-          {selectedProduct && (
+          {/* 容量 */}
+          {(selectedProduct || isOtherModel) && (
             <div>
               <label className={labelCls}>容量／規格 <span className="text-[#ff3b30]">*</span></label>
-              <select required value={form.storage} onChange={e => update('storage', e.target.value)} className={inputCls}>
-                <option value="">選擇容量</option>
-                {selectedProduct.storages.map(s => <option key={s}>{s}</option>)}
-              </select>
+              <SelectOrInput
+                options={selectedProduct?.storages ?? []}
+                value={form.storage}
+                onChange={v => update('storage', v)}
+                placeholder="輸入容量，例如：256G"
+                required
+              />
             </div>
           )}
 
+          {/* 電池（iPhone 才顯示） */}
           {isIphone && (
             <div>
               <label className={labelCls}>電池健康度 <span className="text-[#ff3b30]">*</span></label>
               <div className="flex items-center gap-2">
                 <input type="number" min="1" max="100"
-                  required={isIphone}
+                  required
                   value={form.batteryHealth}
                   onChange={e => update('batteryHealth', e.target.value)}
                   placeholder="例如 92"
@@ -140,19 +167,23 @@ export default function ReportPage() {
 
           <div>
             <label className={labelCls}>購買管道</label>
-            <select value={form.purchaseChannel} onChange={e => update('purchaseChannel', e.target.value)} className={inputCls}>
-              <option value="">選擇購買管道</option>
-              {PURCHASE_CHANNELS.map(c => <option key={c}>{c}</option>)}
-            </select>
+            <SelectOrInput
+              options={PURCHASE_CHANNELS}
+              value={form.purchaseChannel}
+              onChange={v => update('purchaseChannel', v)}
+              placeholder="輸入購買管道"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>保固狀態</label>
-              <select value={form.warrantyStatus} onChange={e => update('warrantyStatus', e.target.value)} className={inputCls}>
-                <option value="">選擇保固狀態</option>
-                {WARRANTY_STATUS.map(w => <option key={w}>{w}</option>)}
-              </select>
+              <SelectOrInput
+                options={WARRANTY_STATUS}
+                value={form.warrantyStatus}
+                onChange={v => update('warrantyStatus', v)}
+                placeholder="輸入保固狀態"
+              />
             </div>
             {showWarrantyMonths && (
               <div>
@@ -175,10 +206,13 @@ export default function ReportPage() {
 
           <div>
             <label className={labelCls}>交易方式 <span className="text-[#ff3b30]">*</span></label>
-            <select required value={form.tradeMethod} onChange={e => update('tradeMethod', e.target.value)} className={inputCls}>
-              <option value="">選擇方式</option>
-              {TRADE_METHODS.map(m => <option key={m}>{m}</option>)}
-            </select>
+            <SelectOrInput
+              options={TRADE_METHODS}
+              value={form.tradeMethod}
+              onChange={v => update('tradeMethod', v)}
+              placeholder="輸入交易方式"
+              required
+            />
           </div>
 
           <div>
