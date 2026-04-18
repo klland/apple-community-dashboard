@@ -1311,7 +1311,7 @@ export const CATEGORIES = ['全部', 'iPhone', 'MacBook', 'iPad', 'Apple Watch',
 export const CONDITIONS = ['全新未拆封', '外觀完美無痕', '輕微細紋（正常使用）', '邊框有小刮痕', '背蓋有明顯刮痕', '機身有缺陷／碰傷']
 
 // 交易方式
-export const TRADE_METHODS = ['面交', '郵寄（賣家出運費）', '郵寄（買家出運費）', '面交或郵寄皆可']
+export const TRADE_METHODS = ['面交', '郵寄（賣家出運費）', '郵寄（買家出運費）']
 
 // 面交地點（台灣主要城市）
 export const LOCATIONS = [

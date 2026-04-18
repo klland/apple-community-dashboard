@@ -62,49 +62,92 @@ const SEED_PRODUCTS = [
   { model: 'iPhone 13 Pro',     storage: '128G', avg: 7500,  color: '遠峰藍', isIphone: true, count: [2, 3], condWeights: [0, 3, 22, 32, 26, 17], batteryRange: [70, 84] },
   { model: 'iPhone 13',         storage: '128G', avg: 6000,  color: '午夜色', isIphone: true, count: [1, 3], condWeights: [0, 2, 20, 32, 28, 18], batteryRange: [68, 82] },
 
-  // ── MacBook M5 系列（2025年新上市，半年內，最多5筆）────────────────
-  { model: 'MacBook Air 13吋 M5',      storage: '16G/256G', avg: 35900, color: '天藍色',  isIphone: false, count: [2, 4], condWeights: [40, 45, 13, 2, 0, 0] },
-  { model: 'MacBook Air 13吋 M5',      storage: '16G/512G', avg: 41900, color: '午夜色',  isIphone: false, count: [2, 3], condWeights: [40, 45, 13, 2, 0, 0] },
-  { model: 'MacBook Air 15吋 M5',      storage: '16G/256G', avg: 42900, color: '銀色',    isIphone: false, count: [1, 3], condWeights: [40, 45, 13, 2, 0, 0] },
-  { model: 'MacBook Pro 14吋 M5',      storage: '24G/512G', avg: 54900, color: '銀色',    isIphone: false, count: [1, 3], condWeights: [35, 48, 15, 2, 0, 0] },
-  { model: 'MacBook Pro 14吋 M5 Pro',  storage: '24G/512G', avg: 68900, color: '太空黑色', isIphone: false, count: [1, 2], condWeights: [35, 48, 15, 2, 0, 0] },
-  { model: 'MacBook Pro 14吋 M5 Max',  storage: '36G/512G', avg: 89900, color: '太空黑色', isIphone: false, count: [1, 2], condWeights: [35, 48, 15, 2, 0, 0] },
-  // MacBook Neo（最新超值款，剛上市，極少）
-  { model: 'MacBook Neo 13吋 M5',      storage: '16G/256G', avg: 19900, color: '胭粉色',  isIphone: false, count: [1, 3], condWeights: [50, 42, 7, 1, 0, 0] },
-  { model: 'MacBook Neo 13吋 M5',      storage: '16G/512G', avg: 24900, color: '靛青色',  isIphone: false, count: [1, 2], condWeights: [50, 42, 7, 1, 0, 0] },
+  // ── MacBook Neo M5（新上市，極少）────────────────────────────────
+  { model: 'MacBook Neo 13吋 M5', storage: '16G/256G', avg: 19900, color: '胭粉色',  isIphone: false, count: [2, 3], condWeights: [50, 42, 7, 1, 0, 0] },
+  { model: 'MacBook Neo 13吋 M5', storage: '16G/512G', avg: 24900, color: '靛青色',  isIphone: false, count: [1, 2], condWeights: [50, 42, 7, 1, 0, 0] },
 
-  // ── MacBook M4 系列（去年款，市場已有流通）────────────────────────
-  { model: 'MacBook Air 13吋 M4',      storage: '16G/256G', avg: 27000, color: '午夜色', isIphone: false, count: [4, 7], condWeights: [10, 35, 40, 12, 3, 0] },
-  { model: 'MacBook Air 13吋 M4',      storage: '16G/512G', avg: 32000, color: '星光色', isIphone: false, count: [3, 6], condWeights: [10, 35, 40, 12, 3, 0] },
-  { model: 'MacBook Air 15吋 M4',      storage: '16G/256G', avg: 33000, color: '銀色',   isIphone: false, count: [2, 4], condWeights: [8, 32, 42, 14, 4, 0] },
-  { model: 'MacBook Air 13吋 M3',      storage: '8G/256G',  avg: 26000, color: '午夜色', isIphone: false, count: [3, 5], condWeights: [3, 20, 45, 22, 8, 2] },
-  { model: 'MacBook Air 13吋 M2',      storage: '8G/256G',  avg: 19000, color: '星光色', isIphone: false, count: [2, 4], condWeights: [2, 15, 42, 26, 12, 3] },
-  { model: 'MacBook Pro 14吋 M4 Pro',  storage: '24G/512G', avg: 56000, color: '太空黑色', isIphone: false, count: [2, 4], condWeights: [8, 30, 42, 15, 5, 0] },
-  { model: 'MacBook Pro 14吋 M4',      storage: '16G/512G', avg: 42000, color: '銀色',   isIphone: false, count: [2, 3], condWeights: [8, 30, 42, 15, 5, 0] },
+  // ── MacBook Air M5（新上市，≤3筆，便宜的多）──────────────────────
+  { model: 'MacBook Air 13吋 M5', storage: '16G/256G', avg: 33500, color: '天藍色',  isIphone: false, count: [2, 3], condWeights: [40, 45, 13, 2, 0, 0] },
+  { model: 'MacBook Air 13吋 M5', storage: '16G/512G', avg: 38000, color: '午夜色',  isIphone: false, count: [1, 2], condWeights: [40, 45, 13, 2, 0, 0] },
+  { model: 'MacBook Air 13吋 M5', storage: '32G/512G', avg: 44500, color: '銀色',    isIphone: false, count: [1, 2], condWeights: [40, 45, 13, 2, 0, 0] },
+  { model: 'MacBook Air 13吋 M5', storage: '32G/1T',   avg: 52000, color: '星光色',  isIphone: false, count: [1, 1], condWeights: [40, 45, 13, 2, 0, 0] },
+  { model: 'MacBook Air 15吋 M5', storage: '16G/256G', avg: 40000, color: '銀色',    isIphone: false, count: [2, 3], condWeights: [40, 45, 13, 2, 0, 0] },
+  { model: 'MacBook Air 15吋 M5', storage: '16G/512G', avg: 44500, color: '午夜色',  isIphone: false, count: [1, 2], condWeights: [40, 45, 13, 2, 0, 0] },
+  { model: 'MacBook Air 15吋 M5', storage: '32G/512G', avg: 51000, color: '天藍色',  isIphone: false, count: [1, 1], condWeights: [40, 45, 13, 2, 0, 0] },
+  { model: 'MacBook Air 15吋 M5', storage: '32G/1T',   avg: 58500, color: '銀色',    isIphone: false, count: [1, 1], condWeights: [40, 45, 13, 2, 0, 0] },
 
-  // ── iPad（中低量）─────────────────────────────────────────────────
-  { model: 'iPad Air 11吋 M3',  storage: '128G', avg: 18000, color: '藍色',  isIphone: false, count: [2, 4], condWeights: [8, 28, 42, 16, 5, 1] },
-  { model: 'iPad Pro 11吋 M4',  storage: '256G', avg: 25000, color: '銀色',  isIphone: false, count: [2, 4], condWeights: [8, 28, 42, 16, 5, 1] },
-  { model: 'iPad mini 第7代',    storage: '128G', avg: 14000, color: '星光色', isIphone: false, count: [2, 3], condWeights: [5, 22, 44, 20, 8, 1] },
+  // ── MacBook Pro M5（新上市，≤3筆）────────────────────────────────
+  { model: 'MacBook Pro 14吋 M5',     storage: '24G/512G', avg: 51500, color: '銀色',    isIphone: false, count: [2, 3], condWeights: [35, 48, 15, 2, 0, 0] },
+  { model: 'MacBook Pro 14吋 M5',     storage: '24G/1T',   avg: 59000, color: '太空黑色', isIphone: false, count: [1, 2], condWeights: [35, 48, 15, 2, 0, 0] },
+  { model: 'MacBook Pro 14吋 M5',     storage: '48G/1T',   avg: 74000, color: '銀色',    isIphone: false, count: [1, 1], condWeights: [35, 48, 15, 2, 0, 0] },
+  { model: 'MacBook Pro 14吋 M5 Pro', storage: '24G/512G', avg: 64500, color: '太空黑色', isIphone: false, count: [1, 2], condWeights: [35, 48, 15, 2, 0, 0] },
+  { model: 'MacBook Pro 14吋 M5 Pro', storage: '24G/1T',   avg: 72000, color: '銀色',    isIphone: false, count: [1, 2], condWeights: [35, 48, 15, 2, 0, 0] },
+  { model: 'MacBook Pro 14吋 M5 Pro', storage: '48G/1T',   avg: 87000, color: '太空黑色', isIphone: false, count: [1, 1], condWeights: [35, 48, 15, 2, 0, 0] },
+  { model: 'MacBook Pro 14吋 M5 Max', storage: '36G/512G', avg: 90500, color: '太空黑色', isIphone: false, count: [1, 2], condWeights: [35, 48, 15, 2, 0, 0] },
+  { model: 'MacBook Pro 14吋 M5 Max', storage: '36G/1T',   avg: 98000, color: '銀色',    isIphone: false, count: [1, 1], condWeights: [35, 48, 15, 2, 0, 0] },
+  { model: 'MacBook Pro 14吋 M5 Max', storage: '64G/1T',   avg: 113000, color: '太空黑色', isIphone: false, count: [1, 1], condWeights: [35, 48, 15, 2, 0, 0] },
 
-  // ── Apple Watch（中低量）─────────────────────────────────────────
-  { model: 'Apple Watch Series 11', storage: '46mm', avg: 13000, color: '午夜色',   isIphone: false, count: [3, 5], condWeights: [5, 25, 45, 18, 6, 1] },
-  { model: 'Apple Watch Series 10', storage: '46mm', avg: 11500, color: '銀色',     isIphone: false, count: [2, 4], condWeights: [3, 18, 44, 22, 10, 3] },
-  { model: 'Apple Watch Ultra 2',   storage: '鈦金屬', avg: 24000, color: '鈦金屬原色', isIphone: false, count: [1, 3], condWeights: [5, 25, 45, 18, 6, 1] },
+  // ── MacBook Air M4（去年款，≤3筆）────────────────────────────────
+  { model: 'MacBook Air 13吋 M4', storage: '16G/256G', avg: 27000, color: '午夜色', isIphone: false, count: [2, 3], condWeights: [10, 35, 40, 12, 3, 0] },
+  { model: 'MacBook Air 13吋 M4', storage: '16G/512G', avg: 32000, color: '星光色', isIphone: false, count: [1, 2], condWeights: [10, 35, 40, 12, 3, 0] },
+  { model: 'MacBook Air 13吋 M4', storage: '32G/512G', avg: 38000, color: '銀色',   isIphone: false, count: [1, 2], condWeights: [10, 35, 40, 12, 3, 0] },
+  { model: 'MacBook Air 13吋 M4', storage: '32G/1T',   avg: 45000, color: '午夜色', isIphone: false, count: [1, 1], condWeights: [10, 35, 40, 12, 3, 0] },
+  { model: 'MacBook Air 15吋 M4', storage: '16G/256G', avg: 33000, color: '銀色',   isIphone: false, count: [2, 3], condWeights: [8, 32, 42, 14, 4, 0] },
+  { model: 'MacBook Air 15吋 M4', storage: '16G/512G', avg: 38000, color: '星光色', isIphone: false, count: [1, 2], condWeights: [8, 32, 42, 14, 4, 0] },
+  { model: 'MacBook Air 15吋 M4', storage: '32G/512G', avg: 44000, color: '午夜色', isIphone: false, count: [1, 1], condWeights: [8, 32, 42, 14, 4, 0] },
+  { model: 'MacBook Air 15吋 M4', storage: '32G/1T',   avg: 51000, color: '銀色',   isIphone: false, count: [1, 1], condWeights: [8, 32, 42, 14, 4, 0] },
 
-  // ── AirPods（耳機幾乎全新，衛生考量）────────────────────────────
-  { model: 'AirPods Pro 第2代', storage: 'USB-C', avg: 7500, color: '白色', isIphone: false, count: [3, 5], condWeights: [60, 30, 8, 2, 0, 0] },
-  { model: 'AirPods 第4代',     storage: 'ANC',   avg: 5500, color: '白色', isIphone: false, count: [2, 4], condWeights: [65, 28, 6, 1, 0, 0] },
+  // ── MacBook Pro M4（≤3筆）────────────────────────────────────────
+  { model: 'MacBook Pro 14吋 M4',     storage: '16G/512G', avg: 42000, color: '銀色',    isIphone: false, count: [2, 3], condWeights: [8, 30, 42, 15, 5, 0] },
+  { model: 'MacBook Pro 14吋 M4',     storage: '16G/1T',   avg: 49000, color: '太空黑色', isIphone: false, count: [1, 2], condWeights: [8, 30, 42, 15, 5, 0] },
+  { model: 'MacBook Pro 14吋 M4',     storage: '32G/1T',   avg: 62000, color: '銀色',    isIphone: false, count: [1, 1], condWeights: [8, 30, 42, 15, 5, 0] },
+  { model: 'MacBook Pro 14吋 M4 Pro', storage: '24G/512G', avg: 56000, color: '太空黑色', isIphone: false, count: [2, 3], condWeights: [8, 30, 42, 15, 5, 0] },
+  { model: 'MacBook Pro 14吋 M4 Pro', storage: '24G/1T',   avg: 63000, color: '銀色',    isIphone: false, count: [1, 2], condWeights: [8, 30, 42, 15, 5, 0] },
+  { model: 'MacBook Pro 14吋 M4 Pro', storage: '48G/1T',   avg: 77000, color: '太空黑色', isIphone: false, count: [1, 1], condWeights: [8, 30, 42, 15, 5, 0] },
 
-  // ── Mac mini M5（新上市，少量）────────────────────────────────────
-  { model: 'Mac mini M5',     storage: '16G/256G', avg: 19900, color: '銀色', isIphone: false, count: [1, 3], condWeights: [30, 45, 22, 3, 0, 0] },
-  { model: 'Mac mini M5',     storage: '16G/512G', avg: 23900, color: '銀色', isIphone: false, count: [1, 2], condWeights: [30, 45, 22, 3, 0, 0] },
-  // Mac mini M4（去年款）
-  { model: 'Mac mini M4',     storage: '16G/256G', avg: 14500, color: '銀色', isIphone: false, count: [2, 3], condWeights: [8, 32, 42, 14, 4, 0] },
-  { model: 'Mac mini M4',     storage: '16G/512G', avg: 18000, color: '銀色', isIphone: false, count: [1, 2], condWeights: [8, 32, 42, 14, 4, 0] },
+  // ── MacBook Air M3（≤3筆）────────────────────────────────────────
+  { model: 'MacBook Air 13吋 M3', storage: '8G/256G',  avg: 21000, color: '午夜色', isIphone: false, count: [2, 3], condWeights: [3, 20, 45, 22, 8, 2] },
+  { model: 'MacBook Air 13吋 M3', storage: '8G/512G',  avg: 26000, color: '星光色', isIphone: false, count: [1, 2], condWeights: [3, 20, 45, 22, 8, 2] },
+  { model: 'MacBook Air 13吋 M3', storage: '16G/512G', avg: 32000, color: '銀色',   isIphone: false, count: [1, 2], condWeights: [3, 20, 45, 22, 8, 2] },
 
-  // ── Mac Studio（極少，月成交不到一台）───────────────────────────
-  { model: 'Mac Studio M4 Max', storage: '36G/512G', avg: 72000, color: '銀色', isIphone: false, count: [1, 2], condWeights: [15, 40, 38, 7, 0, 0] },
+  // ── MacBook Air M2（≤3筆）────────────────────────────────────────
+  { model: 'MacBook Air 13吋 M2', storage: '8G/256G',  avg: 16000, color: '星光色', isIphone: false, count: [2, 3], condWeights: [2, 15, 42, 26, 12, 3] },
+  { model: 'MacBook Air 13吋 M2', storage: '8G/512G',  avg: 20000, color: '午夜色', isIphone: false, count: [1, 2], condWeights: [2, 15, 42, 26, 12, 3] },
+  { model: 'MacBook Air 13吋 M2', storage: '16G/512G', avg: 25000, color: '銀色',   isIphone: false, count: [1, 1], condWeights: [2, 15, 42, 26, 12, 3] },
+
+  // ── iPad（≤3筆）──────────────────────────────────────────────────
+  { model: 'iPad Air 11吋 M3',  storage: '128G', avg: 18000, color: '藍色',  isIphone: false, count: [2, 3], condWeights: [8, 28, 42, 16, 5, 1] },
+  { model: 'iPad Air 11吋 M3',  storage: '256G', avg: 21500, color: '紫色',  isIphone: false, count: [1, 2], condWeights: [8, 28, 42, 16, 5, 1] },
+  { model: 'iPad Pro 11吋 M4',  storage: '256G', avg: 25000, color: '銀色',  isIphone: false, count: [2, 3], condWeights: [8, 28, 42, 16, 5, 1] },
+  { model: 'iPad Pro 11吋 M4',  storage: '512G', avg: 31000, color: '太空黑色', isIphone: false, count: [1, 2], condWeights: [8, 28, 42, 16, 5, 1] },
+  { model: 'iPad mini 第7代',   storage: '128G', avg: 13500, color: '星光色', isIphone: false, count: [2, 3], condWeights: [5, 22, 44, 20, 8, 1] },
+  { model: 'iPad mini 第7代',   storage: '256G', avg: 17000, color: '藍色',  isIphone: false, count: [1, 2], condWeights: [5, 22, 44, 20, 8, 1] },
+
+  // ── Apple Watch（≤3筆）───────────────────────────────────────────
+  { model: 'Apple Watch Series 11', storage: '42mm', avg: 11500, color: '銀色',    isIphone: false, count: [2, 3], condWeights: [5, 25, 45, 18, 6, 1] },
+  { model: 'Apple Watch Series 11', storage: '46mm', avg: 12500, color: '午夜色',  isIphone: false, count: [2, 3], condWeights: [5, 25, 45, 18, 6, 1] },
+  { model: 'Apple Watch Series 10', storage: '42mm', avg: 10500, color: '銀色',    isIphone: false, count: [1, 2], condWeights: [3, 18, 44, 22, 10, 3] },
+  { model: 'Apple Watch Series 10', storage: '46mm', avg: 11500, color: '玫瑰金',  isIphone: false, count: [1, 2], condWeights: [3, 18, 44, 22, 10, 3] },
+  { model: 'Apple Watch Ultra 2',   storage: '鈦金屬', avg: 24000, color: '鈦金屬原色', isIphone: false, count: [1, 2], condWeights: [5, 25, 45, 18, 6, 1] },
+  { model: 'Apple Watch SE 3',      storage: '40mm', avg: 7200,  color: '午夜色',  isIphone: false, count: [1, 2], condWeights: [10, 35, 42, 12, 1, 0] },
+
+  // ── AirPods（耳機幾乎全新，≤3筆）────────────────────────────────
+  { model: 'AirPods Pro 第3代', storage: '標準版', avg: 6800, color: '白色', isIphone: false, count: [2, 3], condWeights: [65, 30, 5, 0, 0, 0] },
+  { model: 'AirPods Pro 第2代', storage: 'USB-C',  avg: 5500, color: '白色', isIphone: false, count: [2, 3], condWeights: [60, 32, 7, 1, 0, 0] },
+  { model: 'AirPods 第4代',     storage: 'ANC',    avg: 4500, color: '白色', isIphone: false, count: [2, 3], condWeights: [65, 28, 6, 1, 0, 0] },
+
+  // ── Mac mini M5（新上市，≤3筆）──────────────────────────────────
+  { model: 'Mac mini M5', storage: '16G/256G', avg: 18500, color: '銀色', isIphone: false, count: [2, 3], condWeights: [30, 45, 22, 3, 0, 0] },
+  { model: 'Mac mini M5', storage: '16G/512G', avg: 22500, color: '銀色', isIphone: false, count: [1, 2], condWeights: [30, 45, 22, 3, 0, 0] },
+  { model: 'Mac mini M5', storage: '32G/512G', avg: 28000, color: '銀色', isIphone: false, count: [1, 1], condWeights: [30, 45, 22, 3, 0, 0] },
+
+  // ── Mac mini M4（≤3筆）───────────────────────────────────────────
+  { model: 'Mac mini M4', storage: '16G/256G', avg: 13500, color: '銀色', isIphone: false, count: [2, 3], condWeights: [8, 32, 42, 14, 4, 0] },
+  { model: 'Mac mini M4', storage: '16G/512G', avg: 17000, color: '銀色', isIphone: false, count: [1, 2], condWeights: [8, 32, 42, 14, 4, 0] },
+
+  // ── Mac Studio（極少）────────────────────────────────────────────
+  { model: 'Mac Studio M4 Max', storage: '36G/512G', avg: 72000, color: '銀色', isIphone: false, count: [1, 1], condWeights: [15, 40, 38, 7, 0, 0] },
+  { model: 'Mac Studio M4 Max', storage: '36G/1T',   avg: 80000, color: '銀色', isIphone: false, count: [1, 1], condWeights: [15, 40, 38, 7, 0, 0] },
 ]
 
 function randomInt(min, max) {
