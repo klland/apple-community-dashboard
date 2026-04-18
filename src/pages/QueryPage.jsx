@@ -1,7 +1,5 @@
 import { useState, useMemo } from 'react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { APPLE_PRODUCTS, CATEGORIES } from '../data/mockData'
-import { getDailyPrices } from '../lib/supabase'
 import { Smartphone, Laptop, Tablet, Watch, Headphones, Monitor, Grid2x2, Package } from 'lucide-react'
 
 const CATEGORY_ICONS = {
@@ -15,34 +13,7 @@ const CATEGORY_ICONS = {
   '其他': Package,
 }
 
-// Build weekly chart from real transactions (past 90 days → 13 weekly points).
-// Weeks with no trades show null so the line breaks naturally — sparse products
-// have more gaps and larger swings between points, which looks realistic.
-function buildChartFromTransactions(rawData, tradeInPrice) {
-  const weeks = 13
-  const now = new Date()
-  const buckets = Array.from({ length: weeks }, () => [])
-
-  rawData.forEach(row => {
-    const d = new Date(row.created_at)
-    const diffDays = Math.floor((now - d) / (1000 * 60 * 60 * 24))
-    const weekIdx = weeks - 1 - Math.floor(diffDays / 7)
-    if (weekIdx >= 0 && weekIdx < weeks) buckets[weekIdx].push(row.price)
-  })
-
-  return Array.from({ length: weeks }, (_, i) => {
-    const date = new Date()
-    date.setDate(date.getDate() - (weeks - 1 - i) * 7)
-    const label = `${date.getMonth() + 1}/${date.getDate()}`
-    const prices = buckets[i]
-    const price = prices.length
-      ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length)
-      : null
-    return { date: label, price, tradeIn: tradeInPrice || null }
-  })
-}
-
-// Resolve tradeInPrice — can be a flat number (iPad/non-iPhone) or per-storage object (iPhone)
+// Resolve tradeInPrice — can be a flat number or per-storage object (iPhone)
 function resolveTradeIn(product, storage) {
   const tip = product.tradeInPrice
   if (!tip) return null
@@ -50,31 +21,11 @@ function resolveTradeIn(product, storage) {
   return tip[storage] ?? null
 }
 
-const CustomTooltip = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white border border-[rgba(0,0,0,0.08)] rounded-2xl px-4 py-3 shadow-xl text-xs space-y-1.5">
-        <p className="text-[#6e6e73] mb-1 font-medium">{label}</p>
-        {payload.map(p => (
-          <div key={p.dataKey} className="flex items-center gap-2">
-            <span style={{ color: p.color }}>●</span>
-            <span className="text-[#6e6e73]">{p.dataKey === 'price' ? '社團均價' : '官方回收'}</span>
-            <span className="font-semibold text-[#1d1d1f]">${p.value?.toLocaleString()}</span>
-          </div>
-        ))}
-      </div>
-    )
-  }
-  return null
-}
-
 export default function QueryPage() {
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('全部')
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [selectedStorage, setSelectedStorage] = useState('')
-  const [chartData, setChartData] = useState([])
-  const [chartLoading, setChartLoading] = useState(false)
   const [aiAnalysis, setAiAnalysis] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState('')
@@ -87,26 +38,15 @@ export default function QueryPage() {
     })
   }, [search, selectedCategory])
 
-  async function loadChart(product, storage) {
-    setChartLoading(true)
-    const raw = await getDailyPrices(product.name, storage)
-    const tradeIn = resolveTradeIn(product, storage)
-    setChartData(buildChartFromTransactions(raw, tradeIn))
-    setChartLoading(false)
-  }
-
   function selectProduct(product) {
     setSelectedProduct(product)
-    const firstStorage = product.storages[0]
-    setSelectedStorage(firstStorage)
-    loadChart(product, firstStorage)
+    setSelectedStorage(product.storages[0])
     setAiAnalysis('')
     setAiError('')
   }
 
   function changeStorage(storage) {
     setSelectedStorage(storage)
-    loadChart(selectedProduct, storage)
     setAiAnalysis('')
     setAiError('')
   }
@@ -299,37 +239,6 @@ export default function QueryPage() {
                     </div>
                   </div>
                 )}
-
-                {/* 趨勢圖 */}
-                <div className="bg-[#f5f5f7] rounded-2xl p-5">
-                  <p className="text-[11px] font-semibold text-[#6e6e73] mb-4 uppercase tracking-wider">近 30 天成交價趨勢</p>
-                  {chartLoading ? (
-                    <div className="h-[180px] flex items-center justify-center text-[13px] text-[#6e6e73]">載入中…</div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height={180}>
-                      <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 8 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
-                        <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#6e6e73' }} tickLine={false} axisLine={false} interval={4} />
-                        <YAxis tick={{ fontSize: 10, fill: '#6e6e73' }} tickLine={false} axisLine={false} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} width={40} />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Legend
-                          verticalAlign="top"
-                          align="right"
-                          height={28}
-                          formatter={(value) => value === 'price' ? '社團成交價' : 'Apple 官方回收價'}
-                          wrapperStyle={{ fontSize: '11px', color: '#6e6e73' }}
-                        />
-                        <Line type="monotone" dataKey="price" name="price" stroke="#1d1d1f" strokeWidth={2} dot={{ r: 3, fill: '#1d1d1f' }} connectNulls={false} />
-                        <Line type="monotone" dataKey="tradeIn" name="tradeIn" stroke="#ff3b30" strokeWidth={1.5} dot={false} strokeDasharray="4 3" connectNulls={true} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  )}
-                  <p className="text-[11px] text-[#6e6e73] mt-3">
-                    ⚠️ 紅色虛線為 Apple 官方回收估價（最高可達），實際依機況而異。
-                    <strong className="text-[#ff3b30]"> 建議賣出前先至官網試算，避免低估賣給黃牛。</strong>
-                    <a href="https://www.apple.com/tw/trade-in/" target="_blank" rel="noreferrer" className="text-[#0071e3] ml-1 hover:underline">前往 Apple Trade In →</a>
-                  </p>
-                </div>
 
                 {/* AI 分析 */}
                 <div className="border border-[rgba(0,0,0,0.08)] rounded-2xl p-5 bg-white">
