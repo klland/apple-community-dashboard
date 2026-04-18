@@ -338,6 +338,22 @@ export default function AdminPage() {
                 </table>
               </div>
             </div>
+
+            {/* 流量分析 */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100">
+                <p className="text-sm font-semibold text-gray-700">網站流量分析</p>
+                <p className="text-xs text-gray-400 mt-0.5">資料來源：Google Analytics 4</p>
+              </div>
+              <iframe
+                src="https://datastudio.google.com/embed/reporting/ca1def25-014a-45c1-a67a-3d51065fdebf/page/XKcvF"
+                width="100%"
+                height="500"
+                frameBorder="0"
+                allowFullScreen
+                className="block"
+              />
+            </div>
           </>
         )}
       </div>
