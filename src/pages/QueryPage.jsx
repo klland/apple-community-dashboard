@@ -15,32 +15,39 @@ const CATEGORY_ICONS = {
   '其他': Package,
 }
 
-// Build 30-day chart from real transactions. Days with no trade show null (gap).
-// Volatility naturally high when trades are sparse.
+// Build weekly chart from real transactions (past 90 days → 13 weekly points).
+// Weeks with no trades show null so the line breaks naturally — sparse products
+// have more gaps and larger swings between points, which looks realistic.
 function buildChartFromTransactions(rawData, tradeInPrice) {
-  const days = 30
-  const buckets = {}
+  const weeks = 13
   const now = new Date()
+  const buckets = Array.from({ length: weeks }, () => [])
 
   rawData.forEach(row => {
     const d = new Date(row.created_at)
     const diffDays = Math.floor((now - d) / (1000 * 60 * 60 * 24))
-    if (diffDays >= days) return
-    const key = days - 1 - diffDays
-    if (!buckets[key]) buckets[key] = []
-    buckets[key].push(row.price)
+    const weekIdx = weeks - 1 - Math.floor(diffDays / 7)
+    if (weekIdx >= 0 && weekIdx < weeks) buckets[weekIdx].push(row.price)
   })
 
-  return Array.from({ length: days }, (_, i) => {
+  return Array.from({ length: weeks }, (_, i) => {
     const date = new Date()
-    date.setDate(date.getDate() - (days - 1 - i))
+    date.setDate(date.getDate() - (weeks - 1 - i) * 7)
     const label = `${date.getMonth() + 1}/${date.getDate()}`
     const prices = buckets[i]
-    const price = prices
+    const price = prices.length
       ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length)
       : null
     return { date: label, price, tradeIn: tradeInPrice || null }
   })
+}
+
+// Resolve tradeInPrice — can be a flat number (iPad/non-iPhone) or per-storage object (iPhone)
+function resolveTradeIn(product, storage) {
+  const tip = product.tradeInPrice
+  if (!tip) return null
+  if (typeof tip === 'number') return tip
+  return tip[storage] ?? null
 }
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -83,7 +90,7 @@ export default function QueryPage() {
   async function loadChart(product, storage) {
     setChartLoading(true)
     const raw = await getDailyPrices(product.name, storage)
-    const tradeIn = product.tradeInPrice?.[storage] || null
+    const tradeIn = resolveTradeIn(product, storage)
     setChartData(buildChartFromTransactions(raw, tradeIn))
     setChartLoading(false)
   }
@@ -241,8 +248,13 @@ export default function QueryPage() {
                     <div>
                       <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">官方回收價</p>
                       <p className="text-[22px] font-semibold text-[#ff3b30] tracking-tight">
-                        ${selectedProduct.tradeInPrice?.[selectedStorage]?.toLocaleString() || '—'}
+                        {resolveTradeIn(selectedProduct, selectedStorage)
+                          ? `$${resolveTradeIn(selectedProduct, selectedStorage).toLocaleString()}`
+                          : '不支援'}
                       </p>
+                      {typeof selectedProduct.tradeInPrice === 'number' && (
+                        <p className="text-[10px] text-[#ff3b30] mt-0.5">最高可達，實際依機況</p>
+                      )}
                     </div>
                     <a href="https://www.apple.com/tw/trade-in/" target="_blank" rel="noreferrer"
                       className="mt-2 text-[11px] text-[#ff3b30] underline underline-offset-2 hover:opacity-70 transition-opacity">
@@ -313,7 +325,7 @@ export default function QueryPage() {
                     </ResponsiveContainer>
                   )}
                   <p className="text-[11px] text-[#6e6e73] mt-3">
-                    ⚠️ 紅色虛線為 Apple 官方回收估價（{selectedStorage} 最高可達），實際依機況而異。
+                    ⚠️ 紅色虛線為 Apple 官方回收估價（最高可達），實際依機況而異。
                     <strong className="text-[#ff3b30]"> 建議賣出前先至官網試算，避免低估賣給黃牛。</strong>
                     <a href="https://www.apple.com/tw/trade-in/" target="_blank" rel="noreferrer" className="text-[#0071e3] ml-1 hover:underline">前往 Apple Trade In →</a>
                   </p>
