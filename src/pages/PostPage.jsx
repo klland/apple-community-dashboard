@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { APPLE_PRODUCTS, CONDITIONS, TRADE_METHODS, PURCHASE_CHANNELS, COSMETIC_CONDITIONS, WARRANTY_STATUS } from '../data/mockData'
+import { APPLE_PRODUCTS, TRADE_METHODS, PURCHASE_CHANNELS, WARRANTY_STATUS } from '../data/mockData'
 import { submitTransaction } from '../lib/supabase'
 
 function QuickTemplate({ label, text }) {
@@ -33,9 +33,7 @@ export default function PostPage() {
     productId: '',
     storage: '',
     color: '',
-    condition: '',
     batteryHealth: '',
-    cosmeticCondition: '',
     warrantyStatus: '',
     warrantyMonthsLeft: '',
     purchaseChannel: '',
@@ -70,10 +68,10 @@ export default function PostPage() {
       submitTransaction({
         model: product.name,
         storage: form.storage,
-        color: form.color,
-        condition: form.condition,
+        color: form.color || null,
+        condition: null,
         battery_health: form.batteryHealth ? parseInt(form.batteryHealth) : null,
-        has_damage: form.cosmeticCondition !== '' && form.cosmeticCondition !== '無損傷',
+        has_damage: false,
         purchase_channel: form.purchaseChannel,
         warranty_status: form.warrantyStatus,
         warranty_months: form.warrantyMonthsLeft ? parseInt(form.warrantyMonthsLeft) : null,
@@ -87,9 +85,7 @@ export default function PostPage() {
 
     setTimeout(() => {
       const priceStr = form.price ? `$${Number(form.price).toLocaleString()}` : '面議'
-
       const batteryLine = form.batteryHealth ? `\n電池健康度：${form.batteryHealth}%` : ''
-      const cosmeticLine = form.cosmeticCondition ? `\n外觀狀況：${form.cosmeticCondition}` : ''
       const warrantyLine = form.warrantyStatus
         ? `\n保固：${form.warrantyStatus}${form.warrantyMonthsLeft ? `（剩餘約 ${form.warrantyMonthsLeft} 個月）` : ''}`
         : ''
@@ -99,8 +95,7 @@ export default function PostPage() {
       let post = ''
       if (isSell) {
         post = `【出售】${product.name} ${form.storage}${form.color ? ' ' + form.color : ''}
-
-成色：${form.condition || '9成新'}${batteryLine}${cosmeticLine}${warrantyLine}${channelLine}
+${batteryLine}${warrantyLine}${channelLine}
 售價：${priceStr}（可小議）
 交易方式：${form.tradeMethod || '面議'}${noteLine}
 
@@ -112,8 +107,7 @@ export default function PostPage() {
           ? `$${Math.round(Number(form.price) * 0.9).toLocaleString()}–$${Number(form.price).toLocaleString()}`
           : '面議'
         post = `【收購】${product.name} ${form.storage}${form.color ? ' ' + form.color : ''}
-
-成色需求：${form.condition || '9成新'}以上${form.batteryHealth ? `\n電池健康度需求：${form.batteryHealth}% 以上` : ''}${form.warrantyStatus ? `\n保固：${form.warrantyStatus}` : ''}
+${form.batteryHealth ? `\n電池健康度需求：${form.batteryHealth}% 以上` : ''}${form.warrantyStatus ? `\n保固：${form.warrantyStatus}` : ''}
 預算：${budget}
 交易方式：${form.tradeMethod || '面議'}${noteLine}
 
@@ -158,11 +152,11 @@ export default function PostPage() {
             {[
               {
                 label: '🎨 指定收購特定顏色',
-                text: '【收購】指定收購 iPhone ＿ 系列，顏色限定＿色，容量 ＿G，成色需 9成新以上，電池 85% 以上。有意出售者請附照片、電池健康度截圖及開價，謝謝！',
+                text: '【收購】指定收購 iPhone ＿ 系列，顏色限定＿色，容量 ＿G，電池 85% 以上。有意出售者請附照片、電池健康度截圖及開價，謝謝！',
               },
               {
                 label: '📱 收購近期型號',
-                text: '【收購】徵 iPhone 15 系列以後機型，任何顏色容量皆可，成色需 9成新以上，電池健康度 85% 以上，有保固更佳。請附照片及開價，價格合理秒回，謝謝！',
+                text: '【收購】徵 iPhone 15 系列以後機型，任何顏色容量皆可，電池健康度 85% 以上，有保固更佳。請附照片及開價，價格合理秒回，謝謝！',
               },
             ].map(({ label, text }) => (
               <QuickTemplate key={label} label={label} text={text} />
@@ -224,18 +218,9 @@ export default function PostPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          {isIphone && (
             <div>
-              <label className={labelCls}>成色</label>
-              <select value={form.condition} onChange={e => update('condition', e.target.value)} className={inputCls}>
-                <option value="">選擇成色</option>
-                {CONDITIONS.map(c => <option key={c}>{c}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className={labelCls}>
-                電池健康度 {isIphone ? '' : <span className="text-[#6e6e73]">（選填）</span>}
-              </label>
+              <label className={labelCls}>電池健康度 <span className="text-[#6e6e73]">（選填）</span></label>
               <div className="flex items-center gap-2">
                 <input type="number" min="1" max="100"
                   value={form.batteryHealth}
@@ -245,15 +230,7 @@ export default function PostPage() {
                 <span className="text-[14px] text-[#6e6e73]">%</span>
               </div>
             </div>
-          </div>
-
-          <div>
-            <label className={labelCls}>外觀損傷狀況</label>
-            <select value={form.cosmeticCondition} onChange={e => update('cosmeticCondition', e.target.value)} className={inputCls}>
-              <option value="">選擇損傷狀況</option>
-              {COSMETIC_CONDITIONS.map(c => <option key={c}>{c}</option>)}
-            </select>
-          </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
