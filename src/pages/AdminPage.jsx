@@ -81,18 +81,45 @@ export default function AdminPage() {
   const fromReport = data.filter(r => r.source === 'report').length
   const fromPost = data.filter(r => r.source === 'post').length
 
-  // 各型號均價排行
+  // 各型號均價排行（含上個月比較）
+  const now = new Date()
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+
   const modelPrices = {}
+  const modelPricesLastMonth = {}
   for (const r of data) {
-    if (!modelPrices[r.model]) modelPrices[r.model] = []
-    modelPrices[r.model].push(r.price)
+    if (!r.model || !r.price) continue
+    const d = new Date(r.created_at)
+    if (d >= thisMonthStart) {
+      if (!modelPrices[r.model]) modelPrices[r.model] = []
+      modelPrices[r.model].push(r.price)
+    } else if (d >= lastMonthStart) {
+      if (!modelPricesLastMonth[r.model]) modelPricesLastMonth[r.model] = []
+      modelPricesLastMonth[r.model].push(r.price)
+    }
   }
-  const modelAvg = Object.entries(modelPrices)
-    .map(([model, prices]) => ({
-      model,
-      avg: Math.round(prices.reduce((a, b) => a + b, 0) / prices.length),
-      count: prices.length,
-    }))
+  // 若本月資料太少，fallback 用全部資料
+  const modelPricesAll = {}
+  for (const r of data) {
+    if (!r.model || !r.price) continue
+    if (!modelPricesAll[r.model]) modelPricesAll[r.model] = []
+    modelPricesAll[r.model].push(r.price)
+  }
+
+  const avgOf = arr => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null
+
+  const modelAvg = Object.entries(modelPricesAll)
+    .map(([model, prices]) => {
+      const avg = avgOf(prices)
+      const lastAvg = avgOf(modelPricesLastMonth[model] ?? [])
+      const thisAvg = avgOf(modelPrices[model] ?? [])
+      // 比較本月 vs 上月，若本月無資料則不顯示趨勢
+      const pct = (thisAvg && lastAvg)
+        ? ((thisAvg - lastAvg) / lastAvg * 100).toFixed(1)
+        : null
+      return { model, avg, count: prices.length, pct }
+    })
     .sort((a, b) => b.count - a.count)
     .slice(0, 10)
 
@@ -203,15 +230,28 @@ export default function AdminPage() {
               <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
                 <p className="text-sm font-semibold text-gray-700 mb-4">各型號均價排行</p>
                 <div className="space-y-3">
-                  {modelAvg.map(({ model, avg, count }) => (
-                    <div key={model} className="flex items-center justify-between">
-                      <div className="min-w-0">
+                  {modelAvg.map(({ model, avg, count, pct }) => (
+                    <div key={model} className="flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm text-gray-800 truncate">{model}</p>
                         <p className="text-xs text-gray-400">{count} 筆</p>
                       </div>
-                      <span className="text-sm font-semibold text-blue-600 shrink-0 ml-2">
-                        ${avg.toLocaleString()}
-                      </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {pct !== null && (
+                          <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${
+                            Number(pct) < 0
+                              ? 'bg-red-50 text-red-500'
+                              : Number(pct) > 0
+                                ? 'bg-green-50 text-green-600'
+                                : 'bg-gray-100 text-gray-400'
+                          }`}>
+                            {Number(pct) > 0 ? '+' : ''}{pct}%
+                          </span>
+                        )}
+                        <span className="text-sm font-semibold text-blue-600">
+                          ${avg.toLocaleString()}
+                        </span>
+                      </div>
                     </div>
                   ))}
                   {modelAvg.length === 0 && <p className="text-sm text-gray-400">尚無資料</p>}
