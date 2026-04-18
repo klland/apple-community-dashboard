@@ -1,16 +1,13 @@
 import { useState } from 'react'
-import { APPLE_PRODUCTS, CONDITIONS, TRADE_METHODS, PURCHASE_CHANNELS, COSMETIC_CONDITIONS, WARRANTY_STATUS } from '../data/mockData'
+import { APPLE_PRODUCTS, TRADE_METHODS, PURCHASE_CHANNELS, WARRANTY_STATUS } from '../data/mockData'
 import { submitTransaction } from '../lib/supabase'
 
 export default function ReportPage() {
   const [form, setForm] = useState({
     productId: '',
     storage: '',
-    color: '',
-    condition: '',
     batteryHealth: '',
     purchaseChannel: '',
-    cosmeticCondition: '',
     warrantyStatus: '',
     warrantyMonthsLeft: '',
     price: '',
@@ -28,7 +25,7 @@ export default function ReportPage() {
   function update(field, value) {
     setForm(prev => {
       const next = { ...prev, [field]: value }
-      if (field === 'productId') { next.storage = ''; next.color = '' }
+      if (field === 'productId') { next.storage = '' }
       return next
     })
   }
@@ -42,10 +39,10 @@ export default function ReportPage() {
       await submitTransaction({
         model: product.name,
         storage: form.storage,
-        color: form.color,
-        condition: form.condition,
+        color: null,
+        condition: null,
         battery_health: form.batteryHealth ? parseInt(form.batteryHealth) : null,
-        has_damage: form.cosmeticCondition !== '' && form.cosmeticCondition !== '無損傷',
+        has_damage: false,
         purchase_channel: form.purchaseChannel,
         warranty_status: form.warrantyStatus,
         warranty_months: form.warrantyMonthsLeft ? parseInt(form.warrantyMonthsLeft) : null,
@@ -58,8 +55,8 @@ export default function ReportPage() {
       setSubmitted(true)
       setTimeout(() => setSubmitted(false), 4000)
       setForm({
-        productId: '', storage: '', color: '', condition: '', batteryHealth: '',
-        purchaseChannel: '', cosmeticCondition: '', warrantyStatus: '', warrantyMonthsLeft: '',
+        productId: '', storage: '', batteryHealth: '',
+        purchaseChannel: '', warrantyStatus: '', warrantyMonthsLeft: '',
         price: '', tradeMethod: '', note: '',
       })
     } catch (err) {
@@ -117,36 +114,18 @@ export default function ReportPage() {
           </div>
 
           {selectedProduct && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={labelCls}>容量／規格 <span className="text-[#ff3b30]">*</span></label>
-                <select required value={form.storage} onChange={e => update('storage', e.target.value)} className={inputCls}>
-                  <option value="">選擇容量</option>
-                  {selectedProduct.storages.map(s => <option key={s}>{s}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className={labelCls}>顏色 <span className="text-[#ff3b30]">*</span></label>
-                <select required value={form.color} onChange={e => update('color', e.target.value)} className={inputCls}>
-                  <option value="">選擇顏色</option>
-                  {selectedProduct.colors.map(c => <option key={c}>{c}</option>)}
-                </select>
-              </div>
+            <div>
+              <label className={labelCls}>容量／規格 <span className="text-[#ff3b30]">*</span></label>
+              <select required value={form.storage} onChange={e => update('storage', e.target.value)} className={inputCls}>
+                <option value="">選擇容量</option>
+                {selectedProduct.storages.map(s => <option key={s}>{s}</option>)}
+              </select>
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          {isIphone && (
             <div>
-              <label className={labelCls}>成色 <span className="text-[#ff3b30]">*</span></label>
-              <select required value={form.condition} onChange={e => update('condition', e.target.value)} className={inputCls}>
-                <option value="">選擇成色</option>
-                {CONDITIONS.map(c => <option key={c}>{c}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className={labelCls}>
-                電池健康度 {isIphone ? <span className="text-[#ff3b30]">*</span> : <span className="text-[#6e6e73]">（選填）</span>}
-              </label>
+              <label className={labelCls}>電池健康度 <span className="text-[#ff3b30]">*</span></label>
               <div className="flex items-center gap-2">
                 <input type="number" min="1" max="100"
                   required={isIphone}
@@ -157,15 +136,7 @@ export default function ReportPage() {
                 <span className="text-[14px] text-[#6e6e73]">%</span>
               </div>
             </div>
-          </div>
-
-          <div>
-            <label className={labelCls}>外觀損傷狀況</label>
-            <select value={form.cosmeticCondition} onChange={e => update('cosmeticCondition', e.target.value)} className={inputCls}>
-              <option value="">選擇損傷狀況</option>
-              {COSMETIC_CONDITIONS.map(c => <option key={c}>{c}</option>)}
-            </select>
-          </div>
+          )}
 
           <div>
             <label className={labelCls}>購買管道</label>
