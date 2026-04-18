@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { APPLE_PRODUCTS, CATEGORIES, CONDITIONS, generateTransactions } from '../data/mockData'
+import { APPLE_PRODUCTS, CATEGORIES } from '../data/mockData'
+import { getDailyPrices } from '../lib/supabase'
 import { Smartphone, Laptop, Tablet, Watch, Headphones, Monitor, Grid2x2, Package } from 'lucide-react'
 
 const CATEGORY_ICONS = {
@@ -14,13 +15,31 @@ const CATEGORY_ICONS = {
   '其他': Package,
 }
 
-function generateChartData(basePrice, tradeInPrice, days = 30) {
+// Build 30-day chart from real transactions. Days with no trade show null (gap).
+// Volatility naturally high when trades are sparse.
+function buildChartFromTransactions(rawData, tradeInPrice) {
+  const days = 30
+  const buckets = {}
+  const now = new Date()
+
+  rawData.forEach(row => {
+    const d = new Date(row.created_at)
+    const diffDays = Math.floor((now - d) / (1000 * 60 * 60 * 24))
+    if (diffDays >= days) return
+    const key = days - 1 - diffDays
+    if (!buckets[key]) buckets[key] = []
+    buckets[key].push(row.price)
+  })
+
   return Array.from({ length: days }, (_, i) => {
     const date = new Date()
     date.setDate(date.getDate() - (days - 1 - i))
     const label = `${date.getMonth() + 1}/${date.getDate()}`
-    const price = Math.round((basePrice + (Math.random() - 0.5) * basePrice * 0.12) / 100) * 100
-    return { date: label, price, tradeIn: tradeInPrice }
+    const prices = buckets[i]
+    const price = prices
+      ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length)
+      : null
+    return { date: label, price, tradeIn: tradeInPrice || null }
   })
 }
 
@@ -47,8 +66,8 @@ export default function QueryPage() {
   const [selectedCategory, setSelectedCategory] = useState('全部')
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [selectedStorage, setSelectedStorage] = useState('')
-  const [transactions, setTransactions] = useState([])
   const [chartData, setChartData] = useState([])
+  const [chartLoading, setChartLoading] = useState(false)
   const [aiAnalysis, setAiAnalysis] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState('')
@@ -61,20 +80,26 @@ export default function QueryPage() {
     })
   }, [search, selectedCategory])
 
+  async function loadChart(product, storage) {
+    setChartLoading(true)
+    const raw = await getDailyPrices(product.name, storage)
+    const tradeIn = product.tradeInPrice?.[storage] || null
+    setChartData(buildChartFromTransactions(raw, tradeIn))
+    setChartLoading(false)
+  }
+
   function selectProduct(product) {
     setSelectedProduct(product)
     const firstStorage = product.storages[0]
     setSelectedStorage(firstStorage)
-    setTransactions(generateTransactions(product.id, firstStorage))
-    setChartData(generateChartData(product.marketAvg[firstStorage], product.tradeInPrice?.[firstStorage] || 0))
+    loadChart(product, firstStorage)
     setAiAnalysis('')
     setAiError('')
   }
 
   function changeStorage(storage) {
     setSelectedStorage(storage)
-    setTransactions(generateTransactions(selectedProduct.id, storage))
-    setChartData(generateChartData(selectedProduct.marketAvg[storage], selectedProduct.tradeInPrice?.[storage] || 0))
+    loadChart(selectedProduct, storage)
     setAiAnalysis('')
     setAiError('')
   }
@@ -104,13 +129,6 @@ export default function QueryPage() {
   const avg = selectedProduct && selectedStorage ? selectedProduct.marketAvg[selectedStorage] : null
   const retail = selectedProduct && selectedStorage ? selectedProduct.basePrice[selectedStorage] : null
   const discount = avg && retail ? Math.round((1 - avg / retail) * 100) : null
-
-  const conditionPrices = selectedProduct && selectedStorage
-    ? CONDITIONS.map((c, i) => {
-        const multipliers = [1.05, 1.02, 1.0, 0.97, 0.93, 0.85]
-        return { condition: c, price: Math.round(avg * multipliers[i] / 100) * 100 }
-      })
-    : []
 
   return (
     <div>
@@ -273,23 +291,27 @@ export default function QueryPage() {
                 {/* 趨勢圖 */}
                 <div className="bg-[#f5f5f7] rounded-2xl p-5">
                   <p className="text-[11px] font-semibold text-[#6e6e73] mb-4 uppercase tracking-wider">近 30 天成交價趨勢</p>
-                  <ResponsiveContainer width="100%" height={180}>
-                    <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 8 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
-                      <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#6e6e73' }} tickLine={false} axisLine={false} interval={4} />
-                      <YAxis tick={{ fontSize: 10, fill: '#6e6e73' }} tickLine={false} axisLine={false} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} width={40} />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend
-                        verticalAlign="top"
-                        align="right"
-                        height={28}
-                        formatter={(value) => value === 'price' ? '社團成交價' : 'Apple 官方回收價'}
-                        wrapperStyle={{ fontSize: '11px', color: '#6e6e73' }}
-                      />
-                      <Line type="monotone" dataKey="price" name="price" stroke="#1d1d1f" strokeWidth={2} dot={false} />
-                      <Line type="monotone" dataKey="tradeIn" name="tradeIn" stroke="#ff3b30" strokeWidth={1.5} dot={false} strokeDasharray="4 3" />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  {chartLoading ? (
+                    <div className="h-[180px] flex items-center justify-center text-[13px] text-[#6e6e73]">載入中…</div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={180}>
+                      <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 8 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
+                        <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#6e6e73' }} tickLine={false} axisLine={false} interval={4} />
+                        <YAxis tick={{ fontSize: 10, fill: '#6e6e73' }} tickLine={false} axisLine={false} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} width={40} />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend
+                          verticalAlign="top"
+                          align="right"
+                          height={28}
+                          formatter={(value) => value === 'price' ? '社團成交價' : 'Apple 官方回收價'}
+                          wrapperStyle={{ fontSize: '11px', color: '#6e6e73' }}
+                        />
+                        <Line type="monotone" dataKey="price" name="price" stroke="#1d1d1f" strokeWidth={2} dot={{ r: 3, fill: '#1d1d1f' }} connectNulls={false} />
+                        <Line type="monotone" dataKey="tradeIn" name="tradeIn" stroke="#ff3b30" strokeWidth={1.5} dot={false} strokeDasharray="4 3" connectNulls={true} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  )}
                   <p className="text-[11px] text-[#6e6e73] mt-3">
                     ⚠️ 紅色虛線為 Apple 官方回收估價（{selectedStorage} 最高可達），實際依機況而異。
                     <strong className="text-[#ff3b30]"> 建議賣出前先至官網試算，避免低估賣給黃牛。</strong>
@@ -315,19 +337,6 @@ export default function QueryPage() {
                   )}
                 </div>
 
-                {/* 各成色參考行情 */}
-                <div className="bg-[#f5f5f7] rounded-2xl p-5">
-                  <p className="text-[11px] font-semibold text-[#6e6e73] mb-4 uppercase tracking-wider">各成色參考行情</p>
-                  <div className="space-y-2.5">
-                    {conditionPrices.map(({ condition, price }) => (
-                      <div key={condition} className="flex justify-between items-center">
-                        <span className="text-[14px] text-[#1d1d1f]">{condition}</span>
-                        <span className="font-semibold text-[14px] text-[#1d1d1f]">${price.toLocaleString()}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
                 {/* 可選顏色 */}
                 <div>
                   <p className="text-[11px] font-semibold text-[#6e6e73] mb-3 uppercase tracking-wider">可選顏色</p>
@@ -338,22 +347,6 @@ export default function QueryPage() {
                   </div>
                 </div>
 
-                {/* 近期成交 */}
-                <div>
-                  <p className="text-[11px] font-semibold text-[#6e6e73] mb-3 uppercase tracking-wider">近期成交紀錄</p>
-                  <div className="border border-[rgba(0,0,0,0.08)] rounded-2xl overflow-hidden bg-white">
-                    {transactions.slice(0, 6).map((tx, i) => (
-                      <div key={i} className="flex items-center justify-between px-5 py-3 border-b border-[rgba(0,0,0,0.05)] last:border-0">
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-[12px] text-[#6e6e73]">{tx.daysAgo === 0 ? '今天' : tx.daysAgo + '天前'}</span>
-                          <span className="px-2.5 py-0.5 bg-[#f5f5f7] text-[#1d1d1f] rounded-full text-[12px]">{tx.condition}</span>
-                          <span className="text-[12px] text-[#6e6e73]">{tx.tradeMethod}</span>
-                        </div>
-                        <span className="font-semibold text-[15px] text-[#1d1d1f]">${tx.price.toLocaleString()}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
             )}
           </div>

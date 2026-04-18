@@ -31,3 +31,19 @@ export async function getMarketPrice(model, storage) {
   const avg = Math.round(trimmed.reduce((a, b) => a + b, 0) / trimmed.length)
   return { avg, count: data.length, trimmedCount: trimmed.length }
 }
+
+// 取得近 90 天每日成交紀錄（用於趨勢圖）
+export async function getDailyPrices(model, storage) {
+  const since = new Date()
+  since.setDate(since.getDate() - 89)
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('price, created_at')
+    .eq('model', model)
+    .eq('storage', storage)
+    .gte('created_at', since.toISOString())
+    .order('created_at')
+
+  if (error) return []
+  return data || []
+}
