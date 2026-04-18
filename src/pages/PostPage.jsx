@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { APPLE_PRODUCTS, TRADE_METHODS, PURCHASE_CHANNELS, WARRANTY_STATUS } from '../data/mockData'
+import { APPLE_PRODUCTS, TRADE_METHODS, PURCHASE_CHANNELS, COSMETIC_CONDITIONS, WARRANTY_STATUS } from '../data/mockData'
 import { submitTransaction } from '../lib/supabase'
 
 function QuickTemplate({ label, text }) {
@@ -34,6 +34,7 @@ export default function PostPage() {
     storage: '',
     color: '',
     batteryHealth: '',
+    cosmeticCondition: '',
     warrantyStatus: '',
     warrantyMonthsLeft: '',
     purchaseChannel: '',
@@ -71,7 +72,7 @@ export default function PostPage() {
         color: form.color || null,
         condition: null,
         battery_health: form.batteryHealth ? parseInt(form.batteryHealth) : null,
-        has_damage: false,
+        has_damage: form.cosmeticCondition !== '' && form.cosmeticCondition !== '無損傷',
         purchase_channel: form.purchaseChannel,
         warranty_status: form.warrantyStatus,
         warranty_months: form.warrantyMonthsLeft ? parseInt(form.warrantyMonthsLeft) : null,
@@ -86,6 +87,7 @@ export default function PostPage() {
     setTimeout(() => {
       const priceStr = form.price ? `$${Number(form.price).toLocaleString()}` : '面議'
       const batteryLine = form.batteryHealth ? `\n電池健康度：${form.batteryHealth}%` : ''
+      const cosmeticLine = form.cosmeticCondition ? `\n外觀狀況：${form.cosmeticCondition}` : ''
       const warrantyLine = form.warrantyStatus
         ? `\n保固：${form.warrantyStatus}${form.warrantyMonthsLeft ? `（剩餘約 ${form.warrantyMonthsLeft} 個月）` : ''}`
         : ''
@@ -95,7 +97,7 @@ export default function PostPage() {
       let post = ''
       if (isSell) {
         post = `【出售】${product.name} ${form.storage}${form.color ? ' ' + form.color : ''}
-${batteryLine}${warrantyLine}${channelLine}
+${batteryLine}${cosmeticLine}${warrantyLine}${channelLine}
 售價：${priceStr}（可小議）
 交易方式：${form.tradeMethod || '面議'}${noteLine}
 
@@ -231,6 +233,14 @@ ${form.batteryHealth ? `\n電池健康度需求：${form.batteryHealth}% 以上`
               </div>
             </div>
           )}
+
+          <div>
+            <label className={labelCls}>外觀損傷狀況</label>
+            <select value={form.cosmeticCondition} onChange={e => update('cosmeticCondition', e.target.value)} className={inputCls}>
+              <option value="">選擇損傷狀況</option>
+              {COSMETIC_CONDITIONS.map(c => <option key={c}>{c}</option>)}
+            </select>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
