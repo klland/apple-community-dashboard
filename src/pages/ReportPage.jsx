@@ -42,7 +42,7 @@ export default function ReportPage() {
   }
 
   const modelName = isOtherModel ? form.customModel : (selectedProduct?.name ?? '')
-  const canSubmit = modelName && form.storage && form.price && form.tradeMethod
+  const canSubmit = modelName && form.storage && form.price && form.tradeMethod && (!isOtherModel || form.customModel)
 
   async function submit(e) {
     e.preventDefault()

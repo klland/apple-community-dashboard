@@ -106,7 +106,7 @@ export const APPLE_PRODUCTS = [
     name: 'iPhone 16 Plus',
     category: 'iPhone',
     storages: ['128G', '256G', '512G'],
-    colors: ['黑色', '白色', '粉色', '湖水綠色', 'ㄤ海藍色'],
+    colors: ['黑色', '白色', '粉色', '湖水綠色', '湛海藍色'],
     launchDate: '2024-09-20',
     launchPrice: { '128G': 32900, '256G': 36400, '512G': 43400 },
     basePrice: { '128G': 32900, '256G': 36400, '512G': 43400 },

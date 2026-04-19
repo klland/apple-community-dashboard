@@ -71,7 +71,7 @@ export default function QueryPage() {
   }, [selectedProduct, selectedStorage])
 
   function fetchAiAnalysis() {
-    if (!selectedProduct || !selectedStorage) return
+    if (!selectedProduct || !selectedStorage || !avgValue) return
     setAiLoading(true)
     setAiError('')
     setAiAnalysis('')
