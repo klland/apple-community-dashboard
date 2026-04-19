@@ -993,6 +993,18 @@ export const APPLE_PRODUCTS = [
     tradeInPrice: 13000,
   },
   {
+    id: 'ipad-air-5',
+    name: 'iPad Air 第5代（M1）',
+    category: 'iPad',
+    storages: ['64G', '256G'],
+    colors: ['太空灰', '星光色', '藍色', '紫色', '粉紅色'],
+    launchDate: '2022-03-18',
+    launchPrice: { '64G': 19900, '256G': 24900 },
+    basePrice: { '64G': 19900, '256G': 24900 },
+    marketAvg: { '64G': 9000, '256G': 12000 },
+    tradeInPrice: 23900,
+  },
+  {
     id: 'ipad-air-4',
     name: 'iPad Air 第4代',
     category: 'iPad',
