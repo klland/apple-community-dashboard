@@ -1,5 +1,31 @@
 // Apple 產品完整資料庫
 export const APPLE_PRODUCTS = [
+  // ==================== 2026 新品 ====================
+  {
+    id: 'iphone-17e',
+    name: 'iPhone 17e',
+    category: 'iPhone',
+    storages: ['256G', '512G'],
+    colors: ['黑色', '白色', '粉紅色'],
+    launchDate: '2026-03-11',
+    launchPrice: { '256G': 21900, '512G': 28900 },
+    basePrice: { '256G': 21900, '512G': 28900 },
+    marketAvg: { '256G': 19500, '512G': 26000 },
+    tradeInPrice: null,
+  },
+  {
+    id: 'macbook-neo-13',
+    name: 'MacBook Neo 13吋',
+    category: 'MacBook',
+    storages: ['8G/256G', '8G/512G'],
+    colors: ['銀色', '太空灰'],
+    launchDate: '2026-03-11',
+    launchPrice: { '8G/256G': 19900, '8G/512G': 22900 },
+    basePrice: { '8G/256G': 19900, '8G/512G': 22900 },
+    marketAvg: { '8G/256G': 18000, '8G/512G': 21000 },
+    tradeInPrice: null,
+  },
+
   // ==================== iPhone 17 系列 ====================
   {
     id: 'iphone-17-pro-max',
@@ -460,6 +486,32 @@ export const APPLE_PRODUCTS = [
     basePrice: { '64G': 14900, '128G': 16900, '256G': 20900 },
     marketAvg: { '64G': 3000, '128G': 4000, '256G': 5500 },
     tradeInPrice: 1600,
+  },
+
+  // ==================== 2026 新品 ====================
+  {
+    id: 'macbook-air-m5-13',
+    name: 'MacBook Air 13吋 M5',
+    category: 'MacBook',
+    storages: ['16G/512G', '16G/1T', '24G/1T', '32G/1T'],
+    colors: ['午夜色', '星光色', '太空灰', '銀色'],
+    launchDate: '2026-03-11',
+    launchPrice: { '16G/512G': 35900, '16G/1T': 39400, '24G/1T': 46400, '32G/1T': 49900 },
+    basePrice: { '16G/512G': 35900, '16G/1T': 39400, '24G/1T': 46400, '32G/1T': 49900 },
+    marketAvg: { '16G/512G': 33000, '16G/1T': 36500, '24G/1T': 43000, '32G/1T': 46500 },
+    tradeInPrice: 10700,
+  },
+  {
+    id: 'macbook-air-m5-15',
+    name: 'MacBook Air 15吋 M5',
+    category: 'MacBook',
+    storages: ['16G/512G', '16G/1T', '24G/1T', '32G/1T'],
+    colors: ['午夜色', '星光色', '太空灰', '銀色'],
+    launchDate: '2026-03-11',
+    launchPrice: { '16G/512G': 42900, '16G/1T': 49900, '24G/1T': 56900, '32G/1T': 63900 },
+    basePrice: { '16G/512G': 42900, '16G/1T': 49900, '24G/1T': 56900, '32G/1T': 63900 },
+    marketAvg: { '16G/512G': 39500, '16G/1T': 46000, '24G/1T': 52500, '32G/1T': 59000 },
+    tradeInPrice: 10700,
   },
 
   // ==================== 2025 新品 ====================
