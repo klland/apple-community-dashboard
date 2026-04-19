@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { APPLE_PRODUCTS, CATEGORIES } from '../data/mockData'
 import { Smartphone, Laptop, Tablet, Watch, Headphones, Monitor, Grid2x2, Package } from 'lucide-react'
+import { getMarketPrice } from '../lib/supabase'
 
 const CATEGORY_ICONS = {
   '全部': Grid2x2,
@@ -29,6 +30,8 @@ export default function QueryPage() {
   const [aiAnalysis, setAiAnalysis] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState('')
+  const [liveAvg, setLiveAvg] = useState(null)   // null = 尚未載入, false = 無資料
+  const [avgLoading, setAvgLoading] = useState(false)
 
   const filtered = useMemo(() => {
     return APPLE_PRODUCTS.filter(p => {
@@ -43,13 +46,29 @@ export default function QueryPage() {
     setSelectedStorage(product.storages[0])
     setAiAnalysis('')
     setAiError('')
+    setLiveAvg(null)
   }
 
   function changeStorage(storage) {
     setSelectedStorage(storage)
     setAiAnalysis('')
     setAiError('')
+    setLiveAvg(null)
   }
+
+  // 每次型號或容量改變時，從 Supabase 撈最新均價
+  useEffect(() => {
+    if (!selectedProduct || !selectedStorage) return
+    let cancelled = false
+    setAvgLoading(true)
+    getMarketPrice(selectedProduct.name, selectedStorage).then(result => {
+      if (cancelled) return
+      // result = { avg, count, trimmedCount } 或 null
+      setLiveAvg(result && result.count >= 5 ? result : false)
+      setAvgLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [selectedProduct, selectedStorage])
 
   function fetchAiAnalysis() {
     if (!selectedProduct || !selectedStorage) return
@@ -58,7 +77,7 @@ export default function QueryPage() {
     setAiAnalysis('')
 
     setTimeout(() => {
-      const avg = selectedProduct.marketAvg[selectedStorage]
+      const avg = avgValue
       const retail = selectedProduct.basePrice[selectedStorage]
       const discount = Math.round((1 - avg / retail) * 100)
 
@@ -73,9 +92,13 @@ export default function QueryPage() {
     }, 800)
   }
 
-  const avg = selectedProduct && selectedStorage ? selectedProduct.marketAvg[selectedStorage] : null
+  // loading 中沿用 mockData，載入完才切換（避免數字閃跳）
+  const avgRaw = selectedProduct && selectedStorage
+    ? (liveAvg && !avgLoading ? liveAvg.avg : selectedProduct.marketAvg[selectedStorage])
+    : null
+  const avgValue = avgRaw != null ? Math.round(avgRaw / 100) * 100 : null
   const retail = selectedProduct && selectedStorage ? selectedProduct.basePrice[selectedStorage] : null
-  const discount = avg && retail ? Math.round((1 - avg / retail) * 100) : null
+  const discount = avgValue && retail ? Math.round((1 - avgValue / retail) * 100) : null
 
   return (
     <div>
@@ -171,14 +194,15 @@ export default function QueryPage() {
                 </div>
 
                 {/* KPI cards */}
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <div className="bg-[#f5f5f7] rounded-2xl p-4">
                     <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">社團均價</p>
-                    <p className="text-[22px] font-semibold text-[#1d1d1f] tracking-tight">${avg?.toLocaleString()}</p>
-                  </div>
-                  <div className="bg-[#f5f5f7] rounded-2xl p-4">
-                    <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">原廠售價</p>
-                    <p className="text-[22px] font-semibold text-[#6e6e73] tracking-tight">${retail?.toLocaleString()}</p>
+                    {avgLoading
+                      ? <p className="text-[18px] font-semibold text-[#6e6e73] tracking-tight">載入中…</p>
+                      : <p className="text-[22px] font-semibold text-[#1d1d1f] tracking-tight">
+                          ${avgValue != null ? avgValue.toLocaleString() : '—'}
+                        </p>
+                    }
                   </div>
                   <div className="bg-[#e3f2fd] rounded-2xl p-4">
                     <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">平均折扣</p>
