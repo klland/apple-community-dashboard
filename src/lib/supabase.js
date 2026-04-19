@@ -5,8 +5,26 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
+// Rate limiting：localStorage 記錄送出時間，1 小時最多 10 筆
+const RATE_KEY = 'submit_timestamps'
+const RATE_LIMIT = 10
+const RATE_WINDOW_MS = 60 * 60 * 1000
+
+function checkRateLimit() {
+  const raw = localStorage.getItem(RATE_KEY)
+  const now = Date.now()
+  const timestamps = raw ? JSON.parse(raw).filter(t => now - t < RATE_WINDOW_MS) : []
+  if (timestamps.length >= RATE_LIMIT) {
+    const waitMin = Math.ceil((RATE_WINDOW_MS - (now - timestamps[0])) / 60000)
+    throw new Error(`已達每小時上限 ${RATE_LIMIT} 筆，請 ${waitMin} 分鐘後再試`)
+  }
+  timestamps.push(now)
+  localStorage.setItem(RATE_KEY, JSON.stringify(timestamps))
+}
+
 // 送出交易資料
 export async function submitTransaction(data) {
+  checkRateLimit()
   const { error } = await supabase.from('transactions').insert([data])
   if (error) throw error
 }

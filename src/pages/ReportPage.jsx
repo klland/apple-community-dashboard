@@ -44,6 +44,18 @@ export default function ReportPage() {
   const modelName = isOtherModel ? form.customModel : (selectedProduct?.name ?? '')
   const canSubmit = modelName && form.storage && form.price && form.tradeMethod && (!isOtherModel || form.customModel)
 
+  function validatePrice() {
+    const price = parseInt(form.price)
+    if (!selectedProduct || !form.storage) return null
+    const launch = selectedProduct.launchPrice?.[form.storage] || selectedProduct.basePrice[form.storage]
+    if (!launch) return null
+    if (price > launch * 1.2) return `價格偏高（超過官方售價 $${launch.toLocaleString()} 的 120%），請確認是否正確`
+    if (price < launch * 0.3) return `價格偏低（低於官方售價 $${launch.toLocaleString()} 的 30%），請確認是否正確`
+    return null
+  }
+
+  const priceWarning = form.price && selectedProduct && form.storage ? validatePrice() : null
+
   async function submit(e) {
     e.preventDefault()
     if (!canSubmit) return
@@ -202,6 +214,11 @@ export default function ReportPage() {
             <input required type="number" value={form.price} onChange={e => update('price', e.target.value)}
               placeholder="例如 28500"
               className={inputCls} />
+            {priceWarning && (
+              <p className="mt-1.5 text-[13px] text-[#ff9500] flex items-center gap-1">
+                ⚠️ {priceWarning}
+              </p>
+            )}
           </div>
 
           <div>
