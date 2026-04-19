@@ -1182,6 +1182,30 @@ export const APPLE_PRODUCTS = [
 
   // ==================== Mac ====================
   {
+    id: 'mac-pro-m4-max',
+    name: 'Mac Pro M4 Max',
+    category: 'Mac',
+    storages: ['36G/512G'],
+    colors: ['銀色'],
+    launchDate: '2024-11-08',
+    launchPrice: { '36G/512G': 67900 },
+    basePrice: { '36G/512G': 67900 },
+    marketAvg: { '36G/512G': 62000 },
+    tradeInPrice: 37400,
+  },
+  {
+    id: 'mac-pro-m3-ultra',
+    name: 'Mac Pro M3 Ultra',
+    category: 'Mac',
+    storages: ['96G/1T'],
+    colors: ['銀色'],
+    launchDate: '2024-11-08',
+    launchPrice: { '96G/1T': 137900 },
+    basePrice: { '96G/1T': 137900 },
+    marketAvg: { '96G/1T': 126000 },
+    tradeInPrice: 37400,
+  },
+  {
     id: 'mac-mini-m4',
     name: 'Mac mini M4',
     category: 'Mac',
