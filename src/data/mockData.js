@@ -86,7 +86,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2024-09-20',
     launchPrice: { '256G': 44900, '512G': 51900, '1T': 58900 },
     basePrice: { '256G': 44900, '512G': 51900, '1T': 58900 },
-    marketAvg: { '256G': 30000, '512G': 34000, '1T': 38000 },
+    marketAvg: { '256G': 28000, '512G': 30000, '1T': 36000 },
     tradeInPrice: 23600,
   },
   {
@@ -98,7 +98,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2024-09-20',
     launchPrice: { '128G': 36900, '256G': 40400, '512G': 47400, '1T': 54400 },
     basePrice: { '128G': 36900, '256G': 40400, '512G': 47400, '1T': 54400 },
-    marketAvg: { '128G': 24000, '256G': 27000, '512G': 31000, '1T': 35000 },
+    marketAvg: { '128G': 23000, '256G': 25000, '512G': 29000, '1T': 33000 },
     tradeInPrice: 20100,
   },
   {
@@ -110,7 +110,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2024-09-20',
     launchPrice: { '128G': 32900, '256G': 36400, '512G': 43400 },
     basePrice: { '128G': 32900, '256G': 36400, '512G': 43400 },
-    marketAvg: { '128G': 20000, '256G': 22500, '512G': 26000 },
+    marketAvg: { '128G': 19000, '256G': 21000, '512G': 25000 },
     tradeInPrice: 16000,
   },
   {
@@ -122,7 +122,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2024-09-20',
     launchPrice: { '128G': 29900, '256G': 33400, '512G': 40400 },
     basePrice: { '128G': 29900, '256G': 33400, '512G': 40400 },
-    marketAvg: { '128G': 17000, '256G': 19500, '512G': 23000 },
+    marketAvg: { '128G': 16000, '256G': 18000, '512G': 22000 },
     tradeInPrice: 14600,
   },
   {
@@ -134,7 +134,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2023-09-22',
     launchPrice: { '256G': 44900, '512G': 51900, '1T': 58900 },
     basePrice: { '256G': 44900, '512G': 51900, '1T': 58900 },
-    marketAvg: { '256G': 22000, '512G': 25000, '1T': 28500 },
+    marketAvg: { '256G': 20000, '512G': 23000, '1T': 25000 },
     tradeInPrice: 18700,
   },
   {
@@ -182,7 +182,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2022-09-16',
     launchPrice: { '128G': 38900, '256G': 42400, '512G': 49400, '1T': 56400 },
     basePrice: { '128G': 38900, '256G': 42400, '512G': 49400, '1T': 56400 },
-    marketAvg: { '128G': 13000, '256G': 15000, '512G': 18000, '1T': 21000 },
+    marketAvg: { '128G': 12500, '256G': 14000, '512G': 17000, '1T': 20000 },
     tradeInPrice: 14300,
   },
   {
@@ -194,7 +194,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2022-09-16',
     launchPrice: { '128G': 34900, '256G': 38400, '512G': 45400, '1T': 52400 },
     basePrice: { '128G': 34900, '256G': 38400, '512G': 45400, '1T': 52400 },
-    marketAvg: { '128G': 11000, '256G': 13000, '512G': 15500, '1T': 18000 },
+    marketAvg: { '128G': 10500, '256G': 12000, '512G': 14500, '1T': 17500 },
     tradeInPrice: 11900,
   },
   {
@@ -206,7 +206,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2022-10-07',
     launchPrice: { '128G': 31900, '256G': 35400, '512G': 42400 },
     basePrice: { '128G': 31900, '256G': 35400, '512G': 42400 },
-    marketAvg: { '128G': 9000, '256G': 11000, '512G': 13500 },
+    marketAvg: { '128G': 8500, '256G': 10000, '512G': 13000 },
     tradeInPrice: 8100,
   },
   {
@@ -218,7 +218,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2022-09-16',
     launchPrice: { '128G': 27900, '256G': 31400, '512G': 38400 },
     basePrice: { '128G': 27900, '256G': 31400, '512G': 38400 },
-    marketAvg: { '128G': 8000, '256G': 9500, '512G': 12000 },
+    marketAvg: { '128G': 7500, '256G': 9000, '512G': 11500 },
     tradeInPrice: 8200,
   },
   {
@@ -230,7 +230,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2021-09-24',
     launchPrice: { '128G': 36900, '256G': 40400, '512G': 47400, '1T': 54400 },
     basePrice: { '128G': 36900, '256G': 40400, '512G': 47400, '1T': 54400 },
-    marketAvg: { '128G': 9500, '256G': 11000, '512G': 13500, '1T': 16000 },
+    marketAvg: { '128G': 9000, '256G': 10000, '512G': 12000, '1T': 14000 },
     tradeInPrice: 10400,
   },
   {
@@ -242,7 +242,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2021-09-24',
     launchPrice: { '128G': 32900, '256G': 36400, '512G': 43400, '1T': 50400 },
     basePrice: { '128G': 32900, '256G': 36400, '512G': 43400, '1T': 50400 },
-    marketAvg: { '128G': 7500, '256G': 9000, '512G': 11000, '1T': 13500 },
+    marketAvg: { '128G': 7000, '256G': 8000, '512G': 10000, '1T': 12000 },
     tradeInPrice: 8900,
   },
   {
@@ -254,7 +254,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2021-09-24',
     launchPrice: { '128G': 25900, '256G': 29400, '512G': 36400 },
     basePrice: { '128G': 25900, '256G': 29400, '512G': 36400 },
-    marketAvg: { '128G': 6000, '256G': 7500, '512G': 9500 },
+    marketAvg: { '128G': 5500, '256G': 6500, '512G': 8000 },
     tradeInPrice: 6400,
   },
   {
@@ -266,7 +266,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2022-03-18',
     launchPrice: { '64G': 14900, '128G': 16900, '256G': 20900 },
     basePrice: { '64G': 14900, '128G': 16900, '256G': 20900 },
-    marketAvg: { '64G': 6000, '128G': 7500, '256G': 10000 },
+    marketAvg: { '64G': 5500, '128G': 6500, '256G': 8000 },
     tradeInPrice: 2500,
   },
 
@@ -280,7 +280,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2020-11-13',
     launchPrice: { '128G': 37900, '256G': 41400, '512G': 48400 },
     basePrice: { '128G': 37900, '256G': 41400, '512G': 48400 },
-    marketAvg: { '128G': 6500, '256G': 7500, '512G': 9000 },
+    marketAvg: { '128G': 6000, '256G': 7000, '512G': 8500 },
     tradeInPrice: 7400,
   },
   {
@@ -292,7 +292,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2020-10-23',
     launchPrice: { '128G': 33900, '256G': 37400, '512G': 44400 },
     basePrice: { '128G': 33900, '256G': 37400, '512G': 44400 },
-    marketAvg: { '128G': 5500, '256G': 6500, '512G': 8000 },
+    marketAvg: { '128G': 5000, '256G': 6000, '512G': 7500 },
     tradeInPrice: 5800,
   },
   {
@@ -304,7 +304,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2020-10-23',
     launchPrice: { '64G': 26900, '128G': 28500, '256G': 32000 },
     basePrice: { '64G': 26900, '128G': 28500, '256G': 32000 },
-    marketAvg: { '64G': 4000, '128G': 5000, '256G': 6500 },
+    marketAvg: { '64G': 3500, '128G': 4500, '256G': 5500 },
     tradeInPrice: 4000,
   },
   {
@@ -316,7 +316,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2019-09-20',
     launchPrice: { '64G': 39900, '256G': 45400, '512G': 52400 },
     basePrice: { '64G': 39900, '256G': 45400, '512G': 52400 },
-    marketAvg: { '64G': 4000, '256G': 5500, '512G': 7000 },
+    marketAvg: { '64G': 3500, '256G': 4000, '512G': 4500 },
     tradeInPrice: 4700,
   },
   {
@@ -328,7 +328,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2019-09-20',
     launchPrice: { '64G': 35900, '256G': 41400, '512G': 48400 },
     basePrice: { '64G': 35900, '256G': 41400, '512G': 48400 },
-    marketAvg: { '64G': 3500, '256G': 4500, '512G': 6000 },
+    marketAvg: { '64G': 3000, '256G': 3500, '512G': 4000 },
     tradeInPrice: 4200,
   },
   {
@@ -340,7 +340,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2019-09-20',
     launchPrice: { '64G': 24900, '128G': 26900, '256G': 30400 },
     basePrice: { '64G': 24900, '128G': 26900, '256G': 30400 },
-    marketAvg: { '64G': 3000, '128G': 3500, '256G': 4500 },
+    marketAvg: { '64G': 2500, '128G': 3000, '256G': 3300 },
     tradeInPrice: 3500,
   },
   {
@@ -352,7 +352,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2018-10-26',
     launchPrice: { '64G': 26900, '128G': 28900, '256G': 32500 },
     basePrice: { '64G': 26900, '128G': 28900, '256G': 32500 },
-    marketAvg: { '64G': 2500, '128G': 3000, '256G': 4000 },
+    marketAvg: { '64G': 2000, '128G': 2200, '256G': 2500 },
     tradeInPrice: 2400,
   },
   {
@@ -364,7 +364,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2018-09-21',
     launchPrice: { '64G': 39900, '256G': 45500, '512G': 52900 },
     basePrice: { '64G': 39900, '256G': 45500, '512G': 52900 },
-    marketAvg: { '64G': 2500, '256G': 3500, '512G': 4500 },
+    marketAvg: { '64G': 2000, '256G': 2300, '512G': 2600 },
     tradeInPrice: 3000,
   },
   {
@@ -376,7 +376,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2018-09-21',
     launchPrice: { '64G': 35900, '256G': 41500, '512G': 48900 },
     basePrice: { '64G': 35900, '256G': 41500, '512G': 48900 },
-    marketAvg: { '64G': 2000, '256G': 2800, '512G': 3800 },
+    marketAvg: { '64G': 1700, '256G': 2000, '512G': 2300 },
     tradeInPrice: 2300,
   },
   {
@@ -388,7 +388,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2017-11-03',
     launchPrice: { '64G': 35900, '256G': 41500 },
     basePrice: { '64G': 35900, '256G': 41500 },
-    marketAvg: { '64G': 1800, '256G': 2500 },
+    marketAvg: { '64G': 1500, '256G': 1700 },
     tradeInPrice: 1600,
   },
   {
@@ -400,7 +400,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2017-09-22',
     launchPrice: { '64G': 28900, '256G': 34500 },
     basePrice: { '64G': 28900, '256G': 34500 },
-    marketAvg: { '64G': 1500, '256G': 2000 },
+    marketAvg: { '64G': 1200, '256G': 1400 },
     tradeInPrice: null,
   },
   {
@@ -412,7 +412,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2017-09-22',
     launchPrice: { '64G': 25500, '256G': 30900 },
     basePrice: { '64G': 25500, '256G': 30900 },
-    marketAvg: { '64G': 1200, '256G': 1600 },
+    marketAvg: { '64G': 1000, '256G': 1200 },
     tradeInPrice: null,
   },
   {
@@ -424,7 +424,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2016-09-16',
     launchPrice: { '32G': 26900, '128G': 30900, '256G': 34900 },
     basePrice: { '32G': 26900, '128G': 30900, '256G': 34900 },
-    marketAvg: { '32G': 800, '128G': 1200, '256G': 1600 },
+    marketAvg: { '32G': 700, '128G': 900, '256G': 1000 },
     tradeInPrice: null,
   },
   {
@@ -436,7 +436,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2016-09-16',
     launchPrice: { '32G': 20900, '128G': 24900, '256G': 28900 },
     basePrice: { '32G': 20900, '128G': 24900, '256G': 28900 },
-    marketAvg: { '32G': 600, '128G': 900, '256G': 1200 },
+    marketAvg: { '32G': 500, '128G': 700, '256G': 800 },
     tradeInPrice: null,
   },
   {
@@ -448,7 +448,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2015-09-25',
     launchPrice: { '16G': 25900, '64G': 29900, '128G': 33900 },
     basePrice: { '16G': 25900, '64G': 29900, '128G': 33900 },
-    marketAvg: { '16G': 400, '64G': 600, '128G': 800 },
+    marketAvg: { '16G': 300, '64G': 400, '128G': 500 },
     tradeInPrice: null,
   },
   {
@@ -460,7 +460,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2015-09-25',
     launchPrice: { '16G': 20900, '64G': 24900, '128G': 28900 },
     basePrice: { '16G': 20900, '64G': 24900, '128G': 28900 },
-    marketAvg: { '16G': 300, '64G': 500, '128G': 700 },
+    marketAvg: { '16G': 200, '64G': 300, '128G': 400 },
     tradeInPrice: null,
   },
   {
@@ -484,7 +484,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2020-04-24',
     launchPrice: { '64G': 14900, '128G': 16900, '256G': 20900 },
     basePrice: { '64G': 14900, '128G': 16900, '256G': 20900 },
-    marketAvg: { '64G': 3000, '128G': 4000, '256G': 5500 },
+    marketAvg: { '64G': 2500, '128G': 3500, '256G': 4500 },
     tradeInPrice: 1600,
   },
 
