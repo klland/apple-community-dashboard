@@ -37,7 +37,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '256G': 44900, '512G': 51900, '1T': 58900, '2T': 72900 },
     basePrice: { '256G': 44900, '512G': 51900, '1T': 58900, '2T': 72900 },
     marketAvg: { '256G': 38000, '512G': 44000, '1T': 50000, '2T': 62000 },
-    tradeInPrice: 39200,
+    tradeInPrice: null,
   },
   {
     id: 'iphone-17-pro',
@@ -49,7 +49,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '256G': 39900, '512G': 46900, '1T': 53900 },
     basePrice: { '256G': 39900, '512G': 46900, '1T': 53900 },
     marketAvg: { '256G': 34000, '512G': 40000, '1T': 46000 },
-    tradeInPrice: 27000,
+    tradeInPrice: null,
   },
   {
     id: 'iphone-17-air',
@@ -61,7 +61,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '256G': 36900, '512G': 43900, '1T': 50900 },
     basePrice: { '256G': 36900, '512G': 43900, '1T': 50900 },
     marketAvg: { '256G': 31000, '512G': 37000, '1T': 43000 },
-    tradeInPrice: 24800,
+    tradeInPrice: null,
   },
   {
     id: 'iphone-17',
@@ -73,7 +73,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '256G': 29900, '512G': 36900 },
     basePrice: { '256G': 29900, '512G': 36900 },
     marketAvg: { '256G': 25000, '512G': 31000 },
-    tradeInPrice: 17700,
+    tradeInPrice: null,
   },
 
   // ==================== iPhone ====================
