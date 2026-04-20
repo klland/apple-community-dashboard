@@ -14,13 +14,6 @@ const CATEGORY_ICONS = {
   '其他': Package,
 }
 
-// Resolve tradeInPrice — can be a flat number or per-storage object (iPhone)
-function resolveTradeIn(product, storage) {
-  const tip = product.tradeInPrice
-  if (!tip) return null
-  if (typeof tip === 'number') return tip
-  return tip[storage] ?? null
-}
 
 export default function QueryPage() {
   const [search, setSearch] = useState('')
@@ -208,23 +201,14 @@ export default function QueryPage() {
                     <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">平均折扣</p>
                     <p className="text-[22px] font-semibold text-[#0071e3] tracking-tight">{discount}% off</p>
                   </div>
-                  <div className="bg-[#fce4ec] rounded-2xl p-4 flex flex-col justify-between">
+                  <a href="https://www.apple.com/tw/trade-in/" target="_blank" rel="noreferrer"
+                    className="bg-[#fce4ec] rounded-2xl p-4 flex flex-col justify-between hover:opacity-80 transition-opacity">
                     <div>
-                      <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">官方回收價</p>
-                      <p className="text-[22px] font-semibold text-[#ff3b30] tracking-tight">
-                        {resolveTradeIn(selectedProduct, selectedStorage)
-                          ? `$${resolveTradeIn(selectedProduct, selectedStorage).toLocaleString()}`
-                          : '不支援'}
-                      </p>
-                      {typeof selectedProduct.tradeInPrice === 'number' && (
-                        <p className="text-[10px] text-[#ff3b30] mt-0.5">最高可達，實際依機況</p>
-                      )}
+                      <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">官方回收估價</p>
+                      <p className="text-[18px] font-semibold text-[#ff3b30] tracking-tight leading-snug">前往 Apple<br />官網試算 →</p>
                     </div>
-                    <a href="https://www.apple.com/tw/trade-in/" target="_blank" rel="noreferrer"
-                      className="mt-2 text-[11px] text-[#ff3b30] underline underline-offset-2 hover:opacity-70 transition-opacity">
-                      前往 Apple 官網試算 →
-                    </a>
-                  </div>
+                    <p className="text-[10px] text-[#ff3b30] mt-2 opacity-70">實際金額依機況而定</p>
+                  </a>
                 </div>
 
                 {/* 原廠開賣資訊 */}
