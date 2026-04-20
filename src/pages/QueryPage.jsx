@@ -148,7 +148,7 @@ export default function QueryPage() {
       <div className="max-w-[980px] mx-auto px-5 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Product list */}
-          <div className="col-span-1 space-y-1.5 max-h-[72vh] overflow-y-auto pr-1">
+          <div className="col-span-1 space-y-1.5 max-h-[40vh] lg:max-h-[72vh] overflow-y-auto pr-1">
             {filtered.length === 0 && (
               <p className="text-[13px] text-[#6e6e73] text-center py-8">找不到相關產品</p>
             )}
@@ -193,7 +193,7 @@ export default function QueryPage() {
                 </div>
 
                 {/* KPI cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   <div className="bg-[#f5f5f7] rounded-2xl p-4">
                     <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">社團均價</p>
                     {avgLoading
