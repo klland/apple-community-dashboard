@@ -217,7 +217,7 @@ ${form.batteryHealth ? `\n電池健康度需求：${form.batteryHealth}% 以上`
 
           {/* 容量 + 顏色 */}
           {(selectedProduct || isOtherModel) && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>容量／規格</label>
                 <SelectOrInput

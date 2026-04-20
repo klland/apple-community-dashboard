@@ -121,7 +121,7 @@ export default function ComparePage() {
         </div>
 
         {/* Slot selectors */}
-        <div className="grid grid-cols-2 gap-5 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
           {[0, 1].map(idx => (
             <div key={idx} className="border border-[rgba(0,0,0,0.08)] rounded-2xl p-5 bg-white">
               <p className="text-[11px] font-semibold text-[#6e6e73] mb-3 uppercase tracking-wider">產品 {idx + 1}</p>

@@ -40,6 +40,12 @@ export default function QueryPage() {
     setAiAnalysis('')
     setAiError('')
     setLiveAvg(null)
+    // 手機版：選完產品自動捲到詳情區
+    if (window.innerWidth < 1024) {
+      setTimeout(() => {
+        document.getElementById('product-detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    }
   }
 
   function changeStorage(storage) {
@@ -140,7 +146,7 @@ export default function QueryPage() {
       </section>
 
       <div className="max-w-[980px] mx-auto px-5 py-10">
-        <div className="grid grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Product list */}
           <div className="col-span-1 space-y-1.5 max-h-[72vh] overflow-y-auto pr-1">
             {filtered.length === 0 && (
@@ -162,7 +168,7 @@ export default function QueryPage() {
           </div>
 
           {/* Detail panel */}
-          <div className="col-span-2">
+          <div id="product-detail" className="col-span-2">
             {!selectedProduct ? (
               <div className="flex flex-col items-center justify-center h-64 text-[#6e6e73] text-[15px] gap-3">
                 <div className="text-4xl opacity-20">⌕</div>
@@ -187,7 +193,7 @@ export default function QueryPage() {
                 </div>
 
                 {/* KPI cards */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="bg-[#f5f5f7] rounded-2xl p-4">
                     <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">社團均價</p>
                     {avgLoading
