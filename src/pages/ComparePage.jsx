@@ -64,8 +64,8 @@ export default function ComparePage() {
   const comparisonRows = [
     { label: '社團均價', getValue: (p, s) => p?.marketAvg[s] ? `$${p.marketAvg[s].toLocaleString()}` : '—', better: 'lower' },
     { label: '原廠售價', getValue: (p, s) => { const v = p?.launchPrice?.[s] || p?.basePrice[s]; return v ? `$${v.toLocaleString()}` : '—' }, better: 'none' },
-    { label: '折舊金額', getValue: (_, __, dep) => dep ? `-$${dep.drop.toLocaleString()}` : '—', better: 'lower', useDep: true },
-    { label: '折舊幅度', getValue: (_, __, dep) => dep ? `${dep.pct}%` : '—', better: 'lower', useDep: true },
+    { label: '折舊金額（越大越省）', getValue: (_, __, dep) => dep ? `-$${dep.drop.toLocaleString()}` : '—', better: 'higher', useDep: true },
+    { label: '折舊幅度（越大越省）', getValue: (_, __, dep) => dep ? `${dep.pct}%` : '—', better: 'higher', useDep: true },
     { label: '上市日期', getValue: (p) => p?.launchDate || '—', better: 'none' },
     { label: '上市月數', getValue: (_, __, dep) => dep ? `${dep.monthsOld} 個月` : '—', better: 'none', useDep: true },
     { label: '可選容量', getValue: (p) => p?.storages.join(' / ') || '—', better: 'none' },

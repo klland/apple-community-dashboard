@@ -50,6 +50,37 @@ export async function getMarketPrice(model, storage) {
   return { avg, count: data.length, trimmedCount: trimmed.length }
 }
 
+// 送出錯誤回報
+export async function submitReport(data) {
+  const { error } = await supabase.from('reports').insert([data])
+  if (error) throw error
+}
+
+// 取得所有錯誤回報（後台用）
+export async function getReports() {
+  const { data, error } = await supabase
+    .from('reports')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data || []
+}
+
+// 更新回報狀態
+export async function updateReportStatus(id, resolved) {
+  const { error } = await supabase
+    .from('reports')
+    .update({ resolved })
+    .eq('id', id)
+  if (error) throw error
+}
+
+// 刪除回報
+export async function deleteReport(id) {
+  const { error } = await supabase.from('reports').delete().eq('id', id)
+  if (error) throw error
+}
+
 // 取得近 90 天每日成交紀錄（用於趨勢圖）
 export async function getDailyPrices(model, storage) {
   const since = new Date()

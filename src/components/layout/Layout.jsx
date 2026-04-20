@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { Apple } from 'lucide-react'
+import ReportIssueButton from '../ReportIssueButton'
 
 export default function Layout({ children }) {
   const { pathname } = useLocation()
@@ -36,6 +37,7 @@ export default function Layout({ children }) {
         </div>
       </header>
       <main>{children}</main>
+      <ReportIssueButton />
     </div>
   )
 }
