@@ -23,7 +23,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '8G/256G': 19900, '8G/512G': 22900 },
     basePrice: { '8G/256G': 19900, '8G/512G': 22900 },
     marketAvg: { '8G/256G': 18000, '8G/512G': 21000 },
-    tradeInPrice: null,
+    tradeInPrice: 10700,
   },
 
   // ==================== iPhone 17 系列 ====================
@@ -87,7 +87,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '256G': 44900, '512G': 51900, '1T': 58900 },
     basePrice: { '256G': 44900, '512G': 51900, '1T': 58900 },
     marketAvg: { '256G': 30000, '512G': 34000, '1T': 38000 },
-    tradeInPrice: null,
+    tradeInPrice: 23600,
   },
   {
     id: 'iphone-16-pro',
@@ -99,7 +99,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 36900, '256G': 40400, '512G': 47400, '1T': 54400 },
     basePrice: { '128G': 36900, '256G': 40400, '512G': 47400, '1T': 54400 },
     marketAvg: { '128G': 24000, '256G': 27000, '512G': 31000, '1T': 35000 },
-    tradeInPrice: null,
+    tradeInPrice: 20100,
   },
   {
     id: 'iphone-16-plus',
@@ -111,7 +111,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 32900, '256G': 36400, '512G': 43400 },
     basePrice: { '128G': 32900, '256G': 36400, '512G': 43400 },
     marketAvg: { '128G': 20000, '256G': 22500, '512G': 26000 },
-    tradeInPrice: null,
+    tradeInPrice: 16000,
   },
   {
     id: 'iphone-16',
@@ -123,7 +123,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 29900, '256G': 33400, '512G': 40400 },
     basePrice: { '128G': 29900, '256G': 33400, '512G': 40400 },
     marketAvg: { '128G': 17000, '256G': 19500, '512G': 23000 },
-    tradeInPrice: null,
+    tradeInPrice: 14600,
   },
   {
     id: 'iphone-15-pro-max',
@@ -135,7 +135,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '256G': 44900, '512G': 51900, '1T': 58900 },
     basePrice: { '256G': 44900, '512G': 51900, '1T': 58900 },
     marketAvg: { '256G': 22000, '512G': 25000, '1T': 28500 },
-    tradeInPrice: null,
+    tradeInPrice: 18700,
   },
   {
     id: 'iphone-15-pro',
@@ -147,7 +147,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 36900, '256G': 40400, '512G': 47400, '1T': 54400 },
     basePrice: { '128G': 36900, '256G': 40400, '512G': 47400, '1T': 54400 },
     marketAvg: { '128G': 15000, '256G': 17000, '512G': 20000, '1T': 23000 },
-    tradeInPrice: null,
+    tradeInPrice: 15400,
   },
   {
     id: 'iphone-15-plus',
@@ -159,7 +159,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 32900, '256G': 36400, '512G': 43400 },
     basePrice: { '128G': 32900, '256G': 36400, '512G': 43400 },
     marketAvg: { '128G': 12000, '256G': 14000, '512G': 17000 },
-    tradeInPrice: null,
+    tradeInPrice: 12000,
   },
   {
     id: 'iphone-15',
@@ -171,7 +171,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 29900, '256G': 33400, '512G': 40400 },
     basePrice: { '128G': 29900, '256G': 33400, '512G': 40400 },
     marketAvg: { '128G': 11000, '256G': 13000, '512G': 16000 },
-    tradeInPrice: null,
+    tradeInPrice: 11500,
   },
   {
     id: 'iphone-14-pro-max',
@@ -183,7 +183,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 38900, '256G': 42400, '512G': 49400, '1T': 56400 },
     basePrice: { '128G': 38900, '256G': 42400, '512G': 49400, '1T': 56400 },
     marketAvg: { '128G': 13000, '256G': 15000, '512G': 18000, '1T': 21000 },
-    tradeInPrice: null,
+    tradeInPrice: 14300,
   },
   {
     id: 'iphone-14-pro',
@@ -195,7 +195,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 34900, '256G': 38400, '512G': 45400, '1T': 52400 },
     basePrice: { '128G': 34900, '256G': 38400, '512G': 45400, '1T': 52400 },
     marketAvg: { '128G': 11000, '256G': 13000, '512G': 15500, '1T': 18000 },
-    tradeInPrice: null,
+    tradeInPrice: 11900,
   },
   {
     id: 'iphone-14-plus',
@@ -207,7 +207,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 31900, '256G': 35400, '512G': 42400 },
     basePrice: { '128G': 31900, '256G': 35400, '512G': 42400 },
     marketAvg: { '128G': 9000, '256G': 11000, '512G': 13500 },
-    tradeInPrice: null,
+    tradeInPrice: 8100,
   },
   {
     id: 'iphone-14',
@@ -219,7 +219,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 27900, '256G': 31400, '512G': 38400 },
     basePrice: { '128G': 27900, '256G': 31400, '512G': 38400 },
     marketAvg: { '128G': 8000, '256G': 9500, '512G': 12000 },
-    tradeInPrice: null,
+    tradeInPrice: 8200,
   },
   {
     id: 'iphone-13-pro-max',
@@ -231,7 +231,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 36900, '256G': 40400, '512G': 47400, '1T': 54400 },
     basePrice: { '128G': 36900, '256G': 40400, '512G': 47400, '1T': 54400 },
     marketAvg: { '128G': 9500, '256G': 11000, '512G': 13500, '1T': 16000 },
-    tradeInPrice: null,
+    tradeInPrice: 10400,
   },
   {
     id: 'iphone-13-pro',
@@ -243,7 +243,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 32900, '256G': 36400, '512G': 43400, '1T': 50400 },
     basePrice: { '128G': 32900, '256G': 36400, '512G': 43400, '1T': 50400 },
     marketAvg: { '128G': 7500, '256G': 9000, '512G': 11000, '1T': 13500 },
-    tradeInPrice: null,
+    tradeInPrice: 8900,
   },
   {
     id: 'iphone-13',
@@ -255,7 +255,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 25900, '256G': 29400, '512G': 36400 },
     basePrice: { '128G': 25900, '256G': 29400, '512G': 36400 },
     marketAvg: { '128G': 6000, '256G': 7500, '512G': 9500 },
-    tradeInPrice: null,
+    tradeInPrice: 6400,
   },
   {
     id: 'iphone-se-3',
@@ -267,7 +267,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '64G': 14900, '128G': 16900, '256G': 20900 },
     basePrice: { '64G': 14900, '128G': 16900, '256G': 20900 },
     marketAvg: { '64G': 6000, '128G': 7500, '256G': 10000 },
-    tradeInPrice: null,
+    tradeInPrice: 2500,
   },
 
   // ==================== iPhone 舊機 ====================
@@ -281,7 +281,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 37900, '256G': 41400, '512G': 48400 },
     basePrice: { '128G': 37900, '256G': 41400, '512G': 48400 },
     marketAvg: { '128G': 6500, '256G': 7500, '512G': 9000 },
-    tradeInPrice: null,
+    tradeInPrice: 7400,
   },
   {
     id: 'iphone-12-pro',
@@ -293,7 +293,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 33900, '256G': 37400, '512G': 44400 },
     basePrice: { '128G': 33900, '256G': 37400, '512G': 44400 },
     marketAvg: { '128G': 5500, '256G': 6500, '512G': 8000 },
-    tradeInPrice: null,
+    tradeInPrice: 5800,
   },
   {
     id: 'iphone-12',
@@ -305,7 +305,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '64G': 26900, '128G': 28500, '256G': 32000 },
     basePrice: { '64G': 26900, '128G': 28500, '256G': 32000 },
     marketAvg: { '64G': 4000, '128G': 5000, '256G': 6500 },
-    tradeInPrice: null,
+    tradeInPrice: 4000,
   },
   {
     id: 'iphone-11-pro-max',
@@ -317,7 +317,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '64G': 39900, '256G': 45400, '512G': 52400 },
     basePrice: { '64G': 39900, '256G': 45400, '512G': 52400 },
     marketAvg: { '64G': 4000, '256G': 5500, '512G': 7000 },
-    tradeInPrice: null,
+    tradeInPrice: 4700,
   },
   {
     id: 'iphone-11-pro',
@@ -329,7 +329,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '64G': 35900, '256G': 41400, '512G': 48400 },
     basePrice: { '64G': 35900, '256G': 41400, '512G': 48400 },
     marketAvg: { '64G': 3500, '256G': 4500, '512G': 6000 },
-    tradeInPrice: null,
+    tradeInPrice: 4200,
   },
   {
     id: 'iphone-11',
@@ -341,7 +341,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '64G': 24900, '128G': 26900, '256G': 30400 },
     basePrice: { '64G': 24900, '128G': 26900, '256G': 30400 },
     marketAvg: { '64G': 3000, '128G': 3500, '256G': 4500 },
-    tradeInPrice: null,
+    tradeInPrice: 3500,
   },
   {
     id: 'iphone-xr',
@@ -353,7 +353,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '64G': 26900, '128G': 28900, '256G': 32500 },
     basePrice: { '64G': 26900, '128G': 28900, '256G': 32500 },
     marketAvg: { '64G': 2500, '128G': 3000, '256G': 4000 },
-    tradeInPrice: null,
+    tradeInPrice: 2400,
   },
   {
     id: 'iphone-xs-max',
@@ -365,7 +365,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '64G': 39900, '256G': 45500, '512G': 52900 },
     basePrice: { '64G': 39900, '256G': 45500, '512G': 52900 },
     marketAvg: { '64G': 2500, '256G': 3500, '512G': 4500 },
-    tradeInPrice: null,
+    tradeInPrice: 3000,
   },
   {
     id: 'iphone-xs',
@@ -377,7 +377,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '64G': 35900, '256G': 41500, '512G': 48900 },
     basePrice: { '64G': 35900, '256G': 41500, '512G': 48900 },
     marketAvg: { '64G': 2000, '256G': 2800, '512G': 3800 },
-    tradeInPrice: null,
+    tradeInPrice: 2300,
   },
   {
     id: 'iphone-x',
@@ -389,7 +389,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '64G': 35900, '256G': 41500 },
     basePrice: { '64G': 35900, '256G': 41500 },
     marketAvg: { '64G': 1800, '256G': 2500 },
-    tradeInPrice: null,
+    tradeInPrice: 1600,
   },
   {
     id: 'iphone-8-plus',
@@ -485,7 +485,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '64G': 14900, '128G': 16900, '256G': 20900 },
     basePrice: { '64G': 14900, '128G': 16900, '256G': 20900 },
     marketAvg: { '64G': 3000, '128G': 4000, '256G': 5500 },
-    tradeInPrice: null,
+    tradeInPrice: 1600,
   },
 
   // ==================== MacBook Pro M5 ====================
@@ -499,7 +499,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '16G/1T': 51690 },
     basePrice: { '16G/1T': 51690 },
     marketAvg: { '16G/1T': 47500 },
-    tradeInPrice: null,
+    tradeInPrice: 20100,
   },
   {
     id: 'macbook-pro-14-m5-pro',
@@ -511,7 +511,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '24G/1T': 69790 },
     basePrice: { '24G/1T': 69790 },
     marketAvg: { '24G/1T': 64000 },
-    tradeInPrice: null,
+    tradeInPrice: 20100,
   },
   {
     id: 'macbook-pro-14-m5-max',
@@ -523,7 +523,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '36G/2T': 109890 },
     basePrice: { '36G/2T': 109890 },
     marketAvg: { '36G/2T': 101000 },
-    tradeInPrice: null,
+    tradeInPrice: 20100,
   },
   {
     id: 'macbook-pro-16-m5-pro',
@@ -535,7 +535,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '24G/1T': 83190 },
     basePrice: { '24G/1T': 83190 },
     marketAvg: { '24G/1T': 76500 },
-    tradeInPrice: null,
+    tradeInPrice: 20100,
   },
   {
     id: 'macbook-pro-16-m5-max',
@@ -547,7 +547,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '48G/2T': 119890 },
     basePrice: { '48G/2T': 119890 },
     marketAvg: { '48G/2T': 110000 },
-    tradeInPrice: null,
+    tradeInPrice: 20100,
   },
 
   // ==================== 2026 新品 ====================
@@ -561,7 +561,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '16G/512G': 35900 },
     basePrice: { '16G/512G': 35900 },
     marketAvg: { '16G/512G': 33000 },
-    tradeInPrice: null,
+    tradeInPrice: 10700,
   },
   {
     id: 'macbook-air-m5-15',
@@ -573,7 +573,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '16G/512G': 42900 },
     basePrice: { '16G/512G': 42900 },
     marketAvg: { '16G/512G': 39500 },
-    tradeInPrice: null,
+    tradeInPrice: 10700,
   },
 
   // ==================== 2025 新品 ====================
@@ -587,7 +587,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '16G/256G': 32900 },
     basePrice: { '16G/256G': 32900 },
     marketAvg: { '16G/256G': 27000 },
-    tradeInPrice: null,
+    tradeInPrice: 10700,
   },
   {
     id: 'macbook-air-m4-15',
@@ -599,7 +599,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '16G/256G': 39900 },
     basePrice: { '16G/256G': 39900 },
     marketAvg: { '16G/256G': 33000 },
-    tradeInPrice: null,
+    tradeInPrice: 10700,
   },
   {
     id: 'ipad-air-m3-11',
@@ -611,7 +611,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 20900, '256G': 24900, '512G': 32900, '1T': 40900 },
     basePrice: { '128G': 20900, '256G': 24900, '512G': 32900, '1T': 40900 },
     marketAvg: { '128G': 18000, '256G': 21500, '512G': 28500, '1T': 36000 },
-    tradeInPrice: null,
+    tradeInPrice: 23900,
   },
   {
     id: 'ipad-11',
@@ -623,7 +623,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 10900, '256G': 15900 },
     basePrice: { '128G': 10900, '256G': 15900 },
     marketAvg: { '128G': 9800, '256G': 14500 },
-    tradeInPrice: null,
+    tradeInPrice: 12600,
   },
   {
     id: 'ipad-air-m3-13',
@@ -635,7 +635,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 29900, '256G': 33900, '512G': 41900, '1T': 49900 },
     basePrice: { '128G': 29900, '256G': 33900, '512G': 41900, '1T': 49900 },
     marketAvg: { '128G': 26000, '256G': 29500, '512G': 37000, '1T': 44000 },
-    tradeInPrice: null,
+    tradeInPrice: 23900,
   },
   {
     id: 'apple-watch-ultra-3',
@@ -685,7 +685,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '8G/256G': 42900 },
     basePrice: { '8G/256G': 42900 },
     marketAvg: { '8G/256G': 31000 },
-    tradeInPrice: null,
+    tradeInPrice: 10700,
   },
   {
     id: 'macbook-air-m3-13',
@@ -697,7 +697,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '8G/256G': 35900 },
     basePrice: { '8G/256G': 35900 },
     marketAvg: { '8G/256G': 26000 },
-    tradeInPrice: null,
+    tradeInPrice: 10700,
   },
   {
     id: 'macbook-air-m2-15',
@@ -709,7 +709,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '8G/256G': 38900 },
     basePrice: { '8G/256G': 38900 },
     marketAvg: { '8G/256G': 23000 },
-    tradeInPrice: null,
+    tradeInPrice: 10700,
   },
   {
     id: 'macbook-air-m2-13',
@@ -721,7 +721,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '8G/256G': 32900 },
     basePrice: { '8G/256G': 32900 },
     marketAvg: { '8G/256G': 19000 },
-    tradeInPrice: null,
+    tradeInPrice: 10700,
   },
   {
     id: 'macbook-pro-16-m4-pro',
@@ -733,7 +733,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '24G/512G': 79900 },
     basePrice: { '24G/512G': 79900 },
     marketAvg: { '24G/512G': 65000 },
-    tradeInPrice: null,
+    tradeInPrice: 20100,
   },
   {
     id: 'macbook-pro-14-m4-pro',
@@ -745,7 +745,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '24G/512G': 69900 },
     basePrice: { '24G/512G': 69900 },
     marketAvg: { '24G/512G': 56000 },
-    tradeInPrice: null,
+    tradeInPrice: 20100,
   },
   {
     id: 'macbook-pro-14-m4',
@@ -757,7 +757,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '16G/512G': 52900 },
     basePrice: { '16G/512G': 52900 },
     marketAvg: { '16G/512G': 42000 },
-    tradeInPrice: null,
+    tradeInPrice: 20100,
   },
 
   // ==================== MacBook 舊機 ====================
@@ -771,7 +771,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '8G/256G': 29900 },
     basePrice: { '8G/256G': 29900 },
     marketAvg: { '8G/256G': 12000 },
-    tradeInPrice: null,
+    tradeInPrice: 10700,
   },
   {
     id: 'macbook-pro-m1-14',
@@ -783,7 +783,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '16G/512G': 54900 },
     basePrice: { '16G/512G': 54900 },
     marketAvg: { '16G/512G': 28000 },
-    tradeInPrice: null,
+    tradeInPrice: 20100,
   },
   {
     id: 'macbook-pro-m1-16',
@@ -795,7 +795,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '16G/512G': 64900 },
     basePrice: { '16G/512G': 64900 },
     marketAvg: { '16G/512G': 34000 },
-    tradeInPrice: null,
+    tradeInPrice: 20100,
   },
   {
     id: 'macbook-air-m2-13-2022',
@@ -807,7 +807,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '8G/256G': 32900 },
     basePrice: { '8G/256G': 32900 },
     marketAvg: { '8G/256G': 21000 },
-    tradeInPrice: null,
+    tradeInPrice: 10700,
   },
 
   // ==================== iPad ====================
@@ -821,7 +821,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '256G': 42900, '512G': 49900, '1T': 63900, '2T': 77900 },
     basePrice: { '256G': 42900, '512G': 49900, '1T': 63900, '2T': 77900 },
     marketAvg: { '256G': 36000, '512G': 42000, '1T': 54000, '2T': 66000 },
-    tradeInPrice: null,
+    tradeInPrice: 26700,
   },
   {
     id: 'ipad-pro-m4-11',
@@ -833,7 +833,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '256G': 29900, '512G': 36900, '1T': 50900, '2T': 64900 },
     basePrice: { '256G': 29900, '512G': 36900, '1T': 50900, '2T': 64900 },
     marketAvg: { '256G': 25000, '512G': 31000, '1T': 43000, '2T': 55000 },
-    tradeInPrice: null,
+    tradeInPrice: 26700,
   },
   {
     id: 'ipad-air-m2-13',
@@ -845,7 +845,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 28900, '256G': 32900, '512G': 40900, '1T': 48900 },
     basePrice: { '128G': 28900, '256G': 32900, '512G': 40900, '1T': 48900 },
     marketAvg: { '128G': 23000, '256G': 27000, '512G': 34000, '1T': 41000 },
-    tradeInPrice: null,
+    tradeInPrice: 23900,
   },
   {
     id: 'ipad-air-m2-11',
@@ -857,7 +857,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 19900, '256G': 23900, '512G': 31900, '1T': 39900 },
     basePrice: { '128G': 19900, '256G': 23900, '512G': 31900, '1T': 39900 },
     marketAvg: { '128G': 16000, '256G': 20000, '512G': 27000, '1T': 34000 },
-    tradeInPrice: null,
+    tradeInPrice: 23900,
   },
   {
     id: 'ipad-10',
@@ -869,7 +869,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '64G': 13900, '256G': 18900 },
     basePrice: { '64G': 13900, '256G': 18900 },
     marketAvg: { '64G': 10000, '256G': 14500 },
-    tradeInPrice: null,
+    tradeInPrice: 12600,
   },
   {
     id: 'ipad-mini-7',
@@ -881,7 +881,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '128G': 15900, '256G': 19900, '512G': 27900 },
     basePrice: { '128G': 15900, '256G': 19900, '512G': 27900 },
     marketAvg: { '128G': 13500, '256G': 17000, '512G': 23500 },
-    tradeInPrice: null,
+    tradeInPrice: 13000,
   },
 
   // ==================== iPad 舊機 ====================
@@ -895,7 +895,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '64G': 10900, '256G': 15900 },
     basePrice: { '64G': 10900, '256G': 15900 },
     marketAvg: { '64G': 5500, '256G': 8500 },
-    tradeInPrice: null,
+    tradeInPrice: 12600,
   },
   {
     id: 'ipad-8',
@@ -907,7 +907,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '32G': 9900, '128G': 13900 },
     basePrice: { '32G': 9900, '128G': 13900 },
     marketAvg: { '32G': 3500, '128G': 5500 },
-    tradeInPrice: null,
+    tradeInPrice: 12600,
   },
   {
     id: 'ipad-mini-6',
@@ -919,7 +919,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '64G': 13900, '256G': 18900 },
     basePrice: { '64G': 13900, '256G': 18900 },
     marketAvg: { '64G': 8000, '256G': 11000 },
-    tradeInPrice: null,
+    tradeInPrice: 13000,
   },
   {
     id: 'ipad-mini-5',
@@ -931,7 +931,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '64G': 12900, '256G': 17900 },
     basePrice: { '64G': 12900, '256G': 17900 },
     marketAvg: { '64G': 4000, '256G': 6000 },
-    tradeInPrice: null,
+    tradeInPrice: 13000,
   },
   {
     id: 'ipad-air-5',
@@ -943,7 +943,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '64G': 19900, '256G': 24900 },
     basePrice: { '64G': 19900, '256G': 24900 },
     marketAvg: { '64G': 9000, '256G': 12000 },
-    tradeInPrice: null,
+    tradeInPrice: 23900,
   },
   {
     id: 'ipad-air-4',
@@ -993,7 +993,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '鈦金屬': 29900 },
     basePrice: { '鈦金屬': 29900 },
     marketAvg: { '鈦金屬': 24000 },
-    tradeInPrice: null,
+    tradeInPrice: 7800,
   },
   {
     id: 'apple-watch-s10',
@@ -1005,7 +1005,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '42mm': 12900, '46mm': 13900 },
     basePrice: { '42mm': 12900, '46mm': 13900 },
     marketAvg: { '42mm': 10500, '46mm': 11500 },
-    tradeInPrice: null,
+    tradeInPrice: 8000,
   },
   {
     id: 'apple-watch-s9',
@@ -1017,7 +1017,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '41mm': 12900, '45mm': 13900 },
     basePrice: { '41mm': 12900, '45mm': 13900 },
     marketAvg: { '41mm': 8000, '45mm': 9000 },
-    tradeInPrice: null,
+    tradeInPrice: 3500,
   },
   {
     id: 'apple-watch-se-3',
@@ -1041,7 +1041,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '40mm': 8900, '44mm': 9900 },
     basePrice: { '40mm': 8900, '44mm': 9900 },
     marketAvg: { '40mm': 5500, '44mm': 6500 },
-    tradeInPrice: null,
+    tradeInPrice: 1100,
   },
 
   // ==================== Apple Watch 舊機 ====================
@@ -1055,7 +1055,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '鈦金屬': 26900 },
     basePrice: { '鈦金屬': 26900 },
     marketAvg: { '鈦金屬': 16000 },
-    tradeInPrice: null,
+    tradeInPrice: 5700,
   },
   {
     id: 'apple-watch-s8',
@@ -1067,7 +1067,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '41mm': 12900, '45mm': 13900 },
     basePrice: { '41mm': 12900, '45mm': 13900 },
     marketAvg: { '41mm': 6000, '45mm': 7000 },
-    tradeInPrice: null,
+    tradeInPrice: 2200,
   },
   {
     id: 'apple-watch-s7',
@@ -1079,7 +1079,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '41mm': 12900, '45mm': 13900 },
     basePrice: { '41mm': 12900, '45mm': 13900 },
     marketAvg: { '41mm': 4500, '45mm': 5500 },
-    tradeInPrice: null,
+    tradeInPrice: 1200,
   },
   {
     id: 'apple-watch-s6',
@@ -1091,7 +1091,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '40mm': 12900, '44mm': 13900 },
     basePrice: { '40mm': 12900, '44mm': 13900 },
     marketAvg: { '40mm': 3500, '44mm': 4500 },
-    tradeInPrice: null,
+    tradeInPrice: 800,
   },
   {
     id: 'apple-watch-se-1',
@@ -1191,7 +1191,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '24G/512G': 46900 },
     basePrice: { '24G/512G': 46900 },
     marketAvg: { '24G/512G': 42000 },
-    tradeInPrice: null,
+    tradeInPrice: 37400,
   },
   {
     id: 'mac-pro-m4-max',
@@ -1203,7 +1203,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '36G/512G': 67900 },
     basePrice: { '36G/512G': 67900 },
     marketAvg: { '36G/512G': 62000 },
-    tradeInPrice: null,
+    tradeInPrice: 37400,
   },
   {
     id: 'mac-pro-m3-ultra',
@@ -1215,7 +1215,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '96G/1T': 137900 },
     basePrice: { '96G/1T': 137900 },
     marketAvg: { '96G/1T': 126000 },
-    tradeInPrice: null,
+    tradeInPrice: 37400,
   },
   {
     id: 'mac-mini-m4',
@@ -1227,7 +1227,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '16G/256G': 19900 },
     basePrice: { '16G/256G': 19900 },
     marketAvg: { '16G/256G': 16500 },
-    tradeInPrice: null,
+    tradeInPrice: 9800,
   },
   {
     id: 'mac-mini-m4-pro',
@@ -1239,7 +1239,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '24G/512G': 31900 },
     basePrice: { '24G/512G': 31900 },
     marketAvg: { '24G/512G': 26000 },
-    tradeInPrice: null,
+    tradeInPrice: 9800,
   },
   {
     id: 'imac-m4',
@@ -1251,7 +1251,7 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '16G/256G': 42900 },
     basePrice: { '16G/256G': 42900 },
     marketAvg: { '16G/256G': 35000 },
-    tradeInPrice: null,
+    tradeInPrice: 11200,
   },
 
   // ==================== Apple TV / HomePod ====================
