@@ -58,6 +58,12 @@ export default function PostPage() {
   const showWarrantyMonths = form.warrantyStatus === '原廠保固內' || form.warrantyStatus === '延長保固（AppleCare+）'
   const modelName = isOtherModel ? form.customModel : (selectedProduct?.name ?? '')
   const canGenerate = modelName && form.storage && !loading
+  const selectedOfficialPrice = selectedProduct && form.storage
+    ? selectedProduct.basePrice[form.storage]
+    : null
+  const selectedReferenceAvg = selectedProduct && form.storage
+    ? selectedProduct.marketAvg[form.storage]
+    : null
 
   function update(field, value) {
     setForm(prev => {
@@ -305,6 +311,11 @@ ${form.batteryHealth ? `\n電池健康度需求：${form.batteryHealth}% 以上`
               <input type="number" value={form.price} onChange={e => update('price', e.target.value)}
                 placeholder="例如 28000"
                 className={inputCls} />
+              {(selectedOfficialPrice || selectedReferenceAvg) && (
+                <p className="mt-1.5 text-[12px] text-[#6e6e73]">
+                  官方 ${selectedOfficialPrice?.toLocaleString() || '—'}・參考均價 ${selectedReferenceAvg?.toLocaleString() || '—'}
+                </p>
+              )}
             </div>
             <div>
               <label className={labelCls}>交易方式</label>

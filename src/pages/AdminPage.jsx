@@ -40,23 +40,6 @@ export default function AdminPage() {
   const [reports, setReports] = useState([])
   const [reportsLoading, setReportsLoading] = useState(false)
 
-  useEffect(() => {
-    const search = location.search
-      || (window.location.hash.includes('?') ? '?' + window.location.hash.split('?')[1] : '')
-    const params = new URLSearchParams(search)
-    if (params.get('key') === ADMIN_KEY) {
-      setAuthed(true)
-    } else {
-      navigate('/', { replace: true })
-    }
-  }, [location.search])
-
-  useEffect(() => {
-    if (!authed) return
-    fetchData()
-    fetchReports()
-  }, [authed])
-
   async function fetchReports() {
     setReportsLoading(true)
     const r = await getReports().catch(() => [])
@@ -95,6 +78,27 @@ export default function AdminPage() {
     setData(all)
     setLoading(false)
   }
+
+  useEffect(() => {
+    const search = location.search
+      || (window.location.hash.includes('?') ? '?' + window.location.hash.split('?')[1] : '')
+    const params = new URLSearchParams(search)
+    if (params.get('key') === ADMIN_KEY) {
+      const id = setTimeout(() => setAuthed(true), 0)
+      return () => clearTimeout(id)
+    } else {
+      navigate('/', { replace: true })
+    }
+  }, [location.search, navigate])
+
+  useEffect(() => {
+    if (!authed) return
+    const id = setTimeout(() => {
+      fetchData()
+      fetchReports()
+    }, 0)
+    return () => clearTimeout(id)
+  }, [authed])
 
   async function deleteRow(id) {
     if (!window.confirm('確定刪除這筆資料？')) return
@@ -453,7 +457,7 @@ export default function AdminPage() {
                 >
                   <option value="">選擇型號…</option>
                   {modelOptions.map(({ model, since }) => (
-                    <option key={model} value={model}>{model}　({since?.slice(0,4)}~)</option>
+                    <option key={model} value={model}>{model} ({since?.slice(0,4)}~)</option>
                   ))}
                 </select>
               </div>
@@ -499,7 +503,7 @@ export default function AdminPage() {
                         }}
                         formatter={(val, _name, props) =>
                           val != null
-                            ? [`$${val.toLocaleString()}　(${props.payload.count} 筆)`, '月均價']
+                            ? [`$${val.toLocaleString()} (${props.payload.count} 筆)`, '月均價']
                             : ['無資料', '月均價']
                         }
                         contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}

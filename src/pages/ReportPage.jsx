@@ -43,6 +43,12 @@ export default function ReportPage() {
 
   const modelName = isOtherModel ? form.customModel : (selectedProduct?.name ?? '')
   const canSubmit = modelName && form.storage && form.price && form.tradeMethod && (!isOtherModel || form.customModel)
+  const selectedOfficialPrice = selectedProduct && form.storage
+    ? (selectedProduct.launchPrice?.[form.storage] || selectedProduct.basePrice[form.storage])
+    : null
+  const selectedReferenceAvg = selectedProduct && form.storage
+    ? selectedProduct.marketAvg[form.storage]
+    : null
 
   function validatePrice() {
     const price = parseInt(form.price)
@@ -85,7 +91,7 @@ export default function ReportPage() {
         purchaseChannel: '', warrantyStatus: '', warrantyMonthsLeft: '',
         price: '', tradeMethod: '', note: '',
       })
-    } catch (err) {
+    } catch {
       setError('送出失敗，請稍後再試')
     } finally {
       setLoading(false)
@@ -214,6 +220,11 @@ export default function ReportPage() {
             <input required type="number" value={form.price} onChange={e => update('price', e.target.value)}
               placeholder="例如 28500"
               className={inputCls} />
+            {(selectedOfficialPrice || selectedReferenceAvg) && (
+              <p className="mt-1.5 text-[12px] text-[#6e6e73]">
+                官方 ${selectedOfficialPrice?.toLocaleString() || '—'}・參考均價 ${selectedReferenceAvg?.toLocaleString() || '—'}
+              </p>
+            )}
             {priceWarning && (
               <p className="mt-1.5 text-[13px] text-[#ff9500] flex items-center gap-1">
                 ⚠️ {priceWarning}

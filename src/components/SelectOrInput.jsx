@@ -10,7 +10,10 @@ export default function SelectOrInput({ options, value, onChange, placeholder = 
 
   useEffect(() => {
     // 外部 reset（value 變回 ''）時收起輸入框
-    if (value === '') setShowInput(false)
+    if (value === '') {
+      const id = setTimeout(() => setShowInput(false), 0)
+      return () => clearTimeout(id)
+    }
   }, [value])
 
   function handleSelect(e) {

@@ -175,7 +175,7 @@ export default function ComparePage() {
                       <button key={p.id} onClick={() => selectProduct(idx, p)}
                         className="w-full text-left px-3.5 py-2.5 rounded-xl text-[14px] hover:bg-[#f5f5f7] text-[#1d1d1f] transition-all">
                         {p.name}
-                        <span className="text-[12px] text-[#6e6e73] ml-2">均價 ${p.marketAvg[p.storages[0]]?.toLocaleString()}+</span>
+                        <span className="text-[12px] text-[#6e6e73] ml-2">參考均價 ${p.marketAvg[p.storages[0]]?.toLocaleString()}+</span>
                       </button>
                     ))}
                   </div>
