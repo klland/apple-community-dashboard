@@ -1,0 +1,43 @@
+{
+  "meta": {
+    "source": "Miko3C",
+    "scrapedAt": "2026-06-30T21:18:19+08:00",
+    "rule": "Second-hand reference prices must not exceed Miko3C cash prices for clearly matched new products.",
+    "categoryUrls": [
+      "https://www.miko3c.com/products/phone/iphone/iPhone17series/",
+      "https://www.miko3c.com/products/phone/iphone/iPhone16series/",
+      "https://www.miko3c.com/products/tablet/apple-ipad/ipad-pro/",
+      "https://www.miko3c.com/products/tablet/apple-ipad/ipad-air/",
+      "https://www.miko3c.com/products/tablet/apple-ipad/ipad-mini/",
+      "https://www.miko3c.com/products/tablet/apple-ipad/ipad/",
+      "https://www.miko3c.com/products/wearable/wearable-apple/apple-AirPods__1/",
+      "https://www.miko3c.com/products/wearable/wearable-apple/apple-watch/",
+      "https://www.miko3c.com/products/wearable/wearable-apple/apple-watch-se/"
+    ]
+  },
+  "ceilings": {
+    "iphone-17e": { "256G": 19090, "512G": 25690 },
+    "iphone-17-pro-max": { "256G": 41590, "512G": 48290, "1T": 55190, "2T": 67290 },
+    "iphone-17-pro": { "256G": 36890, "512G": 43490, "1T": 50490 },
+    "iphone-17-air": { "256G": 31290, "512G": 33990, "1T": 38990 },
+    "iphone-17": { "256G": 26890, "512G": 33690 },
+    "iphone-16-plus": { "256G": 31490 },
+    "iphone-16": { "128G": 22790 },
+    "ipad-pro-m5-13": { "256G": 44990, "512G": 50990 },
+    "ipad-pro-m5-11": { "256G": 33990, "512G": 43990, "1T": 49490 },
+    "ipad-air-m4-13": { "128G": 28390, "256G": 31290 },
+    "ipad-air-m4-11": { "128G": 22090, "256G": 24990 },
+    "ipad-11": { "128G": 13290, "256G": 15990 },
+    "ipad-mini-7": { "128G": 17490, "256G": 20790 },
+    "apple-watch-ultra-3": { "鈦金屬": 23990 },
+    "apple-watch-s11": { "42mm": 11390, "46mm": 12290 },
+    "apple-watch-s10": { "46mm": 10290 },
+    "apple-watch-se-3": { "40mm": 6990, "44mm": 7990 },
+    "apple-watch-se-2": { "40mm": 6190, "44mm": 6190 },
+    "airpods-pro-3": { "標準版": 6050 },
+    "airpods-pro-2": { "標準版": 5690 },
+    "airpods-4-anc": { "標準版": 4790 },
+    "airpods-4": { "標準版": 3690 },
+    "airpods-max-2": { "標準版": 16590 }
+  }
+}

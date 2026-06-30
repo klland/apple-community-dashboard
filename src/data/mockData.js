@@ -1,4 +1,5 @@
 import marketAdjustments from './marketAdjustments.json'
+import mikoPriceCeilings from './mikoPriceCeilings.json'
 
 // Apple 產品完整資料庫
 export const APPLE_PRODUCTS = [
@@ -1423,6 +1424,27 @@ for (const product of APPLE_PRODUCTS) {
 
     const inferred = Math.round(Math.max(0, launch - expectedDrop) / 100) * 100
     product.marketAvg[storage] = Math.min(current, inferred)
+  }
+}
+
+const mikoCeilings = mikoPriceCeilings?.ceilings || {}
+const toHundredFloor = price => Math.floor(price / 100) * 100
+const toSecondHandCeiling = price => toHundredFloor(price * 0.95)
+
+for (const product of APPLE_PRODUCTS) {
+  const ceilings = mikoCeilings[product.id]
+  if (!ceilings) continue
+
+  product.mikoPriceCeiling = Object.fromEntries(
+    Object.entries(ceilings).map(([storage, price]) => [storage, toSecondHandCeiling(price)])
+  )
+
+  for (const storage of product.storages) {
+    const ceiling = product.mikoPriceCeiling[storage]
+    const current = product.marketAvg?.[storage]
+    if (!ceiling || !current) continue
+
+    product.marketAvg[storage] = Math.min(current, ceiling)
   }
 }
 
