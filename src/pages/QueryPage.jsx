@@ -98,12 +98,21 @@ function buildStorageBars(product) {
   })).filter(row => row.market && row.retail)
 }
 
-function getPriceBand(avgValue) {
+function getMarketCeiling(product, storage) {
+  return product?.mikoPriceCeiling?.[storage] ?? null
+}
+
+function capToMarketCeiling(value, ceiling) {
+  if (value == null) return value
+  return ceiling ? Math.min(value, ceiling) : value
+}
+
+function getPriceBand(avgValue, ceiling) {
   if (!avgValue) return null
   return {
     low: Math.round(avgValue * 0.95 / 100) * 100,
     target: avgValue,
-    high: Math.round(avgValue * 1.08 / 100) * 100,
+    high: capToMarketCeiling(Math.round(avgValue * 1.08 / 100) * 100, ceiling),
   }
 }
 
@@ -180,13 +189,19 @@ export default function QueryPage() {
 
     setTimeout(() => {
       const avg = avgValue
+      const ceiling = getMarketCeiling(selectedProduct, selectedStorage)
       const retail = getOfficialPrice(selectedProduct, selectedStorage)
       const discount = Math.round((1 - avg / retail) * 100)
+      const lowOffer = capToMarketCeiling(Math.round(avg*0.95/100)*100, ceiling)
+      const highOffer = capToMarketCeiling(Math.round(avg*1.05/100)*100, ceiling)
+      const sellerLimit = capToMarketCeiling(Math.round(avg*1.08/100)*100, ceiling)
+      const buyerTarget = capToMarketCeiling(Math.round(avg*0.97/100)*100, ceiling)
+      const overpayLimit = capToMarketCeiling(Math.round(avg*1.1/100)*100, ceiling)
 
       const analyses = [
         `目前 ${selectedProduct.name} ${selectedStorage} 社團均價 $${avg.toLocaleString()}，較原廠售價便宜 ${discount}%。近期供給量穩定，建議買家從均價再低 3-5% 開始出價，9成新以上品項較容易成交。`,
-        `${selectedProduct.name} ${selectedStorage} 目前行情合理，成交價集中在 $${Math.round(avg*0.95/100)*100} – $${Math.round(avg*1.05/100)*100} 之間。有盒裝且保固內的機子可溢價 5-8%，賣家定價建議不超過 $${Math.round(avg*1.08/100)*100}。`,
-        `市場觀察：${selectedProduct.name} ${selectedStorage} 近期成交筆數正常，價格波動在 ±5% 範圍內。買家可安心在 $${Math.round(avg*0.97/100)*100} 左右入手，超過 $${Math.round(avg*1.1/100)*100} 建議再議價。`,
+        `${selectedProduct.name} ${selectedStorage} 目前行情合理，成交價集中在 $${lowOffer} – $${highOffer} 之間。有盒裝且保固內的機子可溢價 5-8%，賣家定價建議不超過 $${sellerLimit}。`,
+        `市場觀察：${selectedProduct.name} ${selectedStorage} 近期成交筆數正常，價格波動在 ±5% 範圍內。買家可安心在 $${buyerTarget} 左右入手，超過 $${overpayLimit} 建議再議價。`,
       ]
       const randomAnalysis = analyses[Math.floor(Math.random() * analyses.length)]
       setAiAnalysis(randomAnalysis)
@@ -200,10 +215,13 @@ export default function QueryPage() {
   const adjustedReference = selectedProduct && selectedStorage
     ? selectedProduct.marketAvg[selectedStorage]
     : null
+  const marketCeiling = selectedProduct && selectedStorage
+    ? getMarketCeiling(selectedProduct, selectedStorage)
+    : null
   const avgRaw = selectedProduct && selectedStorage
-    ? (liveAvg && !avgLoading
+    ? capToMarketCeiling(liveAvg && !avgLoading
         ? (selectedProduct.marketAdjusted ? Math.max(liveAvg.avg, adjustedReference ?? 0) : liveAvg.avg)
-        : adjustedReference)
+        : adjustedReference, marketCeiling)
     : null
   const avgValue = avgRaw != null ? Math.round(avgRaw / 100) * 100 : null
   const retail = selectedProduct && selectedStorage ? getOfficialPrice(selectedProduct, selectedStorage) : null
@@ -212,7 +230,7 @@ export default function QueryPage() {
   const monthsOld = getMonthsOld(selectedProduct)
   const depreciationTrend = buildDepreciationTrend(selectedProduct, selectedStorage, avgValue)
   const storageBars = buildStorageBars(selectedProduct)
-  const priceBand = getPriceBand(avgValue)
+  const priceBand = getPriceBand(avgValue, marketCeiling)
   const categoryProducts = selectedProduct
     ? APPLE_PRODUCTS.filter(p => p.category === selectedProduct.category)
     : []
