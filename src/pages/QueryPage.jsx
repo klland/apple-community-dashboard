@@ -141,6 +141,26 @@ export default function QueryPage() {
     })
   }, [search, selectedCategory])
 
+  useEffect(() => {
+    if (filtered.length === 0) {
+      setSelectedProduct(null)
+      setSelectedStorage('')
+      setAiAnalysis('')
+      setAiError('')
+      setLiveAvg(null)
+      return
+    }
+
+    if (!selectedProduct || !filtered.some(product => product.id === selectedProduct.id)) {
+      const nextProduct = filtered[0]
+      setSelectedProduct(nextProduct)
+      setSelectedStorage(nextProduct.storages[0])
+      setAiAnalysis('')
+      setAiError('')
+      setLiveAvg(null)
+    }
+  }, [filtered, selectedProduct])
+
   function selectProduct(product) {
     setSelectedProduct(product)
     setSelectedStorage(product.storages[0])
