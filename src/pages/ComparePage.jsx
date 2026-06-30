@@ -10,6 +10,14 @@ function DepreciationBadge({ pct }) {
   )
 }
 
+function getOfficialPrice(product, storage) {
+  return product?.currentOfficialPrice?.[storage] ?? product?.basePrice?.[storage]
+}
+
+function getLaunchPrice(product, storage) {
+  return product?.launchPrice?.[storage] ?? product?.basePrice?.[storage]
+}
+
 export default function ComparePage() {
   const [category, setCategory] = useState('iPhone')
   const [slots, setSlots] = useState([null, null])
@@ -50,7 +58,7 @@ export default function ComparePage() {
 
   function getDepreciation(product, storage) {
     if (!product || !storage) return null
-    const launch = product.launchPrice?.[storage] || product.basePrice[storage]
+    const launch = getLaunchPrice(product, storage)
     const current = product.marketAvg[storage]
     const drop = launch - current
     const pct = Math.round((drop / launch) * 100)
@@ -63,7 +71,8 @@ export default function ComparePage() {
 
   const comparisonRows = [
     { label: '社團均價', getValue: (p, s) => p?.marketAvg[s] ? `$${p.marketAvg[s].toLocaleString()}` : '—', better: 'lower' },
-    { label: '原廠售價', getValue: (p, s) => { const v = p?.launchPrice?.[s] || p?.basePrice[s]; return v ? `$${v.toLocaleString()}` : '—' }, better: 'none' },
+    { label: '官方參考價', getValue: (p, s) => { const v = getOfficialPrice(p, s); return v ? `$${v.toLocaleString()}` : '—' }, better: 'none' },
+    { label: '上市價', getValue: (p, s) => { const v = getLaunchPrice(p, s); return v ? `$${v.toLocaleString()}` : '—' }, better: 'none' },
     { label: '折舊金額（越大越省）', getValue: (_, __, dep) => dep ? `-$${dep.drop.toLocaleString()}` : '—', better: 'higher', useDep: true },
     { label: '折舊幅度（越大越省）', getValue: (_, __, dep) => dep ? `${dep.pct}%` : '—', better: 'higher', useDep: true },
     { label: '上市日期', getValue: (p) => p?.launchDate || '—', better: 'none' },

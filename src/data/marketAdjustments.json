@@ -1,0 +1,126 @@
+{
+  "meta": {
+    "lastUpdated": "2026-06-30",
+    "month": "2026-06",
+    "note": "Visible but conservative Taiwan second-hand market uplift after Apple Taiwan official price increases. Values are rounded to the nearest NT$100."
+  },
+  "marketAvg": {
+    "macbook-pro-14-m5": {
+      "16G/1T": 50400
+    },
+    "macbook-pro-14-m5-pro": {
+      "24G/1T": 67800
+    },
+    "macbook-pro-14-m5-max": {
+      "36G/2T": 107100
+    },
+    "macbook-pro-16-m5-pro": {
+      "24G/1T": 81100
+    },
+    "macbook-pro-16-m5-max": {
+      "36G/2T": 127200
+    },
+    "macbook-air-m5-13": {
+      "16G/512G": 35300
+    },
+    "macbook-air-m5-15": {
+      "16G/512G": 42300
+    },
+    "macbook-air-m4-13": {
+      "16G/256G": 28900
+    },
+    "macbook-air-m4-15": {
+      "16G/256G": 35300
+    },
+    "macbook-air-m3-13": {
+      "8G/256G": 27000
+    },
+    "macbook-air-m3-15": {
+      "8G/256G": 32200
+    },
+    "macbook-pro-16-m4-pro": {
+      "24G/512G": 68300
+    },
+    "macbook-pro-14-m4-pro": {
+      "24G/512G": 58800
+    },
+    "macbook-pro-14-m4": {
+      "16G/512G": 44100
+    },
+    "ipad-air-m3-11": {
+      "128G": 17600,
+      "256G": 20900,
+      "512G": 28100,
+      "1T": 35200
+    },
+    "ipad-air-m3-13": {
+      "128G": 24200,
+      "256G": 27500,
+      "512G": 34700,
+      "1T": 41800
+    },
+    "ipad-11": {
+      "128G": 10600,
+      "256G": 15700,
+      "512G": 21400
+    },
+    "ipad-pro-m4-13": {
+      "256G": 40300,
+      "512G": 47000,
+      "1T": 60500,
+      "2T": 73900
+    },
+    "ipad-pro-m4-11": {
+      "256G": 28000,
+      "512G": 34700,
+      "1T": 48200,
+      "2T": 61600
+    },
+    "ipad-air-m2-13": {
+      "128G": 21400,
+      "256G": 25100,
+      "512G": 32100,
+      "1T": 38500
+    },
+    "ipad-air-m2-11": {
+      "128G": 15000,
+      "256G": 18700,
+      "512G": 25100,
+      "1T": 32100
+    },
+    "ipad-mini-7": {
+      "128G": 14600,
+      "256G": 18400,
+      "512G": 25400
+    },
+    "ipad-10": {
+      "64G": 10500,
+      "256G": 15200
+    },
+    "mac-mini-m4": {
+      "16G/256G": 18500
+    },
+    "mac-mini-m4-pro": {
+      "24G/512G": 29100
+    },
+    "imac-m4": {
+      "16G/256G": 37100
+    },
+    "mac-pro-m4-max": {
+      "36G/512G": 64500
+    },
+    "mac-pro-m3-ultra": {
+      "96G/1T": 131000
+    },
+    "apple-tv-4k-3": {
+      "64G": 3100,
+      "128G": 3900
+    },
+    "homepod-2": {
+      "標準版": 7000
+    },
+    "homepod-mini": {
+      "標準版": 1900
+    }
+  }
+}

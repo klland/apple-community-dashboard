@@ -6,6 +6,10 @@ import SelectOrInput from '../components/SelectOrInput'
 const inputCls = "w-full px-4 py-3 rounded-xl border border-[rgba(0,0,0,0.1)] text-[15px] bg-[#f5f5f7] focus:outline-none focus:border-[#0071e3] focus:bg-white text-[#1d1d1f] transition-all placeholder-[#6e6e73]"
 const labelCls = "text-[13px] font-medium text-[#1d1d1f] block mb-1.5"
 
+function getOfficialPrice(product, storage) {
+  return product?.currentOfficialPrice?.[storage] ?? product?.basePrice?.[storage]
+}
+
 export default function ReportPage() {
   const [form, setForm] = useState({
     productId: '',
@@ -44,7 +48,7 @@ export default function ReportPage() {
   const modelName = isOtherModel ? form.customModel : (selectedProduct?.name ?? '')
   const canSubmit = modelName && form.storage && form.price && form.tradeMethod && (!isOtherModel || form.customModel)
   const selectedOfficialPrice = selectedProduct && form.storage
-    ? (selectedProduct.launchPrice?.[form.storage] || selectedProduct.basePrice[form.storage])
+    ? getOfficialPrice(selectedProduct, form.storage)
     : null
   const selectedReferenceAvg = selectedProduct && form.storage
     ? selectedProduct.marketAvg[form.storage]
@@ -53,10 +57,10 @@ export default function ReportPage() {
   function validatePrice() {
     const price = parseInt(form.price)
     if (!selectedProduct || !form.storage) return null
-    const launch = selectedProduct.launchPrice?.[form.storage] || selectedProduct.basePrice[form.storage]
-    if (!launch) return null
-    if (price > launch * 1.2) return `價格偏高（超過官方售價 $${launch.toLocaleString()} 的 120%），請確認是否正確`
-    if (price < launch * 0.3) return `價格偏低（低於官方售價 $${launch.toLocaleString()} 的 30%），請確認是否正確`
+    const official = getOfficialPrice(selectedProduct, form.storage)
+    if (!official) return null
+    if (price > official * 1.2) return `價格偏高（超過官方售價 $${official.toLocaleString()} 的 120%），請確認是否正確`
+    if (price < official * 0.3) return `價格偏低（低於官方售價 $${official.toLocaleString()} 的 30%），請確認是否正確`
     return null
   }
 

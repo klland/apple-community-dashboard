@@ -1,3 +1,5 @@
+import marketAdjustments from './marketAdjustments.json'
+
 // Apple 產品完整資料庫
 export const APPLE_PRODUCTS = [
   // ==================== 2026 新品 ====================
@@ -10,7 +12,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2026-03-11',
     launchPrice: { '256G': 21900, '512G': 28900 },
     basePrice: { '256G': 21900, '512G': 28900 },
-    marketAvg: { '256G': 19500, '512G': 26000 },
+    marketAvg: { '256G': 19400, '512G': 26000 },
     tradeInPrice: null,
   },
   {
@@ -36,7 +38,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2025-09-19',
     launchPrice: { '256G': 44900, '512G': 51900, '1T': 58900, '2T': 72900 },
     basePrice: { '256G': 44900, '512G': 51900, '1T': 58900, '2T': 72900 },
-    marketAvg: { '256G': 38000, '512G': 44000, '1T': 50000, '2T': 62000 },
+    marketAvg: { '256G': 34800, '512G': 41800, '1T': 48800, '2T': 62000 },
     tradeInPrice: null,
   },
   {
@@ -48,7 +50,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2025-09-19',
     launchPrice: { '256G': 39900, '512G': 46900, '1T': 53900 },
     basePrice: { '256G': 39900, '512G': 46900, '1T': 53900 },
-    marketAvg: { '256G': 34000, '512G': 40000, '1T': 46000 },
+    marketAvg: { '256G': 31300, '512G': 38300, '1T': 45300 },
     tradeInPrice: null,
   },
   {
@@ -60,7 +62,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2025-09-19',
     launchPrice: { '256G': 36900, '512G': 43900, '1T': 50900 },
     basePrice: { '256G': 36900, '512G': 43900, '1T': 50900 },
-    marketAvg: { '256G': 31000, '512G': 37000, '1T': 43000 },
+    marketAvg: { '256G': 30600, '512G': 37000, '1T': 43000 },
     tradeInPrice: null,
   },
   {
@@ -72,7 +74,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2025-09-19',
     launchPrice: { '256G': 29900, '512G': 36900 },
     basePrice: { '256G': 29900, '512G': 36900 },
-    marketAvg: { '256G': 25000, '512G': 31000 },
+    marketAvg: { '256G': 23700, '512G': 30700 },
     tradeInPrice: null,
   },
 
@@ -575,6 +577,54 @@ export const APPLE_PRODUCTS = [
     marketAvg: { '16G/512G': 39500 },
     tradeInPrice: 10700,
   },
+  {
+    id: 'ipad-pro-m5-13',
+    name: 'iPad Pro 13吋 M5',
+    category: 'iPad',
+    storages: ['256G', '512G', '1T', '2T'],
+    colors: ['銀色', '太空黑色'],
+    launchDate: '2026-05-13',
+    launchPrice: { '256G': 50900, '512G': 57900, '1T': 71900, '2T': 89400 },
+    basePrice: { '256G': 50900, '512G': 57900, '1T': 71900, '2T': 89400 },
+    marketAvg: { '256G': 47500, '512G': 54000, '1T': 67000, '2T': 83500 },
+    tradeInPrice: null,
+  },
+  {
+    id: 'ipad-pro-m5-11',
+    name: 'iPad Pro 11吋 M5',
+    category: 'iPad',
+    storages: ['256G', '512G', '1T', '2T'],
+    colors: ['銀色', '太空黑色'],
+    launchDate: '2026-05-13',
+    launchPrice: { '256G': 39900, '512G': 46900, '1T': 60900, '2T': 78400 },
+    basePrice: { '256G': 39900, '512G': 46900, '1T': 60900, '2T': 78400 },
+    marketAvg: { '256G': 37400, '512G': 44000, '1T': 57000, '2T': 73500 },
+    tradeInPrice: null,
+  },
+  {
+    id: 'ipad-air-m4-13',
+    name: 'iPad Air 13吋 M4',
+    category: 'iPad',
+    storages: ['128G', '256G', '512G', '1T'],
+    colors: ['太空灰色', '藍色', '紫色', '星光色'],
+    launchDate: '2026-05-13',
+    launchPrice: { '128G': 31900, '256G': 35400, '512G': 42400, '1T': 52900 },
+    basePrice: { '128G': 31900, '256G': 35400, '512G': 42400, '1T': 52900 },
+    marketAvg: { '128G': 26500, '256G': 29500, '512G': 35300, '1T': 44000 },
+    tradeInPrice: null,
+  },
+  {
+    id: 'ipad-air-m4-11',
+    name: 'iPad Air 11吋 M4',
+    category: 'iPad',
+    storages: ['128G', '256G', '512G', '1T'],
+    colors: ['太空灰色', '藍色', '紫色', '星光色'],
+    launchDate: '2026-05-13',
+    launchPrice: { '128G': 24900, '256G': 28400, '512G': 35400, '1T': 45900 },
+    basePrice: { '128G': 24900, '256G': 28400, '512G': 35400, '1T': 45900 },
+    marketAvg: { '128G': 20500, '256G': 23500, '512G': 29500, '1T': 38200 },
+    tradeInPrice: null,
+  },
 
   // ==================== 2025 新品 ====================
   {
@@ -610,7 +660,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2025-03-04',
     launchPrice: { '128G': 19900, '256G': 23400, '512G': 30400, '1T': 37400 },
     basePrice: { '128G': 19900, '256G': 23400, '512G': 30400, '1T': 37400 },
-    marketAvg: { '128G': 18000, '256G': 21500, '512G': 28500, '1T': 36000 },
+    marketAvg: { '128G': 16000, '256G': 19000, '512G': 25500, '1T': 32000 },
     tradeInPrice: 23900,
   },
   {
@@ -634,7 +684,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2025-03-04',
     launchPrice: { '128G': 26900, '256G': 30400, '512G': 37400, '1T': 44400 },
     basePrice: { '128G': 26900, '256G': 30400, '512G': 37400, '1T': 44400 },
-    marketAvg: { '128G': 26000, '256G': 29500, '512G': 37000, '1T': 44000 },
+    marketAvg: { '128G': 22000, '256G': 25000, '512G': 31500, '1T': 38000 },
     tradeInPrice: 23900,
   },
   {
@@ -844,7 +894,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2024-05-07',
     launchPrice: { '128G': 26900, '256G': 30400, '512G': 37400, '1T': 44400 },
     basePrice: { '128G': 26900, '256G': 30400, '512G': 37400, '1T': 44400 },
-    marketAvg: { '128G': 23000, '256G': 27000, '512G': 34000, '1T': 41000 },
+    marketAvg: { '128G': 20000, '256G': 23500, '512G': 30000, '1T': 36000 },
     tradeInPrice: 23900,
   },
   {
@@ -856,7 +906,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2024-05-07',
     launchPrice: { '128G': 19900, '256G': 23400, '512G': 30400, '1T': 37400 },
     basePrice: { '128G': 19900, '256G': 23400, '512G': 30400, '1T': 37400 },
-    marketAvg: { '128G': 16000, '256G': 20000, '512G': 27000, '1T': 34000 },
+    marketAvg: { '128G': 14000, '256G': 17500, '512G': 23500, '1T': 30000 },
     tradeInPrice: 23900,
   },
   {
@@ -1182,18 +1232,6 @@ export const APPLE_PRODUCTS = [
 
   // ==================== Mac ====================
   {
-    id: 'mac-pro-m4-pro',
-    name: 'Mac Studio M4 Pro',
-    category: 'Mac',
-    storages: ['24G/512G'],
-    colors: ['銀色'],
-    launchDate: '2025-05-07',
-    launchPrice: { '24G/512G': 46900 },
-    basePrice: { '24G/512G': 46900 },
-    marketAvg: { '24G/512G': 42000 },
-    tradeInPrice: 37400,
-  },
-  {
     id: 'mac-pro-m4-max',
     name: 'Mac Studio M4 Max',
     category: 'Mac',
@@ -1292,6 +1330,101 @@ export const APPLE_PRODUCTS = [
     tradeInPrice: null,
   },
 ]
+
+const currentOfficialPriceOverrides = {
+  'macbook-pro-14-m5': { '16G/1T': 64900 },
+  'macbook-pro-14-m5-pro': { '24G/1T': 84900 },
+  'macbook-pro-14-m5-max': { '36G/2T': 160900 },
+  'macbook-pro-16-m5-pro': { '24G/1T': 99900 },
+  'macbook-pro-16-m5-max': { '36G/2T': 169900 },
+  'macbook-air-m5-13': { '16G/512G': 42900 },
+  'macbook-air-m5-15': { '16G/512G': 49900 },
+  'ipad-11': { '128G': 14900, '256G': 18400, '512G': 25400 },
+  'ipad-mini-7': { '128G': 19900, '256G': 23400, '512G': 30400 },
+  'ipad-pro-m4-13': { '256G': 50900, '512G': 57900, '1T': 71900, '2T': 89400 },
+  'ipad-pro-m4-11': { '256G': 39900, '512G': 46900, '1T': 60900, '2T': 78400 },
+  'ipad-air-m3-13': { '128G': 31900, '256G': 35400, '512G': 42400, '1T': 52900 },
+  'ipad-air-m3-11': { '128G': 24900, '256G': 28400, '512G': 35400, '1T': 45900 },
+  'ipad-air-m2-13': { '128G': 31900, '256G': 35400, '512G': 42400, '1T': 52900 },
+  'ipad-air-m2-11': { '128G': 24900, '256G': 28400, '512G': 35400, '1T': 45900 },
+  'mac-mini-m4': { '16G/256G': 26900 },
+  'mac-mini-m4-pro': { '24G/512G': 54900 },
+  'imac-m4': { '16G/256G': 49900 },
+  'mac-pro-m4-max': { '36G/512G': 84900 },
+  'mac-pro-m3-ultra': { '96G/1T': 184900 },
+  'apple-tv-4k-3': { '64G': 6900, '128G': 8500 },
+  'homepod-2': { '標準版': 10990 },
+  'homepod-mini': { '標準版': 3990 },
+}
+
+for (const product of APPLE_PRODUCTS) {
+  product.currentOfficialPrice = {
+    ...product.basePrice,
+    ...(currentOfficialPriceOverrides[product.id] || {}),
+  }
+  product.officialPriceIncreased = product.storages.some(storage => {
+    const launch = product.launchPrice?.[storage] ?? product.basePrice?.[storage]
+    const currentOfficial = product.currentOfficialPrice?.[storage]
+    return launch != null && currentOfficial != null && currentOfficial > launch
+  })
+}
+
+const marketAvgOverrides = marketAdjustments?.marketAvg || {}
+for (const product of APPLE_PRODUCTS) {
+  const override = marketAvgOverrides[product.id]
+  if (!override) continue
+  product.marketAvg = { ...product.marketAvg, ...override }
+  product.marketAdjusted = true
+}
+
+const MARKET_REFERENCE_DATE = new Date('2026-06-30T00:00:00+08:00')
+
+function monthsSinceLaunch(launchDate) {
+  const launched = new Date(`${launchDate}T00:00:00+08:00`)
+  if (Number.isNaN(launched.getTime())) return 0
+  return Math.max(0, (MARKET_REFERENCE_DATE - launched) / (1000 * 60 * 60 * 24 * 30.4375))
+}
+
+function firstYearIphoneDrop(productName) {
+  if (productName.includes('Pro Max')) return 13000
+  if (productName.includes('Pro')) return 11000
+  return 8000
+}
+
+function cumulativeIphoneDrop(monthsOld, firstYearDrop) {
+  const yearlyFactors = [1, 0.55, 0.35, 0.22, 0.14, 0.1]
+  let remainingMonths = monthsOld
+  let drop = 0
+
+  for (const factor of yearlyFactors) {
+    if (remainingMonths <= 0) break
+    const monthsInYear = Math.min(12, remainingMonths)
+    drop += firstYearDrop * factor * (monthsInYear / 12)
+    remainingMonths -= monthsInYear
+  }
+
+  if (remainingMonths > 0) {
+    drop += firstYearDrop * 0.08 * (remainingMonths / 12)
+  }
+
+  return drop
+}
+
+for (const product of APPLE_PRODUCTS) {
+  if (product.category !== 'iPhone' || !product.launchDate) continue
+
+  const monthsOld = monthsSinceLaunch(product.launchDate)
+  const expectedDrop = cumulativeIphoneDrop(monthsOld, firstYearIphoneDrop(product.name))
+
+  for (const storage of product.storages) {
+    const launch = product.launchPrice?.[storage] ?? product.basePrice?.[storage]
+    const current = product.marketAvg?.[storage]
+    if (!launch || !current) continue
+
+    const inferred = Math.round(Math.max(0, launch - expectedDrop) / 100) * 100
+    product.marketAvg[storage] = Math.min(current, inferred)
+  }
+}
 
 // 類別列表
 export const CATEGORIES = ['全部', 'iPhone', 'MacBook', 'iPad', 'Apple Watch', 'AirPods', 'Mac', '其他']

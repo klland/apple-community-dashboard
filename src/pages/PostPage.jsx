@@ -6,6 +6,10 @@ import SelectOrInput from '../components/SelectOrInput'
 const inputCls = "w-full px-4 py-3 rounded-xl border border-[rgba(0,0,0,0.1)] text-[15px] bg-[#f5f5f7] focus:outline-none focus:border-[#0071e3] focus:bg-white text-[#1d1d1f] transition-all placeholder-[#6e6e73]"
 const labelCls = "text-[13px] font-medium text-[#1d1d1f] block mb-1.5"
 
+function getOfficialPrice(product, storage) {
+  return product?.currentOfficialPrice?.[storage] ?? product?.basePrice?.[storage]
+}
+
 function QuickTemplate({ label, text }) {
   const [copied, setCopied] = useState(false)
   function copy() {
@@ -59,7 +63,7 @@ export default function PostPage() {
   const modelName = isOtherModel ? form.customModel : (selectedProduct?.name ?? '')
   const canGenerate = modelName && form.storage && !loading
   const selectedOfficialPrice = selectedProduct && form.storage
-    ? selectedProduct.basePrice[form.storage]
+    ? getOfficialPrice(selectedProduct, form.storage)
     : null
   const selectedReferenceAvg = selectedProduct && form.storage
     ? selectedProduct.marketAvg[form.storage]

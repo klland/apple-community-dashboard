@@ -19,6 +19,14 @@ function formatMoney(value) {
   return value == null ? '—' : `$${value.toLocaleString()}`
 }
 
+function getOfficialPrice(product, storage) {
+  return product?.currentOfficialPrice?.[storage] ?? product?.basePrice?.[storage]
+}
+
+function getLaunchPrice(product, storage) {
+  return product?.launchPrice?.[storage] ?? product?.basePrice?.[storage]
+}
+
 function ProductCategoryIcon({ category, ...props }) {
   switch (category) {
     case 'iPhone': return <Smartphone {...props} />
@@ -38,17 +46,45 @@ function getMonthsOld(product) {
 
 function buildDepreciationTrend(product, storage, currentValue) {
   if (!product || !storage) return []
-  const launch = product.launchPrice?.[storage] || product.basePrice[storage]
+  const launch = getLaunchPrice(product, storage)
   const current = currentValue ?? product.marketAvg[storage]
   if (!launch || !current) return []
 
   const monthsOld = Math.max(getMonthsOld(product) ?? 1, 1)
-  const points = [0, 0.2, 0.4, 0.6, 0.8, 1]
-  return points.map((pct, idx) => {
-    const value = Math.round((launch - (launch - current) * Math.pow(pct, 0.72)) / 100) * 100
+  if (!product.marketAdjusted) {
+    const points = [0, 0.2, 0.4, 0.6, 0.8, 1]
+    return points.map((pct, idx) => {
+      const value = Math.round((launch - (launch - current) * Math.pow(pct, 0.72)) / 100) * 100
+      return {
+        label: idx === 0 ? '上市' : idx === points.length - 1 ? '現在' : `${Math.round(monthsOld * pct)}月`,
+        price: value,
+      }
+    })
+  }
+
+  const preIncreaseLow = Math.round((current * 0.92) / 100) * 100
+  const points = [
+    { pct: 0, label: '上市', phase: 'decline' },
+    { pct: 0.25, phase: 'decline' },
+    { pct: 0.5, phase: 'decline' },
+    { pct: 0.75, phase: 'decline' },
+    { pct: 0.92, label: '幾天前', phase: 'low' },
+    { pct: 1, label: '現在', phase: 'rebound' },
+  ]
+  return points.map(point => {
+    let value
+    if (point.phase === 'rebound') {
+      value = current
+    } else if (point.phase === 'low') {
+      value = preIncreaseLow
+    } else {
+      const declinePct = point.pct / 0.92
+      value = launch - (launch - preIncreaseLow) * Math.pow(declinePct, 0.72)
+    }
+    const roundedValue = Math.round(value / 100) * 100
     return {
-      label: idx === 0 ? '上市' : idx === points.length - 1 ? '現在' : `${Math.round(monthsOld * pct)}月`,
-      price: value,
+      label: point.label ?? `${Math.round(monthsOld * point.pct)}月`,
+      price: roundedValue,
     }
   })
 }
@@ -58,7 +94,7 @@ function buildStorageBars(product) {
   return product.storages.map(storage => ({
     storage,
     market: product.marketAvg[storage],
-    retail: product.basePrice[storage],
+    retail: getOfficialPrice(product, storage),
   })).filter(row => row.market && row.retail)
 }
 
@@ -144,7 +180,7 @@ export default function QueryPage() {
 
     setTimeout(() => {
       const avg = avgValue
-      const retail = selectedProduct.basePrice[selectedStorage]
+      const retail = getOfficialPrice(selectedProduct, selectedStorage)
       const discount = Math.round((1 - avg / retail) * 100)
 
       const analyses = [
@@ -158,12 +194,19 @@ export default function QueryPage() {
     }, 800)
   }
 
-  // loading 中沿用 mockData，載入完才切換（避免數字閃跳）
+  // loading 中沿用 mockData，載入完才切換（避免數字閃跳）。
+  // If recent live transactions lag behind a broad official-price adjustment, keep the adjusted
+  // reference price as the floor so the page reflects current replacement-cost pressure.
+  const adjustedReference = selectedProduct && selectedStorage
+    ? selectedProduct.marketAvg[selectedStorage]
+    : null
   const avgRaw = selectedProduct && selectedStorage
-    ? (liveAvg && !avgLoading ? liveAvg.avg : selectedProduct.marketAvg[selectedStorage])
+    ? (liveAvg && !avgLoading
+        ? (selectedProduct.marketAdjusted ? Math.max(liveAvg.avg, adjustedReference ?? 0) : liveAvg.avg)
+        : adjustedReference)
     : null
   const avgValue = avgRaw != null ? Math.round(avgRaw / 100) * 100 : null
-  const retail = selectedProduct && selectedStorage ? selectedProduct.basePrice[selectedStorage] : null
+  const retail = selectedProduct && selectedStorage ? getOfficialPrice(selectedProduct, selectedStorage) : null
   const discount = avgValue && retail ? Math.round((1 - avgValue / retail) * 100) : null
   const isLiveMarketPrice = Boolean(liveAvg && !avgLoading)
   const monthsOld = getMonthsOld(selectedProduct)
@@ -359,7 +402,7 @@ export default function QueryPage() {
                     <div className="flex items-center justify-between mb-4">
                       <div>
                         <p className="text-[11px] font-semibold text-[#6e6e73] uppercase tracking-wider">容量價差</p>
-                        <p className="text-[13px] text-[#6e6e73] mt-1">原廠售價 vs 參考均價</p>
+                        <p className="text-[13px] text-[#6e6e73] mt-1">官方參考價 vs 參考均價</p>
                       </div>
                       <Activity size={18} className="text-[#0071e3]" />
                     </div>
@@ -421,15 +464,15 @@ export default function QueryPage() {
                         </p>
                       </div>
                       <div>
-                        <p className="text-[11px] text-[#6e6e73] mb-1">原廠售價</p>
+                        <p className="text-[11px] text-[#6e6e73] mb-1">官方參考價</p>
                         <p className="font-semibold text-[#1d1d1f] text-[14px]">
-                          ${(selectedProduct.launchPrice?.[selectedStorage] || selectedProduct.basePrice[selectedStorage])?.toLocaleString()}
+                          {formatMoney(getOfficialPrice(selectedProduct, selectedStorage))}
                         </p>
                       </div>
                       <div>
                         <p className="text-[11px] text-[#6e6e73] mb-1">目前折舊</p>
                         {(() => {
-                          const launch = selectedProduct.launchPrice?.[selectedStorage] || selectedProduct.basePrice[selectedStorage]
+                          const launch = getLaunchPrice(selectedProduct, selectedStorage)
                           const current = avgValue ?? selectedProduct.marketAvg[selectedStorage]
                           const drop = launch - current
                           const dropPct = Math.round((drop / launch) * 100)
