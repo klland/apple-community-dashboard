@@ -135,6 +135,61 @@ function getProductVariantGroup(product) {
       return {
         key: `macbook-pro-${macBookProMatch[1]}`,
         name: `MacBook Pro ${macBookProMatch[1]}`,
+        kind: 'macbook-pro',
+      }
+    }
+
+    const macBookAirMatch = product.name.match(/^MacBook Air (13吋|15吋)/)
+    if (macBookAirMatch) {
+      return {
+        key: `macbook-air-${macBookAirMatch[1]}`,
+        name: `MacBook Air ${macBookAirMatch[1]}`,
+        kind: 'macbook-air',
+      }
+    }
+
+    if (product.name === 'MacBook Air M1') {
+      return {
+        key: 'macbook-air-13吋',
+        name: 'MacBook Air 13吋',
+        kind: 'macbook-air',
+      }
+    }
+  }
+
+  if (product?.category === 'iPad') {
+    const iPadAirMatch = product.name.match(/^iPad Air (11吋|13吋)/)
+    if (iPadAirMatch) {
+      return {
+        key: `ipad-air-${iPadAirMatch[1]}`,
+        name: `iPad Air ${iPadAirMatch[1]}`,
+        kind: 'ipad-air',
+      }
+    }
+
+    const iPadProMatch = product.name.match(/^iPad Pro (11吋|13吋|12\.9吋)/)
+    if (iPadProMatch) {
+      const isLarge = iPadProMatch[1] === '13吋' || iPadProMatch[1] === '12.9吋'
+      return {
+        key: isLarge ? 'ipad-pro-large' : 'ipad-pro-11吋',
+        name: isLarge ? 'iPad Pro 13吋 / 12.9吋' : 'iPad Pro 11吋',
+        kind: 'ipad-pro',
+      }
+    }
+
+    if (product.name.startsWith('iPad mini ')) {
+      return {
+        key: 'ipad-mini',
+        name: 'iPad mini',
+        kind: 'ipad-mini',
+      }
+    }
+
+    if (/^iPad 第\d+代/.test(product.name)) {
+      return {
+        key: 'ipad',
+        name: 'iPad',
+        kind: 'ipad',
       }
     }
   }
@@ -144,12 +199,40 @@ function getProductVariantGroup(product) {
       return {
         key: 'mac-mini',
         name: 'Mac mini',
+        kind: 'mac',
       }
     }
     if (product.name.startsWith('Mac Studio ')) {
       return {
         key: 'mac-studio',
         name: 'Mac Studio',
+        kind: 'mac',
+      }
+    }
+  }
+
+  if (product?.category === 'Apple Watch') {
+    if (product.name.startsWith('Apple Watch Ultra')) {
+      return {
+        key: 'apple-watch-ultra',
+        name: 'Apple Watch Ultra',
+        kind: 'watch-ultra',
+      }
+    }
+
+    if (product.name.startsWith('Apple Watch Series ')) {
+      return {
+        key: 'apple-watch-series',
+        name: 'Apple Watch Series',
+        kind: 'watch-series',
+      }
+    }
+
+    if (product.name.startsWith('Apple Watch SE')) {
+      return {
+        key: 'apple-watch-se',
+        name: 'Apple Watch SE',
+        kind: 'watch-se',
       }
     }
   }
@@ -160,6 +243,31 @@ function getProductVariantGroup(product) {
 function getVariantLabel(product) {
   const group = getProductVariantGroup(product)
   if (!group) return product?.name ?? ''
+  if (group.kind === 'macbook-air') {
+    if (product.name === 'MacBook Air M1') return 'M1'
+    return product.name.replace(/^MacBook Air (13吋|15吋) /, '')
+  }
+  if (group.kind === 'ipad-air') {
+    return product.name.replace(/^iPad Air (11吋|13吋) /, '')
+  }
+  if (group.kind === 'ipad-pro') {
+    return product.name.replace(/^iPad Pro (11吋|13吋|12\.9吋) /, '')
+  }
+  if (group.kind === 'ipad-mini') {
+    return product.name.replace('iPad mini ', '')
+  }
+  if (group.kind === 'ipad') {
+    return product.name.replace('iPad ', '')
+  }
+  if (group.kind === 'watch-ultra') {
+    return product.name.replace('Apple Watch ', '')
+  }
+  if (group.kind === 'watch-series') {
+    return product.name.replace('Apple Watch ', '')
+  }
+  if (group.kind === 'watch-se') {
+    return product.name.replace('Apple Watch SE ', '') || 'SE'
+  }
   return product.name.replace(`${group.name} `, '')
 }
 
