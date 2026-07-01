@@ -1,0 +1,11 @@
+{
+  "meta": {
+    "source": "replace with your exported marketplace/supabase aggregation",
+    "updatedAt": "2026-04-24"
+  },
+  "products": {
+    "iphone-16": {
+      "128G": { "median": 16800, "count": 42, "updatedAt": "2026-04-20" }
+    }
+  }
+}

@@ -1,29 +1,220 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import {
+  Activity,
+  AlertTriangle,
+  BarChart3,
+  CheckCircle2,
+  Clock,
+  Database,
+  Filter,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  Trash2,
+  XCircle,
+} from 'lucide-react'
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 import { supabase, getReports, updateReportStatus, deleteReport } from '../lib/supabase'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
+import { APPLE_PRODUCTS } from '../data/mockData'
+import marketAdjustments from '../data/marketAdjustments.json'
 
 const ADMIN_KEY = 'klland'
+const PRICE_ANOMALY_THRESHOLD = 0.3
+const DATA_QUALITY_MIN_SAMPLE = 3
+const DELETED_TRANSACTION_IDS_KEY = 'admin_deleted_transaction_ids'
+const BLOCKED_TRANSACTION_IDS = new Set([
+  'c89af0d6-6d7e-4d46-85bf-3dd5b9e58e15',
+])
+const BLOCKED_TRANSACTION_FINGERPRINTS = new Set([
+  'iPhone 13|128G|6|post|2026-06-02T14:01:50.4376+00:00',
+])
+const DATE_RANGE_OPTIONS = [
+  { value: '30', label: '30 天' },
+  { value: '90', label: '90 天' },
+  { value: 'all', label: '全部' },
+]
 
-function StatCard({ title, value, sub }) {
+function readDeletedTransactionIds() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(DELETED_TRANSACTION_IDS_KEY) || '[]').map(String))
+  } catch {
+    return new Set()
+  }
+}
+
+function rememberDeletedTransactionId(id) {
+  const ids = readDeletedTransactionIds()
+  ids.add(String(id))
+  localStorage.setItem(DELETED_TRANSACTION_IDS_KEY, JSON.stringify([...ids]))
+}
+
+function transactionFingerprint(row) {
+  return `${row.model || ''}|${row.storage || ''}|${row.price ?? ''}|${row.source || ''}|${row.created_at || ''}`
+}
+
+function isDeletedTransaction(row, deletedIds) {
+  const id = String(row.id)
+  return deletedIds.has(id)
+    || BLOCKED_TRANSACTION_IDS.has(id)
+    || BLOCKED_TRANSACTION_FINGERPRINTS.has(transactionFingerprint(row))
+}
+
+function formatMoney(value) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return '-'
+  return `NT$${Math.round(Number(value)).toLocaleString('zh-TW')}`
+}
+
+function formatDateTime(value) {
+  if (!value) return '-'
+  return new Date(value).toLocaleString('zh-TW', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function dateKey(value) {
+  if (!value) return ''
+  return new Date(value).toISOString().split('T')[0]
+}
+
+function average(values) {
+  if (!values.length) return null
+  return Math.round(values.reduce((sum, value) => sum + Number(value), 0) / values.length)
+}
+
+function withinDays(value, days) {
+  if (!value || days === 'all') return true
+  const since = new Date()
+  since.setDate(since.getDate() - Number(days))
+  return new Date(value) >= since
+}
+
+function getProductCategory(model) {
+  return APPLE_PRODUCTS.find(product => product.name === model)?.category || '未分類'
+}
+
+function Card({ children, className = '' }) {
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-      <p className="text-xs text-gray-400 mb-1">{title}</p>
-      <p className="text-3xl font-bold text-gray-900">{value}</p>
-      {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
+    <section className={`rounded-lg border border-[#e5e5ea] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)] ${className}`}>
+      {children}
+    </section>
+  )
+}
+
+function SectionHeader({ icon: Icon, title, subtitle, action }) {
+  return (
+    <div className="flex flex-col gap-3 border-b border-[#f2f2f7] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 items-center gap-2.5">
+        {Icon && <Icon size={17} className="shrink-0 text-[#0071e3]" aria-hidden="true" />}
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold text-[#1d1d1f]">{title}</h2>
+          {subtitle && <p className="mt-0.5 text-xs text-[#6e6e73]">{subtitle}</p>}
+        </div>
+      </div>
+      {action}
     </div>
   )
 }
 
-function BarRow({ label, count, max, color = 'bg-gray-900' }) {
+function EmptyState({ title, description }) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-sm text-gray-700 w-36 truncate shrink-0">{label}</span>
-      <div className="flex-1 bg-gray-100 rounded-full h-2">
-        <div className={`${color} h-2 rounded-full transition-all`}
-          style={{ width: `${(count / max) * 100}%` }} />
+    <div role="status" className="flex min-h-[180px] flex-col items-center justify-center px-4 py-10 text-center">
+      <Database size={24} className="mb-3 text-[#86868b]" aria-hidden="true" />
+      <p className="text-sm font-medium text-[#1d1d1f]">{title}</p>
+      {description && <p className="mt-1 max-w-sm text-xs leading-5 text-[#6e6e73]">{description}</p>}
+    </div>
+  )
+}
+
+function KpiCard({ title, value, sub, tone = 'neutral', icon: Icon }) {
+  const toneClass = {
+    neutral: 'text-[#1d1d1f] bg-[#f5f5f7]',
+    blue: 'text-[#0071e3] bg-[#eef6ff]',
+    green: 'text-[#248a3d] bg-[#effaf2]',
+    red: 'text-[#d70015] bg-[#fff1f0]',
+    orange: 'text-[#b86e00] bg-[#fff7e6]',
+  }[tone]
+
+  return (
+    <Card className="p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-[#6e6e73]">{title}</p>
+          <p className="mt-2 text-2xl font-semibold leading-none text-[#1d1d1f]">{value}</p>
+        </div>
+        {Icon && (
+          <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-md ${toneClass}`}>
+            <Icon size={16} aria-hidden="true" />
+          </span>
+        )}
       </div>
-      <span className="text-xs text-gray-500 w-8 text-right shrink-0">{count}</span>
+      {sub && <p className="mt-3 text-xs leading-5 text-[#86868b]">{sub}</p>}
+    </Card>
+  )
+}
+
+function BarRow({ label, count, max, color = 'bg-[#0071e3]' }) {
+  const width = max ? Math.max(3, Math.round((count / max) * 100)) : 0
+  return (
+    <div className="grid grid-cols-[minmax(92px,1fr)_2fr_44px] items-center gap-3">
+      <span className="truncate text-xs text-[#424245]">{label}</span>
+      <div className="h-2 overflow-hidden rounded-full bg-[#f2f2f7]">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${width}%` }} />
+      </div>
+      <span className="text-right text-xs tabular-nums text-[#6e6e73]">{count}</span>
+    </div>
+  )
+}
+
+function Pill({ children, tone = 'neutral' }) {
+  const toneClass = {
+    neutral: 'border-[#e5e5ea] bg-[#f5f5f7] text-[#424245]',
+    blue: 'border-[#d6eaff] bg-[#eef6ff] text-[#0066cc]',
+    green: 'border-[#d7f0dd] bg-[#effaf2] text-[#248a3d]',
+    red: 'border-[#ffd6d2] bg-[#fff1f0] text-[#d70015]',
+    orange: 'border-[#ffe1a8] bg-[#fff7e6] text-[#b86e00]',
+  }[tone]
+  return (
+    <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${toneClass}`}>
+      {children}
+    </span>
+  )
+}
+
+function Field({ label, children }) {
+  return (
+    <label className="min-w-0">
+      <span className="mb-1 block text-[11px] font-medium text-[#6e6e73]">{label}</span>
+      {children}
+    </label>
+  )
+}
+
+function inputClass(extra = '') {
+  return `h-9 w-full rounded-md border border-[#d2d2d7] bg-white px-3 text-xs text-[#1d1d1f] outline-none transition focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/15 ${extra}`
+}
+
+function AdminTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null
+  const row = payload[0]?.payload
+  return (
+    <div className="rounded-lg border border-[#e5e5ea] bg-white px-3 py-2 text-xs shadow-lg">
+      <p className="font-semibold text-[#1d1d1f]">{row?.fullLabel || label}</p>
+      <p className="mt-1 text-[#0071e3]">均價：{formatMoney(row?.avg)}</p>
+      <p className="text-[#6e6e73]">筆數：{row?.count ?? 0}</p>
     </div>
   )
 }
@@ -35,10 +226,19 @@ export default function AdminPage() {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(null)
-  const [tableSearch, setTableSearch] = useState('')
   const [chartModel, setChartModel] = useState('')
+  const [chartRange, setChartRange] = useState('90')
   const [reports, setReports] = useState([])
   const [reportsLoading, setReportsLoading] = useState(false)
+  const [filters, setFilters] = useState({
+    search: '',
+    storage: '',
+    source: '',
+    minPrice: '',
+    maxPrice: '',
+    fromDate: '',
+    toDate: '',
+  })
 
   async function fetchReports() {
     setReportsLoading(true)
@@ -59,7 +259,6 @@ export default function AdminPage() {
 
   async function fetchData() {
     setLoading(true)
-    // Supabase 預設 limit 1000，分頁撈全部
     let all = []
     let from = 0
     const PAGE = 1000
@@ -75,7 +274,8 @@ export default function AdminPage() {
       if (page.length < PAGE) break
       from += PAGE
     }
-    setData(all)
+    const deletedIds = readDeletedTransactionIds()
+    setData(all.filter(row => !isDeletedTransaction(row, deletedIds)))
     setLoading(false)
   }
 
@@ -86,9 +286,8 @@ export default function AdminPage() {
     if (params.get('key') === ADMIN_KEY) {
       const id = setTimeout(() => setAuthed(true), 0)
       return () => clearTimeout(id)
-    } else {
-      navigate('/', { replace: true })
     }
+    navigate('/', { replace: true })
   }, [location.search, navigate])
 
   useEffect(() => {
@@ -103,12 +302,25 @@ export default function AdminPage() {
   async function deleteRow(id) {
     if (!window.confirm('確定刪除這筆資料？')) return
     setDeleting(id)
-    const { error } = await supabase.from('transactions').delete().eq('id', id)
-    if (!error) setData(prev => prev.filter(r => r.id !== id))
+    const { data: deletedRows, error } = await supabase
+      .from('transactions')
+      .delete()
+      .eq('id', id)
+      .select('id')
+    rememberDeletedTransactionId(id)
+    setData(prev => prev.filter(r => r.id !== id))
+    if (error) {
+      window.alert(`資料庫刪除失敗，已先從後台隱藏這筆資料：${error.message}`)
+    } else if (!deletedRows?.length) {
+      window.alert('資料庫沒有回傳已刪除資料，已先從後台隱藏這筆資料。若其他裝置仍看得到，請檢查 Supabase delete 權限。')
+    }
     setDeleting(null)
   }
 
-  // 可選型號列表（有資料的，依筆數排序，附最早日期）
+  function updateFilter(key, value) {
+    setFilters(prev => ({ ...prev, [key]: value }))
+  }
+
   const modelOptions = useMemo(() => {
     const counts = {}
     const earliest = {}
@@ -119,417 +331,509 @@ export default function AdminPage() {
     }
     return Object.entries(counts)
       .sort((a, b) => b[1] - a[1])
-      .map(([m]) => ({ model: m, since: earliest[m]?.slice(0, 7) }))
+      .map(([model, count]) => ({ model, count, since: earliest[model]?.slice(0, 7) }))
   }, [data])
 
-  // 折線圖資料：從最早有資料的月份起算到現在
-  const chartData = useMemo(() => {
-    if (!chartModel) return []
-    const now = new Date()
-    // 找該型號最早一筆資料的月份
-    const modelRows = data.filter(r => r.model === chartModel && r.price && r.created_at)
-    if (modelRows.length === 0) return []
-    const minDate = modelRows.reduce((a, r) => r.created_at < a ? r.created_at : a, modelRows[0].created_at)
-    const start = new Date(minDate)
-    start.setDate(1)
-    start.setHours(0, 0, 0, 0)
+  const activeChartModel = chartModel || modelOptions[0]?.model || ''
 
-    const buckets = {}
-    let cursor = new Date(start)
-    while (cursor <= now) {
-      const key = `${cursor.getFullYear()}/${String(cursor.getMonth() + 1).padStart(2, '0')}`
-      buckets[key] = []
-      cursor.setMonth(cursor.getMonth() + 1)
+  const storageOptions = useMemo(() => {
+    return [...new Set(data.map(r => r.storage).filter(Boolean))].sort()
+  }, [data])
+
+  const modelStorageAvg = useMemo(() => {
+    const groups = {}
+    for (const r of data) {
+      if (!r.model || !r.price) continue
+      const key = `${r.model}__${r.storage || ''}`
+      if (!groups[key]) groups[key] = []
+      groups[key].push(Number(r.price))
     }
+    return Object.fromEntries(Object.entries(groups).map(([key, prices]) => [key, average(prices)]))
+  }, [data])
+
+  const enrichedData = useMemo(() => {
+    return data.map(row => {
+      const key = `${row.model}__${row.storage || ''}`
+      const avg = modelStorageAvg[key]
+      const anomaly = Boolean(row.model && row.price && avg && Math.abs(Number(row.price) - avg) / avg > PRICE_ANOMALY_THRESHOLD)
+      return { ...row, category: getProductCategory(row.model), anomaly }
+    })
+  }, [data, modelStorageAvg])
+
+  const filteredData = useMemo(() => {
+    const q = filters.search.trim().toLowerCase()
+    const min = filters.minPrice ? Number(filters.minPrice) : null
+    const max = filters.maxPrice ? Number(filters.maxPrice) : null
+    return enrichedData.filter(r => {
+      if (q && !`${r.model || ''} ${r.storage || ''} ${r.source || ''}`.toLowerCase().includes(q)) return false
+      if (filters.storage && r.storage !== filters.storage) return false
+      if (filters.source && r.source !== filters.source) return false
+      if (min !== null && Number(r.price) < min) return false
+      if (max !== null && Number(r.price) > max) return false
+      if (filters.fromDate && dateKey(r.created_at) < filters.fromDate) return false
+      if (filters.toDate && dateKey(r.created_at) > filters.toDate) return false
+      return true
+    })
+  }, [enrichedData, filters])
+
+  const stats = useMemo(() => {
+    const now = new Date()
+    const todayKey = now.toISOString().split('T')[0]
+    const weekStart = new Date(now)
+    weekStart.setDate(weekStart.getDate() - 7)
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    const prices = data.map(r => Number(r.price)).filter(Boolean)
+    const anomalies = enrichedData.filter(r => r.anomaly).length
+    const pendingReports = reports.filter(r => !r.resolved).length
+    return {
+      total: data.length,
+      today: data.filter(r => r.created_at?.startsWith(todayKey)).length,
+      week: data.filter(r => new Date(r.created_at) >= weekStart).length,
+      month: data.filter(r => new Date(r.created_at) >= monthStart).length,
+      avgPrice: average(prices),
+      anomalies,
+      pendingReports,
+      latest: data[0]?.created_at || null,
+    }
+  }, [data, enrichedData, reports])
+
+  const chartData = useMemo(() => {
+    if (!activeChartModel) return []
+    const modelRows = data
+      .filter(r => r.model === activeChartModel && r.price && r.created_at && withinDays(r.created_at, chartRange))
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+    if (modelRows.length === 0) return []
+
+    const bucketByDay = chartRange !== 'all'
+    const buckets = {}
     for (const r of modelRows) {
       const d = new Date(r.created_at)
-      const key = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}`
-      if (key in buckets) buckets[key].push(r.price)
+      const key = bucketByDay
+        ? d.toISOString().split('T')[0]
+        : `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}`
+      if (!buckets[key]) buckets[key] = []
+      buckets[key].push(Number(r.price))
     }
-    return Object.entries(buckets).map(([ym, prices]) => {
-      const [year, month] = ym.split('/')
-      // 每年一月顯示年份，其他只顯示月份
-      const label = month === '01' ? `${year}\n${month}月` : `${month}月`
+
+    return Object.entries(buckets).map(([key, prices]) => {
+      const label = bucketByDay ? key.slice(5) : key
       return {
-        ym,
+        key,
         label,
-        avg: prices.length > 0
-          ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length)
-          : null,
+        fullLabel: bucketByDay ? key : `${key} 月`,
+        avg: average(prices),
         count: prices.length,
       }
     })
-  }, [chartModel, data])
+  }, [activeChartModel, chartRange, data])
+
+  const volumeData = useMemo(() => {
+    const buckets = {}
+    for (const r of data.filter(row => withinDays(row.created_at, chartRange))) {
+      const key = dateKey(r.created_at)
+      if (!key) continue
+      buckets[key] = (buckets[key] || 0) + 1
+    }
+    return Object.entries(buckets)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .slice(chartRange === 'all' ? -90 : undefined)
+      .map(([key, count]) => ({ key, label: key.slice(5), count }))
+  }, [data, chartRange])
+
+  const distributions = useMemo(() => {
+    const countBy = (getter, limit = 8) => {
+      const counts = {}
+      for (const r of data) {
+        const key = getter(r)
+        if (!key) continue
+        counts[key] = (counts[key] || 0) + 1
+      }
+      const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, limit)
+      const max = Math.max(...entries.map(([, count]) => count), 1)
+      return { entries, max }
+    }
+    return {
+      source: countBy(r => r.source === 'report' ? '成交回報' : r.source === 'post' ? '貼文產生器' : r.source || '未標記', 4),
+      condition: countBy(r => r.condition, 6),
+      location: countBy(r => r.location?.split(' ')[0], 6),
+    }
+  }, [data])
+
+  const dataHealth = useMemo(() => {
+    const groups = {}
+    for (const r of data) {
+      if (!r.model || !r.storage) continue
+      const key = `${r.model} ${r.storage}`
+      if (!groups[key]) groups[key] = { model: r.model, storage: r.storage, count: 0 }
+      groups[key].count += 1
+    }
+    const lowSample = Object.values(groups)
+      .filter(item => item.count > 0 && item.count < DATA_QUALITY_MIN_SAMPLE)
+      .sort((a, b) => a.count - b.count)
+      .slice(0, 6)
+    const anomalyCount = enrichedData.filter(row => row.anomaly).length
+    const anomalyRate = data.length ? Math.round((anomalyCount / data.length) * 100) : 0
+    const adjustmentMeta = marketAdjustments?.meta || {}
+    const realWeightStatus = adjustmentMeta.lastUpdated
+      ? `月更覆蓋：${adjustmentMeta.lastUpdated}`
+      : '尚未匯入真實加權檔'
+    return { lowSample, anomalyRate, realWeightStatus }
+  }, [data, enrichedData])
 
   if (!authed) return null
 
-  // 統計
-  const total = data.length
-  const today = data.filter(r => r.created_at?.startsWith(new Date().toISOString().split('T')[0])).length
-  const thisWeek = (() => {
-    const d = new Date(); d.setDate(d.getDate() - 7)
-    return data.filter(r => new Date(r.created_at) >= d).length
-  })()
-  const fromReport = data.filter(r => r.source === 'report').length
-  const fromPost = data.filter(r => r.source === 'post').length
-
-  // 各型號均價排行（含上個月比較）
-  const now = new Date()
-  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-
-  const modelPrices = {}
-  const modelPricesLastMonth = {}
-  for (const r of data) {
-    if (!r.model || !r.price) continue
-    const d = new Date(r.created_at)
-    if (d >= thisMonthStart) {
-      if (!modelPrices[r.model]) modelPrices[r.model] = []
-      modelPrices[r.model].push(r.price)
-    } else if (d >= lastMonthStart) {
-      if (!modelPricesLastMonth[r.model]) modelPricesLastMonth[r.model] = []
-      modelPricesLastMonth[r.model].push(r.price)
-    }
-  }
-  // 若本月資料太少，fallback 用全部資料
-  const modelPricesAll = {}
-  for (const r of data) {
-    if (!r.model || !r.price) continue
-    if (!modelPricesAll[r.model]) modelPricesAll[r.model] = []
-    modelPricesAll[r.model].push(r.price)
-  }
-
-  const avgOf = arr => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null
-
-  const modelAvg = Object.entries(modelPricesAll)
-    .map(([model, prices]) => {
-      const avg = avgOf(prices)
-      const lastAvg = avgOf(modelPricesLastMonth[model] ?? [])
-      const thisAvg = avgOf(modelPrices[model] ?? [])
-      // 比較本月 vs 上月，若本月無資料則不顯示趨勢
-      const pct = (thisAvg && lastAvg)
-        ? ((thisAvg - lastAvg) / lastAvg * 100).toFixed(1)
-        : null
-      return { model, avg, count: prices.length, pct }
-    })
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 10)
-
-  // 成色分布
-  const conditionCount = {}
-  for (const r of data) {
-    if (r.condition) conditionCount[r.condition] = (conditionCount[r.condition] || 0) + 1
-  }
-  const conditionEntries = Object.entries(conditionCount).sort((a, b) => b[1] - a[1])
-  const maxCondition = Math.max(...conditionEntries.map(e => e[1])) || 1
-
-  // 交易方式分布
-  const tradeCount = {}
-  for (const r of data) {
-    if (r.trade_method) tradeCount[r.trade_method] = (tradeCount[r.trade_method] || 0) + 1
-  }
-  const tradeEntries = Object.entries(tradeCount).sort((a, b) => b[1] - a[1])
-  const maxTrade = Math.max(...tradeEntries.map(e => e[1])) || 1
-
-  // 地區分布
-  const locationCount = {}
-  for (const r of data) {
-    const loc = r.location?.split(' ')[0]
-    if (loc) locationCount[loc] = (locationCount[loc] || 0) + 1
-  }
-  const locationEntries = Object.entries(locationCount).sort((a, b) => b[1] - a[1]).slice(0, 8)
-  const maxLocation = Math.max(...locationEntries.map(e => e[1])) || 1
-
-  // 每小時分布
-  const hourCount = Array(24).fill(0)
-  for (const r of data) {
-    const h = new Date(r.created_at).getHours()
-    hourCount[h]++
-  }
-  const maxHour = Math.max(...hourCount) || 1
-
-  // 近 7 天每日
-  const dailyCount = {}
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i)
-    dailyCount[d.toISOString().split('T')[0]] = 0
-  }
-  for (const r of data) {
-    const day = r.created_at?.split('T')[0]
-    if (day in dailyCount) dailyCount[day]++
-  }
-  const maxDay = Math.max(...Object.values(dailyCount)) || 1
-
-  // 近 3 個月每月
-  const monthlyCount = {}
-  for (let i = 2; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const key = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}`
-    monthlyCount[key] = 0
-  }
-  for (const r of data) {
-    if (!r.created_at) continue
-    const d = new Date(r.created_at)
-    const key = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}`
-    if (key in monthlyCount) monthlyCount[key]++
-  }
-  const maxMonth = Math.max(...Object.values(monthlyCount)) || 1
-
-  // 價格異常偵測：同型號+容量，離均價 ±30%
-  const modelStoragePrices = {}
-  for (const r of data) {
-    if (!r.model || !r.price) continue
-    const key = `${r.model}__${r.storage || ''}`
-    if (!modelStoragePrices[key]) modelStoragePrices[key] = []
-    modelStoragePrices[key].push(r.price)
-  }
-  const modelStorageAvg = {}
-  for (const [key, prices] of Object.entries(modelStoragePrices)) {
-    modelStorageAvg[key] = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length)
-  }
-  function isAnomaly(r) {
-    if (!r.model || !r.price) return false
-    const key = `${r.model}__${r.storage || ''}`
-    const avg = modelStorageAvg[key]
-    if (!avg) return false
-    return Math.abs(r.price - avg) / avg > 0.3
-  }
-
-  // 明細搜尋過濾
-  const filteredData = tableSearch.trim()
-    ? data.filter(r => r.model?.toLowerCase().includes(tableSearch.toLowerCase()))
-    : data
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-5xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-8">
+    <div className="min-h-screen bg-[#f5f5f7]">
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <header className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">管理員後台</h1>
-            <p className="text-xs text-gray-400 mt-1">蘋果二手行情網站數據總覽</p>
+            <p className="text-xs font-medium text-[#6e6e73]">Apple 二手行情資料營運</p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-normal text-[#1d1d1f]">管理員後台</h1>
+            <p className="mt-1 text-xs text-[#86868b]">最後資料時間：{stats.latest ? formatDateTime(stats.latest) : '尚無資料'}</p>
           </div>
-          <button onClick={fetchData}
-            className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-full hover:bg-gray-50 bg-white">
+          <button
+            type="button"
+            onClick={() => {
+              fetchData()
+              fetchReports()
+            }}
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#d2d2d7] bg-white px-3 text-xs font-medium text-[#1d1d1f] transition hover:bg-[#f5f5f7] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/25"
+          >
+            <RefreshCw size={14} aria-hidden="true" />
             重新整理
           </button>
-        </div>
+        </header>
 
         {loading ? (
-          <p className="text-center text-gray-400 py-20">載入中...</p>
+          <Card className="p-10">
+            <div role="status" className="flex items-center justify-center gap-3 text-sm text-[#6e6e73]">
+              <RefreshCw size={17} className="animate-spin" aria-hidden="true" />
+              載入後台資料中
+            </div>
+          </Card>
         ) : (
-          <>
-            {/* KPI */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <StatCard title="總回報筆數" value={total} sub="自開站累計" />
-              <StatCard title="今日新增" value={today} sub={new Date().toLocaleDateString('zh-TW')} />
-              <StatCard title="近 7 天" value={thisWeek} />
-              <StatCard title="來源分布" value={`${fromReport} / ${fromPost}`} sub="成交回報 / 貼文產生器" />
-            </div>
+          <div className="space-y-5">
+            <section className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
+              <KpiCard title="總成交筆數" value={stats.total.toLocaleString('zh-TW')} sub="自開站累計" icon={Database} tone="blue" />
+              <KpiCard title="本月新增" value={stats.month.toLocaleString('zh-TW')} sub="本月回報量" icon={BarChart3} tone="neutral" />
+              <KpiCard title="近 7 天" value={stats.week.toLocaleString('zh-TW')} sub="近期活躍度" icon={Activity} tone="green" />
+              <KpiCard title="今日新增" value={stats.today.toLocaleString('zh-TW')} sub={new Date().toLocaleDateString('zh-TW')} icon={Clock} tone="neutral" />
+              <KpiCard title="平均成交價" value={formatMoney(stats.avgPrice)} sub="全站成交均值" icon={BarChart3} tone="blue" />
+              <KpiCard title="異常價格" value={stats.anomalies.toLocaleString('zh-TW')} sub={`超過同規格均價 ${PRICE_ANOMALY_THRESHOLD * 100}%`} icon={AlertTriangle} tone={stats.anomalies ? 'orange' : 'green'} />
+              <KpiCard title="待處理回報" value={stats.pendingReports.toLocaleString('zh-TW')} sub="使用者問題回報" icon={ShieldCheck} tone={stats.pendingReports ? 'red' : 'green'} />
+            </section>
 
-            {/* 近 7 天 + 近 3 個月趨勢 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                <p className="text-sm font-semibold text-gray-700 mb-4">近 7 天每日提交數</p>
-                <div className="flex items-end gap-2 h-28">
-                  {Object.entries(dailyCount).map(([day, count]) => (
-                    <div key={day} className="flex-1 flex flex-col items-center gap-1">
-                      <span className="text-xs text-gray-500">{count}</span>
-                      <div className="w-full rounded-t-md bg-gray-900 transition-all"
-                        style={{ height: `${(count / maxDay) * 80}px`, minHeight: count > 0 ? 4 : 0 }} />
-                      <span className="text-xs text-gray-400">{day.slice(5)}</span>
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.8fr)_minmax(320px,0.9fr)]">
+              <Card>
+                <SectionHeader
+                  icon={BarChart3}
+                  title="成交均價趨勢"
+                  subtitle="依型號追蹤均價與資料量，金額皆為 TWD 整數"
+                  action={
+                    <div className="flex flex-wrap items-center gap-2">
+                      <select
+                        value={activeChartModel}
+                        onChange={e => setChartModel(e.target.value)}
+                        className={inputClass('w-[220px]')}
+                        aria-label="選擇趨勢型號"
+                      >
+                        <option value="">選擇型號</option>
+                        {modelOptions.map(({ model, count, since }) => (
+                          <option key={model} value={model}>{model}・{count} 筆・{since}</option>
+                        ))}
+                      </select>
+                      <div className="flex rounded-md border border-[#d2d2d7] bg-white p-0.5" role="group" aria-label="趨勢時間範圍">
+                        {DATE_RANGE_OPTIONS.map(option => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => setChartRange(option.value)}
+                            className={`h-8 rounded px-3 text-xs font-medium transition ${
+                              chartRange === option.value
+                                ? 'bg-[#1d1d1f] text-white'
+                                : 'text-[#6e6e73] hover:bg-[#f5f5f7]'
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                <p className="text-sm font-semibold text-gray-700 mb-4">近 3 個月提交量</p>
-                <div className="flex items-end gap-4 h-28">
-                  {Object.entries(monthlyCount).map(([month, count]) => (
-                    <div key={month} className="flex-1 flex flex-col items-center gap-1">
-                      <span className="text-xs text-gray-500">{count}</span>
-                      <div className="w-full rounded-t-md bg-blue-500 transition-all"
-                        style={{ height: `${(count / maxMonth) * 80}px`, minHeight: count > 0 ? 4 : 0 }} />
-                      <span className="text-xs text-gray-400">{month.slice(5)} 月</span>
+                  }
+                />
+                {chartData.length === 0 ? (
+                  <EmptyState title="尚無可繪製的趨勢資料" description="選擇有成交紀錄的型號，或切換到更長的時間範圍。" />
+                ) : (
+                  <div className="grid grid-cols-1 gap-4 p-4 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
+                    <div className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData} margin={{ top: 10, right: 18, left: 0, bottom: 8 }} accessibilityLayer>
+                          <CartesianGrid stroke="#f2f2f7" vertical={false} />
+                          <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#86868b' }} interval="preserveStartEnd" />
+                          <YAxis
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fontSize: 11, fill: '#86868b' }}
+                            tickFormatter={value => `${Math.round(value / 1000)}k`}
+                            width={42}
+                          />
+                          <Tooltip content={<AdminTooltip />} />
+                          <Line type="monotone" dataKey="avg" stroke="#0071e3" strokeWidth={2.4} dot={{ r: 3, fill: '#0071e3' }} activeDot={{ r: 5 }} connectNulls={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
                     </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* 使用時段 */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6">
-              <p className="text-sm font-semibold text-gray-700 mb-4">使用時段分布（小時）</p>
-              <div className="flex items-end gap-0.5 h-20">
-                {hourCount.map((count, h) => (
-                  <div key={h} className="flex-1 flex flex-col items-center">
-                    <div className="w-full rounded-t bg-blue-400"
-                      style={{ height: `${(count / maxHour) * 64}px`, minHeight: count > 0 ? 2 : 0 }} />
+                    <div className="h-[300px]">
+                      {volumeData.length === 0 ? (
+                        <EmptyState title="尚無提交量" description="目前時間範圍沒有可統計資料。" />
+                      ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={volumeData} margin={{ top: 10, right: 12, left: 0, bottom: 8 }} accessibilityLayer>
+                            <CartesianGrid stroke="#f2f2f7" vertical={false} />
+                            <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#86868b' }} interval="preserveStartEnd" />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#86868b' }} width={28} />
+                            <Tooltip cursor={{ fill: '#f5f5f7' }} contentStyle={{ borderRadius: 8, borderColor: '#e5e5ea', fontSize: 12 }} formatter={value => [`${value} 筆`, '提交量']} />
+                            <Bar dataKey="count" fill="#34c759" radius={[4, 4, 0, 0]} maxBarSize={18} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      )}
+                    </div>
                   </div>
-                ))}
-              </div>
-              <div className="flex justify-between text-xs text-gray-400 mt-1">
-                <span>0時</span><span>6時</span><span>12時</span><span>18時</span><span>23時</span>
-              </div>
-            </div>
+                )}
+              </Card>
 
-            {/* 各型號均價 + 成色分布 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                <p className="text-sm font-semibold text-gray-700 mb-4">各型號均價排行</p>
-                <div className="space-y-3">
-                  {modelAvg.map(({ model, avg, count, pct }) => (
-                    <div key={model} className="flex items-center justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm text-gray-800 truncate">{model}</p>
-                        <p className="text-xs text-gray-400">{count} 筆</p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {pct !== null && (
-                          <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${
-                            Number(pct) < 0
-                              ? 'bg-red-50 text-red-500'
-                              : Number(pct) > 0
-                                ? 'bg-green-50 text-green-600'
-                                : 'bg-gray-100 text-gray-400'
-                          }`}>
-                            {Number(pct) > 0 ? '+' : ''}{pct}%
-                          </span>
-                        )}
-                        <span className="text-sm font-semibold text-blue-600">
-                          ${avg.toLocaleString()}
-                        </span>
-                      </div>
+              <Card>
+                <SectionHeader icon={ShieldCheck} title="資料健康度" subtitle="用來判讀價格可信度與補資料優先順序" />
+                <div className="space-y-4 p-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-lg border border-[#e5e5ea] p-3">
+                      <p className="text-xs text-[#6e6e73]">異常比例</p>
+                      <p className="mt-1 text-xl font-semibold text-[#1d1d1f]">{dataHealth.anomalyRate}%</p>
                     </div>
-                  ))}
-                  {modelAvg.length === 0 && <p className="text-sm text-gray-400">尚無資料</p>}
+                    <div className="rounded-lg border border-[#e5e5ea] p-3">
+                      <p className="text-xs text-[#6e6e73]">真實資料權重</p>
+                      <p className="mt-1 text-xs leading-5 text-[#1d1d1f]">{dataHealth.realWeightStatus}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs font-semibold text-[#1d1d1f]">樣本不足型號</p>
+                    {dataHealth.lowSample.length === 0 ? (
+                      <p className="rounded-lg bg-[#effaf2] px-3 py-2 text-xs text-[#248a3d]">目前沒有低於 {DATA_QUALITY_MIN_SAMPLE} 筆的已回報規格。</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {dataHealth.lowSample.map(item => (
+                          <div key={`${item.model}-${item.storage}`} className="flex items-center justify-between gap-3 rounded-lg bg-[#f5f5f7] px-3 py-2">
+                            <span className="min-w-0 truncate text-xs text-[#424245]">{item.model}・{item.storage}</span>
+                            <Pill tone="orange">{item.count} 筆</Pill>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                <p className="text-sm font-semibold text-gray-700 mb-4">成色分布</p>
-                <div className="space-y-2">
-                  {conditionEntries.map(([cond, count]) => (
-                    <BarRow key={cond} label={cond} count={count} max={maxCondition} color="bg-green-500" />
-                  ))}
-                  {conditionEntries.length === 0 && <p className="text-sm text-gray-400">尚無資料</p>}
-                </div>
-              </div>
+              </Card>
             </div>
 
-            {/* 交易方式 + 地區分布 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                <p className="text-sm font-semibold text-gray-700 mb-4">交易方式分布</p>
-                <div className="space-y-2">
-                  {tradeEntries.map(([method, count]) => (
-                    <BarRow key={method} label={method} count={count} max={maxTrade} color="bg-purple-500" />
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+              <Card>
+                <SectionHeader icon={Activity} title="來源分布" />
+                <div className="space-y-3 p-4">
+                  {distributions.source.entries.map(([label, count]) => (
+                    <BarRow key={label} label={label} count={count} max={distributions.source.max} color="bg-[#0071e3]" />
                   ))}
-                  {tradeEntries.length === 0 && <p className="text-sm text-gray-400">尚無資料</p>}
                 </div>
-              </div>
-
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                <p className="text-sm font-semibold text-gray-700 mb-4">地區分布</p>
-                <div className="space-y-2">
-                  {locationEntries.map(([loc, count]) => (
-                    <BarRow key={loc} label={loc} count={count} max={maxLocation} color="bg-orange-400" />
+              </Card>
+              <Card>
+                <SectionHeader icon={CheckCircle2} title="成色分布" />
+                <div className="space-y-3 p-4">
+                  {distributions.condition.entries.length === 0 ? (
+                    <p className="text-xs text-[#86868b]">尚無成色資料</p>
+                  ) : distributions.condition.entries.map(([label, count]) => (
+                    <BarRow key={label} label={label} count={count} max={distributions.condition.max} color="bg-[#34c759]" />
                   ))}
-                  {locationEntries.length === 0 && <p className="text-sm text-gray-400">尚無資料</p>}
                 </div>
-              </div>
+              </Card>
+              <Card>
+                <SectionHeader icon={Database} title="地區分布" />
+                <div className="space-y-3 p-4">
+                  {distributions.location.entries.length === 0 ? (
+                    <p className="text-xs text-[#86868b]">尚無地區資料</p>
+                  ) : distributions.location.entries.map(([label, count]) => (
+                    <BarRow key={label} label={label} count={count} max={distributions.location.max} color="bg-[#ff9500]" />
+                  ))}
+                </div>
+              </Card>
             </div>
 
-            {/* 型號均價趨勢折線圖 */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6">
-              <div className="flex items-center justify-between mb-4 gap-3">
-                <p className="text-sm font-semibold text-gray-700">
-                  型號均價走勢
-                  {chartModel && chartData.length > 0 && (
-                    <span className="font-normal text-gray-400 ml-2 text-xs">
-                      {chartData[0].ym.replace('/', '/')} – {chartData[chartData.length - 1].ym.replace('/', '/')}
-                    </span>
-                  )}
-                </p>
-                <select
-                  value={chartModel}
-                  onChange={e => setChartModel(e.target.value)}
-                  className="text-xs px-3 py-1.5 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-400 max-w-[240px]"
-                >
-                  <option value="">選擇型號…</option>
-                  {modelOptions.map(({ model, since }) => (
-                    <option key={model} value={model}>{model} ({since?.slice(0,4)}~)</option>
-                  ))}
-                </select>
+            <Card>
+              <SectionHeader
+                icon={Filter}
+                title="成交資料表"
+                subtitle={`顯示 ${filteredData.length.toLocaleString('zh-TW')} / ${data.length.toLocaleString('zh-TW')} 筆`}
+              />
+              <div className="border-b border-[#f2f2f7] p-4">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-7">
+                  <Field label="搜尋">
+                    <div className="relative">
+                      <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#86868b]" aria-hidden="true" />
+                      <input value={filters.search} onChange={e => updateFilter('search', e.target.value)} className={inputClass('pl-9')} placeholder="型號、容量、來源" />
+                    </div>
+                  </Field>
+                  <Field label="容量">
+                    <select value={filters.storage} onChange={e => updateFilter('storage', e.target.value)} className={inputClass()} aria-label="依容量篩選">
+                      <option value="">全部容量</option>
+                      {storageOptions.map(storage => <option key={storage} value={storage}>{storage}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="來源">
+                    <select value={filters.source} onChange={e => updateFilter('source', e.target.value)} className={inputClass()} aria-label="依來源篩選">
+                      <option value="">全部來源</option>
+                      <option value="report">成交回報</option>
+                      <option value="post">貼文產生器</option>
+                    </select>
+                  </Field>
+                  <Field label="最低價">
+                    <input type="number" value={filters.minPrice} onChange={e => updateFilter('minPrice', e.target.value)} className={inputClass()} placeholder="0" />
+                  </Field>
+                  <Field label="最高價">
+                    <input type="number" value={filters.maxPrice} onChange={e => updateFilter('maxPrice', e.target.value)} className={inputClass()} placeholder="99999" />
+                  </Field>
+                  <Field label="開始日期">
+                    <input type="date" value={filters.fromDate} onChange={e => updateFilter('fromDate', e.target.value)} className={inputClass()} />
+                  </Field>
+                  <Field label="結束日期">
+                    <input type="date" value={filters.toDate} onChange={e => updateFilter('toDate', e.target.value)} className={inputClass()} />
+                  </Field>
+                </div>
               </div>
-              {!chartModel ? (
-                <p className="text-xs text-gray-400 text-center py-10">請選擇型號查看均價走勢</p>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[980px] text-xs">
+                  <thead>
+                    <tr className="border-b border-[#e5e5ea] bg-[#fbfbfd] text-left text-[11px] font-semibold text-[#6e6e73]">
+                      <th className="px-4 py-3">型號</th>
+                      <th className="px-3 py-3">容量</th>
+                      <th className="px-3 py-3 text-right">價格</th>
+                      <th className="px-3 py-3">來源</th>
+                      <th className="px-3 py-3">交易方式</th>
+                      <th className="px-3 py-3">地點</th>
+                      <th className="px-3 py-3">建立時間</th>
+                      <th className="px-3 py-3">異常</th>
+                      <th className="px-4 py-3 text-center">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredData.map(row => (
+                      <tr key={row.id} className="border-b border-[#f2f2f7] transition hover:bg-[#fbfbfd]">
+                        <td className="px-4 py-3">
+                          <div className="max-w-[220px] truncate font-medium text-[#1d1d1f]">{row.model || '-'}</div>
+                          <div className="mt-0.5 text-[11px] text-[#86868b]">{row.category}</div>
+                        </td>
+                        <td className="px-3 py-3 text-[#424245]">{row.storage || '-'}</td>
+                        <td className="px-3 py-3 text-right font-semibold tabular-nums text-[#1d1d1f]">{formatMoney(row.price)}</td>
+                        <td className="px-3 py-3">
+                          <Pill tone={row.source === 'report' ? 'green' : row.source === 'post' ? 'blue' : 'neutral'}>
+                            {row.source === 'report' ? '成交回報' : row.source === 'post' ? '貼文' : row.source || '未標記'}
+                          </Pill>
+                        </td>
+                        <td className="px-3 py-3 text-[#424245]">{row.trade_method || '-'}</td>
+                        <td className="px-3 py-3 text-[#424245]">{row.location || '-'}</td>
+                        <td className="px-3 py-3 text-[#6e6e73]">{formatDateTime(row.created_at)}</td>
+                        <td className="px-3 py-3">
+                          {row.anomaly ? (
+                            <Pill tone="orange">需檢查</Pill>
+                          ) : (
+                            <span className="text-[#86868b]">正常</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <button
+                            type="button"
+                            onClick={() => deleteRow(row.id)}
+                            disabled={deleting === row.id}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[#d70015] transition hover:bg-[#fff1f0] disabled:opacity-40"
+                            aria-label={`刪除 ${row.model || '成交資料'}`}
+                            title="刪除"
+                          >
+                            <Trash2 size={15} aria-hidden="true" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredData.length === 0 && (
+                      <tr>
+                        <td colSpan={9}>
+                          <EmptyState title="找不到符合條件的成交資料" description="調整搜尋字、價格區間或日期範圍後再試一次。" />
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+
+            <Card>
+              <SectionHeader
+                icon={AlertTriangle}
+                title="用戶錯誤回報"
+                subtitle={`${reports.filter(r => !r.resolved).length} 筆未處理・共 ${reports.length} 筆`}
+                action={
+                  <button
+                    type="button"
+                    onClick={fetchReports}
+                    className="inline-flex h-8 items-center gap-2 rounded-md border border-[#d2d2d7] bg-white px-3 text-xs font-medium text-[#1d1d1f] hover:bg-[#f5f5f7]"
+                  >
+                    <RefreshCw size={13} aria-hidden="true" />
+                    重新整理
+                  </button>
+                }
+              />
+              {reportsLoading ? (
+                <div role="status" className="py-10 text-center text-xs text-[#86868b]">載入回報中</div>
+              ) : reports.length === 0 ? (
+                <EmptyState title="目前沒有回報" description="使用者送出的價格或產品問題會出現在這裡。" />
               ) : (
-                <>
-                  <ResponsiveContainer width="100%" height={240}>
-                    <LineChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 20 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis
-                        dataKey="label"
-                        tick={({ x, y, payload }) => {
-                          const lines = payload.value.split('\n')
-                          return (
-                            <g transform={`translate(${x},${y})`}>
-                              {lines.map((line, i) => (
-                                <text key={i} x={0} y={0} dy={14 + i * 12} textAnchor="middle"
-                                  fill={i === 0 && lines.length > 1 ? '#374151' : '#9ca3af'}
-                                  fontSize={i === 0 && lines.length > 1 ? 11 : 10}
-                                  fontWeight={i === 0 && lines.length > 1 ? 600 : 400}>
-                                  {line}
-                                </text>
-                              ))}
-                            </g>
-                          )
-                        }}
-                        interval={chartData.length > 24 ? 2 : 1}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxis
-                        tick={{ fontSize: 11, fill: '#9ca3af' }}
-                        axisLine={false}
-                        tickLine={false}
-                        tickFormatter={v => `$${(v / 1000).toFixed(0)}k`}
-                        width={44}
-                      />
-                      <Tooltip
-                        labelFormatter={(_, payload) => {
-                          if (!payload?.length) return ''
-                          return payload[0]?.payload?.ym?.replace('/', '/') ?? ''
-                        }}
-                        formatter={(val, _name, props) =>
-                          val != null
-                            ? [`$${val.toLocaleString()} (${props.payload.count} 筆)`, '月均價']
-                            : ['無資料', '月均價']
-                        }
-                        contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="avg"
-                        stroke="#0071e3"
-                        strokeWidth={2}
-                        dot={{ r: 3, fill: '#0071e3' }}
-                        connectNulls={false}
-                        activeDot={{ r: 5 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                  <p className="text-xs text-gray-400 mt-1 text-right">月份資料不足 3 筆時僅供參考</p>
-                </>
+                <div className="divide-y divide-[#f2f2f7]">
+                  {reports.map(report => (
+                    <article key={report.id} className="grid grid-cols-1 gap-3 px-4 py-3 md:grid-cols-[140px_minmax(0,1fr)_180px] md:items-start">
+                      <div className="flex items-center gap-2">
+                        {report.resolved ? <CheckCircle2 size={15} className="text-[#248a3d]" aria-hidden="true" /> : <XCircle size={15} className="text-[#ff9500]" aria-hidden="true" />}
+                        <Pill tone={report.resolved ? 'green' : 'orange'}>{report.resolved ? '已處理' : '待處理'}</Pill>
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-semibold text-[#1d1d1f]">{report.issue_type || '未分類問題'}</span>
+                          {report.product && <span className="text-xs text-[#6e6e73]">{report.product}</span>}
+                        </div>
+                        <p className="mt-1 text-xs leading-5 text-[#424245]">{report.description || '使用者未填寫補充說明。'}</p>
+                        <p className="mt-1 text-[11px] text-[#86868b]">{formatDateTime(report.created_at)}</p>
+                      </div>
+                      <div className="flex items-center gap-2 md:justify-end">
+                        <button
+                          type="button"
+                          onClick={() => toggleResolved(report.id, report.resolved)}
+                          className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#d2d2d7] bg-white px-3 text-xs font-medium text-[#1d1d1f] hover:bg-[#f5f5f7]"
+                          aria-label={report.resolved ? '標記為未處理' : '標記為已處理'}
+                        >
+                          <CheckCircle2 size={14} aria-hidden="true" />
+                          {report.resolved ? '重開' : '處理'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeReport(report.id)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[#d70015] hover:bg-[#fff1f0]"
+                          aria-label="刪除回報"
+                          title="刪除回報"
+                        >
+                          <Trash2 size={14} aria-hidden="true" />
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
               )}
-            </div>
+            </Card>
 
-            {/* 流量分析 */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-              <div className="px-6 py-4 border-b border-gray-100">
-                <p className="text-sm font-semibold text-gray-700">網站流量分析</p>
-                <p className="text-xs text-gray-400 mt-0.5">資料來源：Google Analytics 4</p>
-              </div>
+            <Card className="overflow-hidden">
+              <SectionHeader icon={Activity} title="網站流量分析" subtitle="資料來源：Google Analytics 4 / Looker Studio" />
               <iframe
                 src="https://datastudio.google.com/embed/reporting/ca1def25-014a-45c1-a67a-3d51065fdebf/page/XKcvF"
                 width="100%"
@@ -537,125 +841,12 @@ export default function AdminPage() {
                 frameBorder="0"
                 allowFullScreen
                 className="block"
+                title="網站流量分析"
               />
-            </div>
-
-            {/* 最新明細 + 刪除 */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-4 gap-3">
-                <p className="text-sm font-semibold text-gray-700 shrink-0">所有回報明細（可刪除可疑資料）</p>
-                <input
-                  value={tableSearch}
-                  onChange={e => setTableSearch(e.target.value)}
-                  placeholder="搜尋型號…"
-                  className="text-xs px-3 py-1.5 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-400 w-40"
-                />
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-gray-400 border-b border-gray-100">
-                      <th className="text-left pb-2">時間</th>
-                      <th className="text-left pb-2">型號</th>
-                      <th className="text-left pb-2">容量</th>
-                      <th className="text-left pb-2">成色</th>
-                      <th className="text-right pb-2">價格</th>
-                      <th className="text-left pb-2">來源</th>
-                      <th className="text-center pb-2">刪除</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredData.map(r => {
-                      const anomaly = isAnomaly(r)
-                      return (
-                        <tr key={r.id} className={`border-b border-gray-50 hover:bg-gray-50 ${anomaly ? 'bg-red-50' : ''}`}>
-                          <td className="py-2 text-gray-400">
-                            {new Date(r.created_at).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                          </td>
-                          <td className="py-2 text-gray-700 max-w-[120px] truncate">{r.model}</td>
-                          <td className="py-2 text-gray-500">{r.storage}</td>
-                          <td className="py-2 text-gray-500">{r.condition}</td>
-                          <td className="py-2 text-right font-medium">
-                            <span className={anomaly ? 'text-red-500' : 'text-blue-600'}>
-                              ${r.price?.toLocaleString()}
-                            </span>
-                            {anomaly && <span className="ml-1 text-red-400" title="價格離均價超過 30%">⚠️</span>}
-                          </td>
-                          <td className="py-2">
-                            <span className={`px-2 py-0.5 rounded-full ${r.source === 'report' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'}`}>
-                              {r.source === 'report' ? '成交回報' : '貼文'}
-                            </span>
-                          </td>
-                          <td className="py-2 text-center">
-                            <button onClick={() => deleteRow(r.id)} disabled={deleting === r.id}
-                              className="text-red-400 hover:text-red-600 disabled:opacity-30 px-2 py-1 rounded hover:bg-red-50 transition">
-                              {deleting === r.id ? '...' : '刪除'}
-                            </button>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                    {filteredData.length === 0 && (
-                      <tr><td colSpan={7} className="py-8 text-center text-gray-400">找不到相關資料</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* 用戶錯誤回報 */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-sm font-semibold text-gray-700">用戶回報問題</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {reports.filter(r => !r.resolved).length} 筆未處理・共 {reports.length} 筆
-                  </p>
-                </div>
-                <button onClick={fetchReports} className="text-xs text-blue-500 hover:underline">重新整理</button>
-              </div>
-              {reportsLoading ? (
-                <p className="text-xs text-gray-400 py-6 text-center">載入中…</p>
-              ) : reports.length === 0 ? (
-                <p className="text-xs text-gray-400 py-6 text-center">目前沒有回報</p>
-              ) : (
-                <div className="space-y-2">
-                  {reports.map(r => (
-                    <div key={r.id} className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${r.resolved ? 'bg-gray-50 border-gray-100 opacity-60' : 'bg-orange-50 border-orange-100'}`}>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${r.resolved ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                            {r.resolved ? '已處理' : '未處理'}
-                          </span>
-                          <span className="text-[12px] font-medium text-gray-700">{r.issue_type}</span>
-                          {r.product && <span className="text-[11px] text-gray-400">{r.product}</span>}
-                          <span className="text-[11px] text-gray-300 ml-auto">
-                            {new Date(r.created_at).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                        {r.description && (
-                          <p className="text-[12px] text-gray-600 mt-1.5 leading-relaxed">{r.description}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button onClick={() => toggleResolved(r.id, r.resolved)}
-                          className={`text-[11px] px-2.5 py-1 rounded-lg font-medium transition-all ${r.resolved ? 'bg-gray-200 text-gray-600 hover:bg-gray-300' : 'bg-green-500 text-white hover:bg-green-600'}`}>
-                          {r.resolved ? '取消' : '標記處理'}
-                        </button>
-                        <button onClick={() => removeReport(r.id)}
-                          className="text-[11px] px-2.5 py-1 rounded-lg text-red-400 hover:bg-red-50 transition-all">
-                          刪除
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-          </>
+            </Card>
+          </div>
         )}
-      </div>
+      </main>
     </div>
   )
 }
