@@ -1,5 +1,13 @@
 import { useState, useMemo, useEffect } from 'react'
 import { APPLE_PRODUCTS, CATEGORIES } from '../data/mockData'
+import {
+  estimateMacSpec,
+  getDefaultMacSpec,
+  getMacRuleMessages,
+  getMacSpecConfig,
+  isMacOptionDisabled,
+  normalizeMacSpec,
+} from '../data/macSpecRules'
 import { Smartphone, Laptop, Tablet, Watch, Headphones, Monitor, Grid2x2, Package, TrendingDown, Activity, CircleDollarSign } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { getMarketPrice } from '../lib/supabase'
@@ -44,9 +52,9 @@ function getMonthsOld(product) {
   return Math.max(0, Math.floor((new Date() - new Date(product.launchDate)) / (1000 * 60 * 60 * 24 * 30)))
 }
 
-function buildDepreciationTrend(product, storage, currentValue) {
+function buildDepreciationTrend(product, storage, currentValue, options = {}) {
   if (!product || !storage) return []
-  const launch = getLaunchPrice(product, storage)
+  const launch = options.launchPrice ?? getLaunchPrice(product, storage)
   const current = currentValue ?? product.marketAvg[storage]
   if (!launch || !current) return []
 
@@ -120,6 +128,88 @@ function getPrimaryMarketPrice(product) {
   return product?.marketAvg?.[product?.storages?.[0]]
 }
 
+function getProductVariantGroup(product) {
+  if (product?.category === 'MacBook') {
+    const macBookProMatch = product.name.match(/^MacBook Pro (14吋|16吋)/)
+    if (macBookProMatch) {
+      return {
+        key: `macbook-pro-${macBookProMatch[1]}`,
+        name: `MacBook Pro ${macBookProMatch[1]}`,
+      }
+    }
+  }
+
+  if (product?.category === 'Mac') {
+    if (product.name.startsWith('Mac mini ')) {
+      return {
+        key: 'mac-mini',
+        name: 'Mac mini',
+      }
+    }
+    if (product.name.startsWith('Mac Studio ')) {
+      return {
+        key: 'mac-studio',
+        name: 'Mac Studio',
+      }
+    }
+  }
+
+  return null
+}
+
+function getVariantLabel(product) {
+  const group = getProductVariantGroup(product)
+  if (!group) return product?.name ?? ''
+  return product.name.replace(`${group.name} `, '')
+}
+
+function buildProductEntries(products) {
+  const entries = []
+  const groups = new Map()
+
+  for (const product of products) {
+    const group = getProductVariantGroup(product)
+    if (!group) {
+      entries.push({ type: 'product', key: product.id, product })
+      continue
+    }
+
+    if (!groups.has(group.key)) {
+      const entry = {
+        type: 'variant-group',
+        key: group.key,
+        name: group.name,
+        category: product.category,
+        variants: [],
+      }
+      groups.set(group.key, entry)
+      entries.push(entry)
+    }
+    groups.get(group.key).variants.push(product)
+  }
+
+  return entries
+}
+
+function getEntryPrimaryPrice(entry) {
+  if (entry.type === 'product') return getPrimaryMarketPrice(entry.product)
+  const prices = entry.variants.map(getPrimaryMarketPrice).filter(Boolean)
+  return prices.length ? Math.min(...prices) : null
+}
+
+function isEntrySelected(entry, selectedProduct) {
+  if (!selectedProduct) return false
+  if (entry.type === 'product') return entry.product.id === selectedProduct.id
+  return entry.variants.some(product => product.id === selectedProduct.id)
+}
+
+function getMacSpecSummary(config, spec) {
+  if (!config || !spec) return ''
+  return config.groups
+    .map(group => group.options.find(option => option.value === spec[group.key])?.label ?? spec[group.key])
+    .join(' / ')
+}
+
 
 export default function QueryPage() {
   const [search, setSearch] = useState('')
@@ -127,6 +217,7 @@ export default function QueryPage() {
   const initialProduct = APPLE_PRODUCTS.find(p => p.id === 'iphone-16-pro') ?? APPLE_PRODUCTS[0]
   const [selectedProduct, setSelectedProduct] = useState(initialProduct)
   const [selectedStorage, setSelectedStorage] = useState(initialProduct?.storages[0] ?? '')
+  const [selectedMacSpec, setSelectedMacSpec] = useState(null)
   const [aiAnalysis, setAiAnalysis] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState('')
@@ -140,6 +231,13 @@ export default function QueryPage() {
       return matchCat && matchSearch
     })
   }, [search, selectedCategory])
+
+  const productEntries = useMemo(() => buildProductEntries(filtered), [filtered])
+
+  const macConfig = useMemo(
+    () => getMacSpecConfig(selectedProduct?.id),
+    [selectedProduct?.id]
+  )
 
   useEffect(() => {
     if (filtered.length === 0) {
@@ -161,9 +259,24 @@ export default function QueryPage() {
     }
   }, [filtered, selectedProduct])
 
+  useEffect(() => {
+    if (!macConfig) {
+      setSelectedMacSpec(null)
+      return
+    }
+
+    setSelectedStorage(macConfig.baseStorage)
+    setSelectedMacSpec(getDefaultMacSpec(macConfig))
+    setAiAnalysis('')
+    setAiError('')
+    setLiveAvg(null)
+  }, [macConfig])
+
   function selectProduct(product) {
     setSelectedProduct(product)
-    setSelectedStorage(product.storages[0])
+    const config = getMacSpecConfig(product.id)
+    setSelectedStorage(config?.baseStorage ?? product.storages[0])
+    setSelectedMacSpec(config ? getDefaultMacSpec(config) : null)
     setAiAnalysis('')
     setAiError('')
     setLiveAvg(null)
@@ -180,6 +293,16 @@ export default function QueryPage() {
     setAiAnalysis('')
     setAiError('')
     setLiveAvg(null)
+  }
+
+  function changeMacSpec(key, value) {
+    if (!macConfig) return
+    setSelectedMacSpec(current => normalizeMacSpec(macConfig, {
+      ...(current ?? getDefaultMacSpec(macConfig)),
+      [key]: value,
+    }))
+    setAiAnalysis('')
+    setAiError('')
   }
 
   // 每次型號或容量改變時，從 Supabase 撈最新均價
@@ -202,15 +325,15 @@ export default function QueryPage() {
   }, [selectedProduct, selectedStorage])
 
   function fetchAiAnalysis() {
-    if (!selectedProduct || !selectedStorage || !avgValue) return
+    if (!selectedProduct || !selectedStorage || !displayAvgValue) return
     setAiLoading(true)
     setAiError('')
     setAiAnalysis('')
 
     setTimeout(() => {
-      const avg = avgValue
-      const ceiling = getMarketCeiling(selectedProduct, selectedStorage)
-      const retail = getOfficialPrice(selectedProduct, selectedStorage)
+      const avg = displayAvgValue
+      const ceiling = macEstimate?.newProductGuardrail ?? getMarketCeiling(selectedProduct, selectedStorage)
+      const retail = displayRetail
       const discount = Math.round((1 - avg / retail) * 100)
       const lowOffer = capToMarketCeiling(Math.round(avg*0.95/100)*100, ceiling)
       const highOffer = capToMarketCeiling(Math.round(avg*1.05/100)*100, ceiling)
@@ -219,9 +342,9 @@ export default function QueryPage() {
       const overpayLimit = capToMarketCeiling(Math.round(avg*1.1/100)*100, ceiling)
 
       const analyses = [
-        `目前 ${selectedProduct.name} ${selectedStorage} 社團均價 $${avg.toLocaleString()}，較原廠售價便宜 ${discount}%。近期供給量穩定，建議買家從均價再低 3-5% 開始出價，9成新以上品項較容易成交。`,
-        `${selectedProduct.name} ${selectedStorage} 目前行情合理，成交價集中在 $${lowOffer} – $${highOffer} 之間。有盒裝且保固內的機子可溢價 5-8%，賣家定價建議不超過 $${sellerLimit}。`,
-        `市場觀察：${selectedProduct.name} ${selectedStorage} 近期成交筆數正常，價格波動在 ±5% 範圍內。買家可安心在 $${buyerTarget} 左右入手，超過 $${overpayLimit} 建議再議價。`,
+        `目前 ${selectedProduct.name} ${displayStorageLabel} 參考行情 $${avg.toLocaleString()}，較官方參考價便宜 ${discount}%。近期供給量穩定，建議買家從均價再低 3-5% 開始出價，9成新以上品項較容易成交。`,
+        `${selectedProduct.name} ${displayStorageLabel} 目前行情合理，成交價集中在 $${lowOffer} – $${highOffer} 之間。有盒裝且保固內的機子可溢價 5-8%，賣家定價建議不超過 $${sellerLimit}。`,
+        `市場觀察：${selectedProduct.name} ${displayStorageLabel} 近期成交筆數正常，價格波動在 ±5% 範圍內。買家可安心在 $${buyerTarget} 左右入手，超過 $${overpayLimit} 建議再議價。`,
       ]
       const randomAnalysis = analyses[Math.floor(Math.random() * analyses.length)]
       setAiAnalysis(randomAnalysis)
@@ -245,17 +368,40 @@ export default function QueryPage() {
     : null
   const avgValue = avgRaw != null ? Math.round(avgRaw / 100) * 100 : null
   const retail = selectedProduct && selectedStorage ? getOfficialPrice(selectedProduct, selectedStorage) : null
-  const discount = avgValue && retail ? Math.round((1 - avgValue / retail) * 100) : null
+  const normalizedMacSpec = macConfig && selectedMacSpec
+    ? normalizeMacSpec(macConfig, selectedMacSpec)
+    : null
+  const macEstimate = macConfig && normalizedMacSpec
+    ? estimateMacSpec({
+        config: macConfig,
+        spec: normalizedMacSpec,
+        baseMarket: avgValue,
+        baseRetail: retail,
+      })
+    : null
+  const displayAvgValue = macEstimate?.estimatedMarket ?? avgValue
+  const displayRetail = macEstimate?.estimatedRetail ?? retail
+  const displayStorageLabel = macEstimate
+    ? getMacSpecSummary(macConfig, macEstimate.spec)
+    : selectedStorage
+  const discount = displayAvgValue && displayRetail ? Math.round((1 - displayAvgValue / displayRetail) * 100) : null
   const isLiveMarketPrice = Boolean(liveAvg && !avgLoading)
   const monthsOld = getMonthsOld(selectedProduct)
-  const depreciationTrend = buildDepreciationTrend(selectedProduct, selectedStorage, avgValue)
+  const depreciationTrend = buildDepreciationTrend(selectedProduct, selectedStorage, displayAvgValue, {
+    launchPrice: macEstimate?.estimatedRetail,
+  })
   const storageBars = buildStorageBars(selectedProduct)
-  const priceBand = getPriceBand(avgValue, marketCeiling)
+  const priceBand = getPriceBand(displayAvgValue, macEstimate?.newProductGuardrail ?? marketCeiling)
   const categoryProducts = selectedProduct
     ? APPLE_PRODUCTS.filter(p => p.category === selectedProduct.category)
     : []
-  const categoryPrices = categoryProducts.map(getPrimaryMarketPrice).filter(Boolean)
+  const categoryEntries = buildProductEntries(categoryProducts)
+  const categoryPrices = categoryEntries.map(getEntryPrimaryPrice).filter(Boolean)
   const maxCategoryPrice = Math.max(...categoryPrices, 1)
+  const selectedVariantGroup = getProductVariantGroup(selectedProduct)
+  const selectedGroupVariants = selectedVariantGroup
+    ? APPLE_PRODUCTS.filter(product => getProductVariantGroup(product)?.key === selectedVariantGroup.key)
+    : []
 
   return (
     <div>
@@ -319,24 +465,30 @@ export default function QueryPage() {
             {filtered.length === 0 && (
               <p className="text-[13px] text-[#6e6e73] text-center py-8">找不到相關產品</p>
             )}
-            {filtered.map(product => (
+            {productEntries.map(entry => (
               (() => {
-                const primaryPrice = getPrimaryMarketPrice(product)
+                const primaryPrice = getEntryPrimaryPrice(entry)
                 const priceWidth = Math.max(8, Math.round((primaryPrice / maxCategoryPrice) * 100))
+                const active = isEntrySelected(entry, selectedProduct)
+                const product = entry.type === 'product' ? entry.product : entry.variants[0]
+                const title = entry.type === 'product' ? product.name : entry.name
+                const subtitle = entry.type === 'product'
+                  ? `參考均價 $${product.marketAvg[product.storages[0]]?.toLocaleString()}+`
+                  : `${entry.variants.length} 種晶片，參考均價 $${primaryPrice?.toLocaleString()} 起`
                 return (
-              <button key={product.id} onClick={() => selectProduct(product)}
+              <button key={entry.key} onClick={() => selectProduct(product)}
                 className={`w-full text-left px-4 py-3.5 rounded-2xl text-sm transition-all duration-200 ${
-                  selectedProduct?.id === product.id
+                  active
                     ? 'bg-[#1d1d1f] text-white shadow-md'
                     : 'bg-[#f5f5f7] text-[#1d1d1f] hover:bg-[#e8e8ed]'
                 }`}>
-                <div className="font-medium text-[14px]">{product.name}</div>
-                <div className={`text-[12px] mt-0.5 ${selectedProduct?.id === product.id ? 'text-[#a1a1a6]' : 'text-[#6e6e73]'}`}>
-                  參考均價 ${product.marketAvg[product.storages[0]]?.toLocaleString()}+
+                <div className="font-medium text-[14px]">{title}</div>
+                <div className={`text-[12px] mt-0.5 ${active ? 'text-[#a1a1a6]' : 'text-[#6e6e73]'}`}>
+                  {subtitle}
                 </div>
-                <div className={`h-1 rounded-full mt-2 overflow-hidden ${selectedProduct?.id === product.id ? 'bg-white/15' : 'bg-white'}`}>
+                <div className={`h-1 rounded-full mt-2 overflow-hidden ${active ? 'bg-white/15' : 'bg-white'}`}>
                   <div
-                    className={`h-full rounded-full ${selectedProduct?.id === product.id ? 'bg-[#0071e3]' : 'bg-[#d2d2d7]'}`}
+                    className={`h-full rounded-full ${active ? 'bg-[#0071e3]' : 'bg-[#d2d2d7]'}`}
                     style={{ width: `${priceWidth}%` }}
                   />
                 </div>
@@ -369,19 +521,117 @@ export default function QueryPage() {
                   </div>
                 </div>
 
-                {/* Storage selector */}
-                <div className="flex gap-2 flex-wrap">
-                  {selectedProduct.storages.map(s => (
-                    <button key={s} onClick={() => changeStorage(s)}
-                      className={`px-4 py-1.5 rounded-full text-[13px] font-medium border transition-all duration-200 ${
-                        selectedStorage === s
-                          ? 'border-[#1d1d1f] bg-[#1d1d1f] text-white'
-                          : 'border-[rgba(0,0,0,0.15)] text-[#1d1d1f] hover:border-[#1d1d1f]'
-                      }`}>
-                      {s}
-                    </button>
-                  ))}
-                </div>
+                {selectedGroupVariants.length > 1 && (
+                  <div className="flex gap-2 flex-wrap">
+                    {selectedGroupVariants.map(product => (
+                      <button
+                        key={product.id}
+                        onClick={() => selectProduct(product)}
+                        className={`px-4 py-1.5 rounded-full text-[13px] font-medium border transition-all duration-200 ${
+                          selectedProduct?.id === product.id
+                            ? 'border-[#1d1d1f] bg-[#1d1d1f] text-white'
+                            : 'border-[rgba(0,0,0,0.15)] text-[#1d1d1f] hover:border-[#1d1d1f]'
+                        }`}
+                      >
+                        {getVariantLabel(product)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {macConfig && macEstimate ? (
+                  <div className="border border-[rgba(0,0,0,0.08)] rounded-2xl p-5 bg-white space-y-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-[11px] font-semibold text-[#6e6e73] uppercase tracking-wider">Mac 規格估算</p>
+                        <h3 className="text-[18px] font-semibold text-[#1d1d1f] mt-1">基準規格：{macConfig.baseMarketLabel}</h3>
+                        <p className="text-[12px] text-[#6e6e73] mt-1">高配為規格加值估算，不假裝每個組合都有足夠成交樣本。</p>
+                      </div>
+                      <span className="shrink-0 px-3 py-1 rounded-full bg-[#fff7e6] text-[#b36b00] text-[11px] font-semibold border border-[#ffe0a3]">估算</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {macConfig.groups.map(group => (
+                        <div key={group.key}>
+                          <p className="text-[11px] font-semibold text-[#6e6e73] mb-2">{group.label}</p>
+                          <div className="flex flex-wrap gap-2">
+                            {group.options.map(option => {
+                              const disabled = isMacOptionDisabled(macConfig, normalizedMacSpec, group.key, option.value)
+                              const active = normalizedMacSpec?.[group.key] === option.value
+                              return (
+                                <button
+                                  key={option.value}
+                                  onClick={() => !disabled && changeMacSpec(group.key, option.value)}
+                                  disabled={disabled}
+                                  className={`px-3 py-1.5 rounded-full text-[12px] font-medium border transition-all ${
+                                    active
+                                      ? 'border-[#1d1d1f] bg-[#1d1d1f] text-white'
+                                      : disabled
+                                        ? 'border-[#e5e5ea] bg-[#f5f5f7] text-[#b0b0b5] cursor-not-allowed'
+                                        : 'border-[rgba(0,0,0,0.15)] text-[#1d1d1f] hover:border-[#1d1d1f]'
+                                  }`}
+                                >
+                                  {option.label}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {getMacRuleMessages(macConfig, normalizedMacSpec).length > 0 && (
+                      <div className="rounded-xl bg-[#f5f5f7] px-3 py-2">
+                        {getMacRuleMessages(macConfig, normalizedMacSpec).map(message => (
+                          <p key={message} className="text-[12px] text-[#6e6e73]">{message}</p>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="rounded-xl bg-[#f5f5f7] p-3">
+                        <p className="text-[11px] text-[#6e6e73]">基準行情</p>
+                        <p className="text-[18px] font-semibold text-[#1d1d1f]">{formatMoney(macEstimate.baseMarket)}</p>
+                      </div>
+                      <div className="rounded-xl bg-[#f5f5f7] p-3">
+                        <p className="text-[11px] text-[#6e6e73]">規格加值</p>
+                        <p className="text-[18px] font-semibold text-[#1d1d1f]">+{macEstimate.marketAddOn.toLocaleString()}</p>
+                      </div>
+                      <div className="rounded-xl bg-[#e8f5e9] p-3">
+                        <p className="text-[11px] text-[#2e7d32]">估算行情</p>
+                        <p className="text-[18px] font-semibold text-[#1d1d1f]">{formatMoney(macEstimate.estimatedMarket)}</p>
+                      </div>
+                    </div>
+
+                    {macEstimate.rows.length > 0 && (
+                      <div className="divide-y divide-[rgba(0,0,0,0.06)]">
+                        {macEstimate.rows.map(row => (
+                          <div key={`${row.key}-${row.label}`} className="flex items-center justify-between py-2 text-[13px]">
+                            <span className="text-[#6e6e73]">{row.label}</span>
+                            <span className="font-semibold text-[#1d1d1f]">+{row.market.toLocaleString()}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {macEstimate.capped && (
+                      <p className="text-[12px] text-[#b36b00]">估算值已被新品參考防線壓低，二手價不應貼近全新品。</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex gap-2 flex-wrap">
+                    {selectedProduct.storages.map(s => (
+                      <button key={s} onClick={() => changeStorage(s)}
+                        className={`px-4 py-1.5 rounded-full text-[13px] font-medium border transition-all duration-200 ${
+                          selectedStorage === s
+                            ? 'border-[#1d1d1f] bg-[#1d1d1f] text-white'
+                            : 'border-[rgba(0,0,0,0.15)] text-[#1d1d1f] hover:border-[#1d1d1f]'
+                        }`}>
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 {/* KPI cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -392,10 +642,13 @@ export default function QueryPage() {
                     {avgLoading
                       ? <p className="text-[18px] font-semibold text-[#6e6e73] tracking-tight">載入中…</p>
                       : <p className="text-[22px] font-semibold text-[#1d1d1f] tracking-tight">
-                          ${avgValue != null ? avgValue.toLocaleString() : '—'}
+                          ${displayAvgValue != null ? displayAvgValue.toLocaleString() : '—'}
                         </p>
                     }
-                    {!avgLoading && !isLiveMarketPrice && (
+                    {!avgLoading && macEstimate && (
+                      <p className="text-[10px] text-[#6e6e73] mt-1">含規格加值估算，基準為社團行情</p>
+                    )}
+                    {!avgLoading && !macEstimate && !isLiveMarketPrice && (
                       <p className="text-[10px] text-[#6e6e73] mt-1">成交筆數不足時顯示資料庫參考值</p>
                     )}
                   </div>
@@ -504,16 +757,17 @@ export default function QueryPage() {
                       <div>
                         <p className="text-[11px] text-[#6e6e73] mb-1">官方參考價</p>
                         <p className="font-semibold text-[#1d1d1f] text-[14px]">
-                          {formatMoney(getOfficialPrice(selectedProduct, selectedStorage))}
+                          {formatMoney(displayRetail)}
                         </p>
                       </div>
                       <div>
                         <p className="text-[11px] text-[#6e6e73] mb-1">目前折舊</p>
                         {(() => {
                           const launch = getLaunchPrice(selectedProduct, selectedStorage)
-                          const current = avgValue ?? selectedProduct.marketAvg[selectedStorage]
-                          const drop = launch - current
-                          const dropPct = Math.round((drop / launch) * 100)
+                          const launchWithAddOns = macEstimate?.estimatedRetail ?? launch
+                          const current = displayAvgValue ?? selectedProduct.marketAvg[selectedStorage]
+                          const drop = launchWithAddOns - current
+                          const dropPct = Math.round((drop / launchWithAddOns) * 100)
                           return (
                             <div>
                               <p className="font-semibold text-[#ff3b30] text-[14px]">-${drop.toLocaleString()}</p>

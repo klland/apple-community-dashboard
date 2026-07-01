@@ -1233,7 +1233,7 @@ export const APPLE_PRODUCTS = [
 
   // ==================== Mac ====================
   {
-    id: 'mac-pro-m4-max',
+    id: 'mac-studio-m4-max',
     name: 'Mac Studio M4 Max',
     category: 'Mac',
     storages: ['36G/512G'],
@@ -1245,7 +1245,7 @@ export const APPLE_PRODUCTS = [
     tradeInPrice: 37400,
   },
   {
-    id: 'mac-pro-m3-ultra',
+    id: 'mac-studio-m3-ultra',
     name: 'Mac Studio M3 Ultra',
     category: 'Mac',
     storages: ['96G/1T'],
@@ -1351,8 +1351,8 @@ const currentOfficialPriceOverrides = {
   'mac-mini-m4': { '16G/256G': 26900 },
   'mac-mini-m4-pro': { '24G/512G': 54900 },
   'imac-m4': { '16G/256G': 49900 },
-  'mac-pro-m4-max': { '36G/512G': 84900 },
-  'mac-pro-m3-ultra': { '96G/1T': 184900 },
+  'mac-studio-m4-max': { '36G/512G': 84900 },
+  'mac-studio-m3-ultra': { '96G/1T': 184900 },
   'apple-tv-4k-3': { '64G': 6900, '128G': 8500 },
   'homepod-2': { '標準版': 10990 },
   'homepod-mini': { '標準版': 3990 },
