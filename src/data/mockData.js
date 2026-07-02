@@ -787,6 +787,18 @@ export const APPLE_PRODUCTS = [
     tradeInPrice: 20100,
   },
   {
+    id: 'macbook-pro-16-m4-max',
+    name: 'MacBook Pro 16吋 M4 Max',
+    category: 'MacBook',
+    storages: ['36G/1T'],
+    colors: ['太空黑色', '銀色'],
+    launchDate: '2024-11-08',
+    launchPrice: { '36G/1T': 119900 },
+    basePrice: { '36G/1T': 119900 },
+    marketAvg: { '36G/1T': 90000 },
+    tradeInPrice: 20100,
+  },
+  {
     id: 'macbook-pro-14-m4-pro',
     name: 'MacBook Pro 14吋 M4 Pro',
     category: 'MacBook',
@@ -796,6 +808,18 @@ export const APPLE_PRODUCTS = [
     launchPrice: { '24G/512G': 69900 },
     basePrice: { '24G/512G': 69900 },
     marketAvg: { '24G/512G': 56000 },
+    tradeInPrice: 20100,
+  },
+  {
+    id: 'macbook-pro-14-m4-max',
+    name: 'MacBook Pro 14吋 M4 Max',
+    category: 'MacBook',
+    storages: ['36G/1T'],
+    colors: ['太空黑色', '銀色'],
+    launchDate: '2024-11-08',
+    launchPrice: { '36G/1T': 109900 },
+    basePrice: { '36G/1T': 109900 },
+    marketAvg: { '36G/1T': 82000 },
     tradeInPrice: 20100,
   },
   {
@@ -918,6 +942,18 @@ export const APPLE_PRODUCTS = [
     marketAvg: { '32G/1T': 70000 },
     tradeInPrice: 20100,
   },
+  {
+    id: 'macbook-pro-13-m2',
+    name: 'MacBook Pro 13吋 M2',
+    category: 'MacBook',
+    storages: ['8G/256G'],
+    colors: ['太空灰', '銀色'],
+    launchDate: '2022-06-24',
+    launchPrice: { '8G/256G': 39900 },
+    basePrice: { '8G/256G': 39900 },
+    marketAvg: { '8G/256G': 16000 },
+    tradeInPrice: 20100,
+  },
 
   // ==================== MacBook 舊機 ====================
   {
@@ -945,6 +981,18 @@ export const APPLE_PRODUCTS = [
     tradeInPrice: 20100,
   },
   {
+    id: 'macbook-pro-14-m1-max',
+    name: 'MacBook Pro 14吋 M1 Max',
+    category: 'MacBook',
+    storages: ['32G/1T'],
+    colors: ['太空灰', '銀色'],
+    launchDate: '2021-10-26',
+    launchPrice: { '32G/1T': 94900 },
+    basePrice: { '32G/1T': 94900 },
+    marketAvg: { '32G/1T': 47000 },
+    tradeInPrice: 20100,
+  },
+  {
     id: 'macbook-pro-m1-16',
     name: 'MacBook Pro 16吋 M1 Pro',
     category: 'MacBook',
@@ -957,16 +1005,28 @@ export const APPLE_PRODUCTS = [
     tradeInPrice: 20100,
   },
   {
-    id: 'macbook-air-m2-13-2022',
-    name: 'MacBook Air 13吋 M2（2022）',
+    id: 'macbook-pro-16-m1-max',
+    name: 'MacBook Pro 16吋 M1 Max',
+    category: 'MacBook',
+    storages: ['32G/1T'],
+    colors: ['太空灰', '銀色'],
+    launchDate: '2021-10-26',
+    launchPrice: { '32G/1T': 104900 },
+    basePrice: { '32G/1T': 104900 },
+    marketAvg: { '32G/1T': 54000 },
+    tradeInPrice: 20100,
+  },
+  {
+    id: 'macbook-pro-13-m1',
+    name: 'MacBook Pro 13吋 M1',
     category: 'MacBook',
     storages: ['8G/256G'],
-    colors: ['午夜色', '星光色', '太空灰', '銀色'],
-    launchDate: '2022-07-15',
-    launchPrice: { '8G/256G': 32900 },
-    basePrice: { '8G/256G': 32900 },
-    marketAvg: { '8G/256G': 21000 },
-    tradeInPrice: 10700,
+    colors: ['太空灰', '銀色'],
+    launchDate: '2020-11-17',
+    launchPrice: { '8G/256G': 39900 },
+    basePrice: { '8G/256G': 39900 },
+    marketAvg: { '8G/256G': 13000 },
+    tradeInPrice: 20100,
   },
 
   // ==================== iPad ====================
@@ -1365,6 +1425,54 @@ export const APPLE_PRODUCTS = [
     tradeInPrice: 37400,
   },
   {
+    id: 'mac-studio-m2-max',
+    name: 'Mac Studio M2 Max',
+    category: 'Mac',
+    storages: ['32G/512G'],
+    colors: ['銀色'],
+    launchDate: '2023-06-13',
+    launchPrice: { '32G/512G': 67900 },
+    basePrice: { '32G/512G': 67900 },
+    marketAvg: { '32G/512G': 43000 },
+    tradeInPrice: 37400,
+  },
+  {
+    id: 'mac-studio-m2-ultra',
+    name: 'Mac Studio M2 Ultra',
+    category: 'Mac',
+    storages: ['64G/1T'],
+    colors: ['銀色'],
+    launchDate: '2023-06-13',
+    launchPrice: { '64G/1T': 137900 },
+    basePrice: { '64G/1T': 137900 },
+    marketAvg: { '64G/1T': 85000 },
+    tradeInPrice: 37400,
+  },
+  {
+    id: 'mac-studio-m1-max',
+    name: 'Mac Studio M1 Max',
+    category: 'Mac',
+    storages: ['32G/512G'],
+    colors: ['銀色'],
+    launchDate: '2022-03-18',
+    launchPrice: { '32G/512G': 59900 },
+    basePrice: { '32G/512G': 59900 },
+    marketAvg: { '32G/512G': 34000 },
+    tradeInPrice: 37400,
+  },
+  {
+    id: 'mac-studio-m1-ultra',
+    name: 'Mac Studio M1 Ultra',
+    category: 'Mac',
+    storages: ['64G/1T'],
+    colors: ['銀色'],
+    launchDate: '2022-03-18',
+    launchPrice: { '64G/1T': 119900 },
+    basePrice: { '64G/1T': 119900 },
+    marketAvg: { '64G/1T': 68000 },
+    tradeInPrice: 37400,
+  },
+  {
     id: 'mac-mini-m4',
     name: 'Mac mini M4',
     category: 'Mac',
@@ -1389,6 +1497,42 @@ export const APPLE_PRODUCTS = [
     tradeInPrice: 9800,
   },
   {
+    id: 'mac-mini-m2',
+    name: 'Mac mini M2',
+    category: 'Mac',
+    storages: ['8G/256G'],
+    colors: ['銀色'],
+    launchDate: '2023-01-24',
+    launchPrice: { '8G/256G': 18900 },
+    basePrice: { '8G/256G': 18900 },
+    marketAvg: { '8G/256G': 10500 },
+    tradeInPrice: 9800,
+  },
+  {
+    id: 'mac-mini-m2-pro',
+    name: 'Mac mini M2 Pro',
+    category: 'Mac',
+    storages: ['16G/512G'],
+    colors: ['銀色'],
+    launchDate: '2023-01-24',
+    launchPrice: { '16G/512G': 39900 },
+    basePrice: { '16G/512G': 39900 },
+    marketAvg: { '16G/512G': 23500 },
+    tradeInPrice: 9800,
+  },
+  {
+    id: 'mac-mini-m1',
+    name: 'Mac mini M1',
+    category: 'Mac',
+    storages: ['8G/256G'],
+    colors: ['銀色'],
+    launchDate: '2020-11-17',
+    launchPrice: { '8G/256G': 21900 },
+    basePrice: { '8G/256G': 21900 },
+    marketAvg: { '8G/256G': 8500 },
+    tradeInPrice: 9800,
+  },
+  {
     id: 'imac-m4',
     name: 'iMac M4',
     category: 'Mac',
@@ -1399,6 +1543,42 @@ export const APPLE_PRODUCTS = [
     basePrice: { '16G/256G': 42900 },
     marketAvg: { '16G/256G': 35000 },
     tradeInPrice: 11200,
+  },
+  {
+    id: 'imac-m3',
+    name: 'iMac M3',
+    category: 'Mac',
+    storages: ['8G/256G'],
+    colors: ['藍色', '綠色', '粉紅色', '銀色', '黃色', '橙色', '紫色'],
+    launchDate: '2023-11-07',
+    launchPrice: { '8G/256G': 44900 },
+    basePrice: { '8G/256G': 44900 },
+    marketAvg: { '8G/256G': 26000 },
+    tradeInPrice: 11200,
+  },
+  {
+    id: 'imac-m1',
+    name: 'iMac M1',
+    category: 'Mac',
+    storages: ['8G/256G'],
+    colors: ['藍色', '綠色', '粉紅色', '銀色', '黃色', '橙色', '紫色'],
+    launchDate: '2021-05-21',
+    launchPrice: { '8G/256G': 39900 },
+    basePrice: { '8G/256G': 39900 },
+    marketAvg: { '8G/256G': 17000 },
+    tradeInPrice: 11200,
+  },
+  {
+    id: 'mac-pro-m2-ultra',
+    name: 'Mac Pro M2 Ultra',
+    category: 'Mac',
+    storages: ['64G/1T'],
+    colors: ['銀色'],
+    launchDate: '2023-06-13',
+    launchPrice: { '64G/1T': 229900 },
+    basePrice: { '64G/1T': 229900 },
+    marketAvg: { '64G/1T': 120000 },
+    tradeInPrice: null,
   },
 
   // ==================== Apple TV / HomePod ====================
@@ -1511,7 +1691,7 @@ function getProductLineKey(product) {
   }
 
   if (product.category === 'MacBook') {
-    const pro = name.match(/^MacBook Pro (14吋|16吋) M\d+(?: (Pro|Max))?/)
+    const pro = name.match(/^MacBook Pro (13吋|14吋|16吋) M\d+(?: (Pro|Max))?/)
     if (pro) return `macbook-pro-${pro[1]}-${(pro[2] || 'base').toLowerCase()}`
 
     const air = name.match(/^MacBook Air (13吋|15吋)/)
@@ -1526,9 +1706,10 @@ function getProductLineKey(product) {
     if (pro) return pro[1] === '11吋' ? 'ipad-pro-11' : 'ipad-pro-large'
 
     const air = name.match(/^iPad Air (11吋|13吋)/)
-    if (air) return `ipad-air-${air[1]}`
+    if (air) return 'ipad-air'
 
     if (name.startsWith('iPad mini')) return 'ipad-mini'
+    if (name.startsWith('iPad Air 第')) return 'ipad-air'
     if (/^iPad 第\d+代/.test(name)) return 'ipad'
     return `ipad-${name}`
   }

@@ -128,9 +128,56 @@ function getPrimaryMarketPrice(product) {
   return product?.marketAvg?.[product?.storages?.[0]]
 }
 
-function getProductVariantGroup(product) {
+function getIphoneGeneration(product) {
+  const name = product?.name ?? ''
+  const match = name.match(/^iPhone\s+(\d+)/)
+  if (match) return Number(match[1])
+  if (name.startsWith('iPhone SE')) return 'SE'
+  if (/^iPhone\s+(X|XR|XS)/.test(name)) return 'X'
+  return null
+}
+
+function getIphoneTier(product) {
+  const name = product?.name ?? ''
+  if (name.startsWith('iPhone SE')) return { key: 'se', name: 'iPhone SE', rank: 0 }
+  if (/^iPhone\s+(X|XR|XS)/.test(name)) return { key: 'x', name: 'iPhone X 系列', rank: 1 }
+  if (name.includes('Pro Max')) return { key: 'pro-max', name: 'iPhone Pro Max', rank: 4 }
+  if (name.includes('Pro')) return { key: 'pro', name: 'iPhone Pro', rank: 3 }
+  if (name.includes('Plus') || name.includes('Air')) return { key: 'plus-air', name: 'iPhone Plus / Air', rank: 2 }
+  if (/iPhone\s+\d+e/.test(name)) return { key: 'e', name: 'iPhone e', rank: 0 }
+  return { key: 'standard', name: 'iPhone 標準版', rank: 1 }
+}
+
+function getIphoneGenerationRank(generation) {
+  if (typeof generation === 'number') return generation
+  if (generation === 'X') return 10
+  if (generation === 'SE') return 9
+  return 0
+}
+
+function getProductVariantGroup(product, options = {}) {
+  if (product?.category === 'iPhone' && options.iphoneGrouping) {
+    const generation = getIphoneGeneration(product)
+    if (!generation) return null
+
+    if (options.iphoneGrouping === 'generation') {
+      return {
+        key: `iphone-generation-${generation}`,
+        name: generation === 'SE' ? 'iPhone SE' : `iPhone ${generation} 世代`,
+        kind: 'iphone-generation',
+      }
+    }
+
+    const tier = getIphoneTier(product)
+    return {
+      key: `iphone-model-${tier.key}`,
+      name: tier.name,
+      kind: 'iphone-model',
+    }
+  }
+
   if (product?.category === 'MacBook') {
-    const macBookProMatch = product.name.match(/^MacBook Pro (14吋|16吋)/)
+    const macBookProMatch = product.name.match(/^MacBook Pro (13吋|14吋|16吋)/)
     if (macBookProMatch) {
       return {
         key: `macbook-pro-${macBookProMatch[1]}`,
@@ -161,8 +208,16 @@ function getProductVariantGroup(product) {
     const iPadAirMatch = product.name.match(/^iPad Air (11吋|13吋)/)
     if (iPadAirMatch) {
       return {
-        key: `ipad-air-${iPadAirMatch[1]}`,
-        name: `iPad Air ${iPadAirMatch[1]}`,
+        key: 'ipad-air',
+        name: 'iPad Air',
+        kind: 'ipad-air',
+      }
+    }
+
+    if (product.name.startsWith('iPad Air 第')) {
+      return {
+        key: 'ipad-air',
+        name: 'iPad Air',
         kind: 'ipad-air',
       }
     }
@@ -209,6 +264,20 @@ function getProductVariantGroup(product) {
         kind: 'mac',
       }
     }
+    if (product.name.startsWith('iMac ')) {
+      return {
+        key: 'imac',
+        name: 'iMac',
+        kind: 'mac',
+      }
+    }
+    if (product.name.startsWith('Mac Pro ')) {
+      return {
+        key: 'mac-pro',
+        name: 'Mac Pro',
+        kind: 'mac',
+      }
+    }
   }
 
   if (product?.category === 'Apple Watch') {
@@ -240,15 +309,30 @@ function getProductVariantGroup(product) {
   return null
 }
 
-function getVariantLabel(product) {
-  const group = getProductVariantGroup(product)
+function getVariantLabel(product, options = {}) {
+  const group = getProductVariantGroup(product, options)
   if (!group) return product?.name ?? ''
+  if (group.kind === 'iphone-generation') {
+    if (product.name.startsWith('iPhone SE')) return product.name.replace('iPhone ', '')
+    if (/^iPhone\s+(X|XR|XS)/.test(product.name)) return product.name.replace('iPhone ', '')
+    return product.name.replace(/^iPhone\s+\d+\s*/, '') || '標準版'
+  }
+  if (group.kind === 'iphone-model') {
+    const generation = getIphoneGeneration(product)
+    const tier = getIphoneTier(product)
+    if (!generation) return product.name
+    if (tier.key === 'standard') return `${generation}`
+    if (tier.key === 'e') return `${generation}e`
+    if (tier.key === 'se') return product.name.replace('iPhone ', '')
+    if (tier.key === 'x') return product.name.replace('iPhone ', '')
+    return product.name.replace('iPhone ', '')
+  }
   if (group.kind === 'macbook-air') {
     if (product.name === 'MacBook Air M1') return 'M1'
     return product.name.replace(/^MacBook Air (13吋|15吋) /, '')
   }
   if (group.kind === 'ipad-air') {
-    return product.name.replace(/^iPad Air (11吋|13吋) /, '')
+    return product.name.replace('iPad Air ', '')
   }
   if (group.kind === 'ipad-pro') {
     return product.name.replace(/^iPad Pro (11吋|13吋|12\.9吋) /, '')
@@ -271,12 +355,33 @@ function getVariantLabel(product) {
   return product.name.replace(`${group.name} `, '')
 }
 
-function buildProductEntries(products) {
+function getVariantSortValue(product, options = {}) {
+  if (product?.category === 'iPhone') {
+    const generation = getIphoneGeneration(product) ?? 0
+    const tier = getIphoneTier(product)
+    if (options.iphoneGrouping === 'generation') return tier.rank
+    return getIphoneGenerationRank(generation) * 10 + tier.rank
+  }
+
+  const label = getVariantLabel(product, options)
+  const chip = label.match(/M(\d+)/)
+  const generation = chip ? Number(chip[1]) : 0
+  const tier = label.includes('Ultra')
+    ? 3
+    : label.includes('Max')
+      ? 2
+      : label.includes('Pro')
+        ? 1
+        : 0
+  return generation * 10 + tier
+}
+
+function buildProductEntries(products, options = {}) {
   const entries = []
   const groups = new Map()
 
   for (const product of products) {
-    const group = getProductVariantGroup(product)
+    const group = getProductVariantGroup(product, options)
     if (!group) {
       entries.push({ type: 'product', key: product.id, product })
       continue
@@ -294,6 +399,31 @@ function buildProductEntries(products) {
       entries.push(entry)
     }
     groups.get(group.key).variants.push(product)
+  }
+
+  for (const group of groups.values()) {
+    group.variants.sort((a, b) => getVariantSortValue(b, options) - getVariantSortValue(a, options))
+  }
+
+  if (options.iphoneGrouping) {
+    const modelOrder = {
+      'pro-max': 70,
+      pro: 60,
+      'plus-air': 50,
+      standard: 40,
+      e: 30,
+      se: 20,
+      x: 10,
+    }
+
+    entries.sort((a, b) => {
+      const productA = a.type === 'product' ? a.product : a.variants[0]
+      const productB = b.type === 'product' ? b.product : b.variants[0]
+      if (options.iphoneGrouping === 'generation') {
+        return getIphoneGenerationRank(getIphoneGeneration(productB)) - getIphoneGenerationRank(getIphoneGeneration(productA))
+      }
+      return (modelOrder[getIphoneTier(productB).key] ?? 0) - (modelOrder[getIphoneTier(productA).key] ?? 0)
+    })
   }
 
   return entries
@@ -322,6 +452,7 @@ function getMacSpecSummary(config, spec) {
 export default function QueryPage() {
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('全部')
+  const [iphoneGrouping, setIphoneGrouping] = useState('generation')
   const initialProduct = APPLE_PRODUCTS.find(p => p.id === 'iphone-16-pro') ?? APPLE_PRODUCTS[0]
   const [selectedProduct, setSelectedProduct] = useState(initialProduct)
   const [selectedStorage, setSelectedStorage] = useState(initialProduct?.storages[0] ?? '')
@@ -340,7 +471,10 @@ export default function QueryPage() {
     })
   }, [search, selectedCategory])
 
-  const productEntries = useMemo(() => buildProductEntries(filtered), [filtered])
+  const productEntries = useMemo(
+    () => buildProductEntries(filtered, selectedCategory === 'iPhone' ? { iphoneGrouping } : {}),
+    [filtered, selectedCategory, iphoneGrouping]
+  )
 
   const macConfig = useMemo(
     () => getMacSpecConfig(selectedProduct?.id),
@@ -503,12 +637,15 @@ export default function QueryPage() {
   const categoryProducts = selectedProduct
     ? APPLE_PRODUCTS.filter(p => p.category === selectedProduct.category)
     : []
-  const categoryEntries = buildProductEntries(categoryProducts)
+  const selectedGroupingOptions = selectedProduct?.category === 'iPhone' ? { iphoneGrouping } : {}
+  const categoryEntries = buildProductEntries(categoryProducts, selectedGroupingOptions)
   const categoryPrices = categoryEntries.map(getEntryPrimaryPrice).filter(Boolean)
   const maxCategoryPrice = Math.max(...categoryPrices, 1)
-  const selectedVariantGroup = getProductVariantGroup(selectedProduct)
+  const selectedVariantGroup = getProductVariantGroup(selectedProduct, selectedGroupingOptions)
   const selectedGroupVariants = selectedVariantGroup
-    ? APPLE_PRODUCTS.filter(product => getProductVariantGroup(product)?.key === selectedVariantGroup.key)
+    ? APPLE_PRODUCTS
+        .filter(product => getProductVariantGroup(product, selectedGroupingOptions)?.key === selectedVariantGroup.key)
+        .sort((a, b) => getVariantSortValue(b, selectedGroupingOptions) - getVariantSortValue(a, selectedGroupingOptions))
     : []
 
   return (
@@ -553,6 +690,28 @@ export default function QueryPage() {
               )
             })}
           </div>
+          {selectedCategory === 'iPhone' && (
+            <div className="mt-4 flex justify-center">
+              <div className="inline-flex rounded-full bg-white border border-[rgba(0,0,0,0.1)] p-1 shadow-sm">
+                {[
+                  { value: 'generation', label: '依世代' },
+                  { value: 'model', label: '依機型' },
+                ].map(option => (
+                  <button
+                    key={option.value}
+                    onClick={() => setIphoneGrouping(option.value)}
+                    className={`px-4 py-1.5 rounded-full text-[13px] font-medium transition-all ${
+                      iphoneGrouping === option.value
+                        ? 'bg-[#1d1d1f] text-white'
+                        : 'text-[#6e6e73] hover:text-[#1d1d1f]'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-2 max-w-[560px] mx-auto mt-7 text-left">
             <div className="bg-white rounded-2xl p-3 border border-[rgba(0,0,0,0.06)]">
               <p className="text-[11px] text-[#6e6e73]">收錄產品</p>
@@ -582,7 +741,7 @@ export default function QueryPage() {
                 const title = entry.type === 'product' ? product.name : entry.name
                 const subtitle = entry.type === 'product'
                   ? `參考均價 $${product.marketAvg[product.storages[0]]?.toLocaleString()}+`
-                  : `${entry.variants.length} 種晶片，參考均價 $${primaryPrice?.toLocaleString()} 起`
+                  : `${entry.variants.length} 個型號，參考均價 $${primaryPrice?.toLocaleString()} 起`
                 return (
               <button key={entry.key} onClick={() => selectProduct(product)}
                 className={`w-full text-left px-4 py-3.5 rounded-2xl text-sm transition-all duration-200 ${
@@ -641,7 +800,7 @@ export default function QueryPage() {
                             : 'border-[rgba(0,0,0,0.15)] text-[#1d1d1f] hover:border-[#1d1d1f]'
                         }`}
                       >
-                        {getVariantLabel(product)}
+                        {getVariantLabel(product, selectedGroupingOptions)}
                       </button>
                     ))}
                   </div>
