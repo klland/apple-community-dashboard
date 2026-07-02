@@ -1487,11 +1487,146 @@ for (const product of APPLE_PRODUCTS) {
 }
 
 const MARKET_REFERENCE_DATE = new Date('2026-06-30T00:00:00+08:00')
+const MAX_DISCOUNT_TIERS = [
+  { months: 6, standard: 0.16, highSpec: 0.12 },
+  { months: 18, standard: 0.28, highSpec: 0.24 },
+  { months: 30, standard: 0.35, highSpec: 0.32 },
+]
 
 function monthsSinceLaunch(launchDate) {
   const launched = new Date(`${launchDate}T00:00:00+08:00`)
   if (Number.isNaN(launched.getTime())) return 0
   return Math.max(0, (MARKET_REFERENCE_DATE - launched) / (1000 * 60 * 60 * 24 * 30.4375))
+}
+
+function getProductLineKey(product) {
+  const name = product.name || ''
+
+  if (product.category === 'iPhone') {
+    if (name.includes('Pro Max')) return 'iphone-pro-max'
+    if (name.includes('Pro')) return 'iphone-pro'
+    if (name.includes('Plus') || name.includes('Air')) return 'iphone-air'
+    if (name.includes('e')) return 'iphone-e'
+    return 'iphone'
+  }
+
+  if (product.category === 'MacBook') {
+    const pro = name.match(/^MacBook Pro (14吋|16吋) M\d+(?: (Pro|Max))?/)
+    if (pro) return `macbook-pro-${pro[1]}-${(pro[2] || 'base').toLowerCase()}`
+
+    const air = name.match(/^MacBook Air (13吋|15吋)/)
+    if (air) return `macbook-air-${air[1]}`
+
+    if (name === 'MacBook Air M1') return 'macbook-air-13吋'
+    return `macbook-${name}`
+  }
+
+  if (product.category === 'iPad') {
+    const pro = name.match(/^iPad Pro (11吋|13吋|12\.9吋)/)
+    if (pro) return pro[1] === '11吋' ? 'ipad-pro-11' : 'ipad-pro-large'
+
+    const air = name.match(/^iPad Air (11吋|13吋)/)
+    if (air) return `ipad-air-${air[1]}`
+
+    if (name.startsWith('iPad mini')) return 'ipad-mini'
+    if (/^iPad 第\d+代/.test(name)) return 'ipad'
+    return `ipad-${name}`
+  }
+
+  if (product.category === 'Apple Watch') {
+    if (name.startsWith('Apple Watch Ultra')) return 'apple-watch-ultra'
+    if (name.startsWith('Apple Watch Series')) return 'apple-watch-series'
+    if (name.startsWith('Apple Watch SE')) return 'apple-watch-se'
+    return `apple-watch-${name}`
+  }
+
+  if (product.category === 'AirPods') {
+    if (name.startsWith('AirPods Pro')) return 'airpods-pro'
+    if (name.startsWith('AirPods Max')) return 'airpods-max'
+    if (name.startsWith('AirPods 4')) return 'airpods'
+    return `airpods-${name}`
+  }
+
+  if (product.category === 'Mac') {
+    if (name.startsWith('Mac mini')) {
+      return name.includes('Pro') ? 'mac-mini-pro' : 'mac-mini'
+    }
+    if (name.startsWith('Mac Studio')) {
+      if (name.includes('Ultra')) return 'mac-studio-ultra'
+      if (name.includes('Max')) return 'mac-studio-max'
+      return 'mac-studio'
+    }
+    if (name.startsWith('iMac')) return 'imac'
+  }
+
+  if (name.startsWith('Apple TV')) return 'apple-tv'
+  if (name.startsWith('HomePod mini')) return 'homepod-mini'
+  if (name.startsWith('HomePod')) return 'homepod'
+  return `${product.category}-${name}`
+}
+
+function latestLaunchTimeByLine(products) {
+  const result = new Map()
+  for (const product of products) {
+    if (!product.launchDate) continue
+    const time = new Date(`${product.launchDate}T00:00:00+08:00`).getTime()
+    if (Number.isNaN(time)) continue
+    const key = getProductLineKey(product)
+    result.set(key, Math.max(result.get(key) || 0, time))
+  }
+  return result
+}
+
+function ramFromStorageLabel(storage) {
+  const match = String(storage || '').match(/(\d+)G\//)
+  return match ? Number(match[1]) : 0
+}
+
+function isHighSpecVariant(product, storage) {
+  const name = product.name || ''
+  if (product.category === 'MacBook' || product.category === 'Mac') {
+    if (/\bM\d+ (Pro|Max)\b/.test(name) || name.includes('Ultra')) return true
+    if (ramFromStorageLabel(storage) >= 32) return true
+    return /(^|\/)(1T|2T|4T|8T)$/.test(String(storage || ''))
+  }
+
+  if (product.category === 'iPad') return /^(1T|2T)$/.test(String(storage || ''))
+  if (product.category === 'iPhone') return /^(1T|2T)$/.test(String(storage || ''))
+  return false
+}
+
+function maxDiscountForLatestProduct(monthsOld, highSpec) {
+  const tier = MAX_DISCOUNT_TIERS.find(item => monthsOld <= item.months)
+  if (!tier) return null
+  return highSpec ? tier.highSpec : tier.standard
+}
+
+function enforceLatestProductDiscountFloors(products) {
+  const latestByLine = latestLaunchTimeByLine(products)
+
+  for (const product of products) {
+    if (!product.launchDate || !product.marketAvg) continue
+
+    const launchTime = new Date(`${product.launchDate}T00:00:00+08:00`).getTime()
+    const latestTime = latestByLine.get(getProductLineKey(product))
+    if (!latestTime || launchTime < latestTime) continue
+
+    const monthsOld = monthsSinceLaunch(product.launchDate)
+    for (const storage of product.storages) {
+      const official = product.currentOfficialPrice?.[storage] ?? product.basePrice?.[storage]
+      const current = product.marketAvg?.[storage]
+      if (!official || !current) continue
+
+      const maxDiscount = maxDiscountForLatestProduct(monthsOld, isHighSpecVariant(product, storage))
+      if (maxDiscount == null) continue
+
+      const floor = toHundredFloor(official * (1 - maxDiscount))
+      if (current < floor) {
+        product.marketAvg[storage] = floor
+        product.latestProductFloorApplied = true
+      }
+    }
+  }
 }
 
 function firstYearIphoneDrop(productName) {
@@ -1538,6 +1673,8 @@ for (const product of APPLE_PRODUCTS) {
 const mikoCeilings = mikoPriceCeilings?.ceilings || {}
 const toHundredFloor = price => Math.floor(price / 100) * 100
 const toSecondHandCeiling = price => toHundredFloor(price * 0.95)
+
+enforceLatestProductDiscountFloors(APPLE_PRODUCTS)
 
 for (const product of APPLE_PRODUCTS) {
   const ceilings = mikoCeilings[product.id]
