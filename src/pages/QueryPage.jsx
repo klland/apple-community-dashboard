@@ -27,6 +27,23 @@ function formatMoney(value) {
   return value == null ? '—' : `$${value.toLocaleString()}`
 }
 
+function isLowLiquidityIphone(product, marketValue) {
+  return product?.category === 'iPhone' && marketValue != null && marketValue < 3000
+}
+
+function getLowLiquidityRange(value) {
+  if (value == null) return null
+  const high = Math.max(1000, Math.ceil(value / 500) * 500)
+  const low = Math.max(300, Math.floor(high * 0.45 / 100) * 100)
+  return { low, high }
+}
+
+function formatMarketValue(product, value) {
+  if (!isLowLiquidityIphone(product, value)) return formatMoney(value)
+  const range = getLowLiquidityRange(value)
+  return range ? `$${range.low.toLocaleString()} - $${range.high.toLocaleString()}` : '低流動性'
+}
+
 function getOfficialPrice(product, storage) {
   return product?.currentOfficialPrice?.[storage] ?? product?.basePrice?.[storage]
 }
@@ -574,6 +591,13 @@ export default function QueryPage() {
 
     setTimeout(() => {
       const avg = displayAvgValue
+      if (isLowLiquidityIphone(selectedProduct, avg)) {
+        const range = getLowLiquidityRange(avg)
+        const rangeText = range ? `$${range.low.toLocaleString()} - $${range.high.toLocaleString()}` : '低價區間'
+        setAiAnalysis(`${selectedProduct.name} ${displayStorageLabel} 已屬低流動性老機，參考區間約 ${rangeText}。這類手機價格受外觀、電池健康度、是否能正常使用與配件影響很大，能賣就賣，外觀好才有溢價；外觀差或電池差時不用再用精準均價估算。`)
+        setAiLoading(false)
+        return
+      }
       const ceiling = macEstimate?.newProductGuardrail ?? getMarketCeiling(selectedProduct, selectedStorage)
       const retail = displayRetail
       const discount = Math.round((1 - avg / retail) * 100)
@@ -626,14 +650,16 @@ export default function QueryPage() {
   const displayStorageLabel = macEstimate
     ? getMacSpecSummary(macConfig, macEstimate.spec)
     : selectedStorage
-  const discount = displayAvgValue && displayRetail ? Math.round((1 - displayAvgValue / displayRetail) * 100) : null
+  const lowLiquidityIphone = isLowLiquidityIphone(selectedProduct, displayAvgValue)
+  const lowLiquidityRange = lowLiquidityIphone ? getLowLiquidityRange(displayAvgValue) : null
+  const discount = !lowLiquidityIphone && displayAvgValue && displayRetail ? Math.round((1 - displayAvgValue / displayRetail) * 100) : null
   const isLiveMarketPrice = Boolean(liveAvg && !avgLoading)
   const monthsOld = getMonthsOld(selectedProduct)
   const depreciationTrend = buildDepreciationTrend(selectedProduct, selectedStorage, displayAvgValue, {
     launchPrice: macEstimate?.estimatedRetail,
   })
   const storageBars = buildStorageBars(selectedProduct)
-  const priceBand = getPriceBand(displayAvgValue, macEstimate?.newProductGuardrail ?? marketCeiling)
+  const priceBand = lowLiquidityIphone ? null : getPriceBand(displayAvgValue, macEstimate?.newProductGuardrail ?? marketCeiling)
   const categoryProducts = selectedProduct
     ? APPLE_PRODUCTS.filter(p => p.category === selectedProduct.category)
     : []
@@ -740,8 +766,12 @@ export default function QueryPage() {
                 const product = entry.type === 'product' ? entry.product : entry.variants[0]
                 const title = entry.type === 'product' ? product.name : entry.name
                 const subtitle = entry.type === 'product'
-                  ? `參考均價 $${product.marketAvg[product.storages[0]]?.toLocaleString()}+`
-                  : `${entry.variants.length} 個型號，參考均價 $${primaryPrice?.toLocaleString()} 起`
+                  ? isLowLiquidityIphone(product, product.marketAvg[product.storages[0]])
+                    ? `低流動性 ${formatMarketValue(product, product.marketAvg[product.storages[0]])}`
+                    : `參考均價 $${product.marketAvg[product.storages[0]]?.toLocaleString()}+`
+                  : isLowLiquidityIphone(product, primaryPrice)
+                    ? `${entry.variants.length} 個型號，低流動性 ${formatMarketValue(product, primaryPrice)}`
+                    : `${entry.variants.length} 個型號，參考均價 $${primaryPrice?.toLocaleString()} 起`
                 return (
               <button key={entry.key} onClick={() => selectProduct(product)}
                 className={`w-full text-left px-4 py-3.5 rounded-2xl text-sm transition-all duration-200 ${
@@ -904,24 +934,27 @@ export default function QueryPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="bg-[#f5f5f7] rounded-2xl p-4">
                     <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">
-                      {isLiveMarketPrice ? `社團均價（${liveAvg.count} 筆）` : '參考均價'}
+                      {lowLiquidityIphone ? '低流動性區間' : isLiveMarketPrice ? `社團均價（${liveAvg.count} 筆）` : '參考均價'}
                     </p>
                     {avgLoading
                       ? <p className="text-[18px] font-semibold text-[#6e6e73] tracking-tight">載入中…</p>
                       : <p className="text-[22px] font-semibold text-[#1d1d1f] tracking-tight">
-                          ${displayAvgValue != null ? displayAvgValue.toLocaleString() : '—'}
+                          {formatMarketValue(selectedProduct, displayAvgValue)}
                         </p>
                     }
+                    {!avgLoading && lowLiquidityIphone && (
+                      <p className="text-[10px] text-[#6e6e73] mt-1">不再用精準均價，外觀與電池影響較大</p>
+                    )}
                     {!avgLoading && macEstimate && (
                       <p className="text-[10px] text-[#6e6e73] mt-1">含規格加值估算，基準為社團行情</p>
                     )}
-                    {!avgLoading && !macEstimate && !isLiveMarketPrice && (
+                    {!avgLoading && !lowLiquidityIphone && !macEstimate && !isLiveMarketPrice && (
                       <p className="text-[10px] text-[#6e6e73] mt-1">成交筆數不足時顯示資料庫參考值</p>
                     )}
                   </div>
                   <div className="bg-[#e3f2fd] rounded-2xl p-4">
-                    <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">平均折扣</p>
-                    <p className="text-[22px] font-semibold text-[#0071e3] tracking-tight">{discount != null ? `${discount}% off` : '—'}</p>
+                    <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">{lowLiquidityIphone ? '市場狀態' : '平均折扣'}</p>
+                    <p className="text-[22px] font-semibold text-[#0071e3] tracking-tight">{lowLiquidityIphone ? '低流動性' : discount != null ? `${discount}% off` : '—'}</p>
                   </div>
                   <a href="https://www.apple.com/tw/trade-in/" target="_blank" rel="noreferrer"
                     className="bg-[#fce4ec] rounded-2xl p-4 flex flex-col justify-between hover:opacity-80 transition-opacity">
@@ -932,6 +965,15 @@ export default function QueryPage() {
                     <p className="text-[10px] text-[#ff3b30] mt-2 opacity-70">實際金額依機況而定</p>
                   </a>
                 </div>
+
+                {lowLiquidityIphone && lowLiquidityRange && (
+                  <div className="border border-[#ffe0a3] rounded-2xl p-5 bg-[#fffaf0]">
+                    <p className="text-[11px] font-semibold text-[#b36b00] uppercase tracking-wider">低流動性提醒</p>
+                    <p className="text-[14px] text-[#1d1d1f] leading-relaxed mt-2">
+                      這台手機行情低於 $3,000，市場通常不再適合用精準均價判斷。參考區間約 ${lowLiquidityRange.low.toLocaleString()} - ${lowLiquidityRange.high.toLocaleString()}；能賣就賣，外觀好、電池健康度高、功能正常才有溢價。
+                    </p>
+                  </div>
+                )}
 
                 {/* Charts */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -949,7 +991,7 @@ export default function QueryPage() {
                           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                           <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#6e6e73' }} axisLine={false} tickLine={false} />
                           <YAxis tick={{ fontSize: 11, fill: '#6e6e73' }} axisLine={false} tickLine={false} tickFormatter={v => `$${Math.round(v / 1000)}k`} width={42} />
-                          <Tooltip formatter={v => [formatMoney(v), '行情']} contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.08)', fontSize: 12 }} />
+                          <Tooltip formatter={v => [lowLiquidityIphone ? formatMarketValue(selectedProduct, v) : formatMoney(v), '行情']} contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.08)', fontSize: 12 }} />
                           <Line type="monotone" dataKey="price" stroke="#ff3b30" strokeWidth={2.5} dot={{ r: 3, fill: '#ff3b30' }} activeDot={{ r: 5 }} />
                         </LineChart>
                       </ResponsiveContainer>
@@ -970,7 +1012,7 @@ export default function QueryPage() {
                           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                           <XAxis dataKey="storage" tick={{ fontSize: 11, fill: '#6e6e73' }} axisLine={false} tickLine={false} />
                           <YAxis tick={{ fontSize: 11, fill: '#6e6e73' }} axisLine={false} tickLine={false} tickFormatter={v => `$${Math.round(v / 1000)}k`} width={42} />
-                          <Tooltip formatter={v => formatMoney(v)} contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.08)', fontSize: 12 }} />
+                          <Tooltip formatter={(v, name) => name === '行情' && lowLiquidityIphone ? formatMarketValue(selectedProduct, v) : formatMoney(v)} contentStyle={{ borderRadius: 12, border: '1px solid rgba(0,0,0,0.08)', fontSize: 12 }} />
                           <Bar dataKey="retail" name="原廠" fill="#d2d2d7" radius={[6, 6, 0, 0]} />
                           <Bar dataKey="market" name="行情" fill="#0071e3" radius={[6, 6, 0, 0]} />
                         </BarChart>
@@ -1029,7 +1071,12 @@ export default function QueryPage() {
                       </div>
                       <div>
                         <p className="text-[11px] text-[#6e6e73] mb-1">目前折舊</p>
-                        {(() => {
+                        {lowLiquidityIphone ? (
+                          <div>
+                            <p className="font-semibold text-[#ff9500] text-[14px]">低流動性</p>
+                            <p className="text-[11px] text-[#ff9500]">不適用精準折舊</p>
+                          </div>
+                        ) : (() => {
                           const launch = getLaunchPrice(selectedProduct, selectedStorage)
                           const launchWithAddOns = macEstimate?.estimatedRetail ?? launch
                           const current = displayAvgValue ?? selectedProduct.marketAvg[selectedStorage]
