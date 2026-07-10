@@ -10,7 +10,7 @@ import {
 } from '../data/macSpecRules'
 import { Smartphone, Laptop, Tablet, Watch, Headphones, Monitor, Grid2x2, Package, TrendingDown, Activity, CircleDollarSign } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { getMarketPrice } from '../lib/supabase'
+import { getDailyPrices, getMarketPrice } from '../lib/supabase'
 
 const CATEGORY_ICONS = {
   '全部': Grid2x2,
@@ -76,42 +76,32 @@ function buildDepreciationTrend(product, storage, currentValue, options = {}) {
   if (!launch || !current) return []
 
   const monthsOld = Math.max(getMonthsOld(product) ?? 1, 1)
-  if (!product.marketAdjusted) {
-    const points = [0, 0.2, 0.4, 0.6, 0.8, 1]
-    return points.map((pct, idx) => {
-      const value = Math.round((launch - (launch - current) * Math.pow(pct, 0.72)) / 100) * 100
-      return {
-        label: idx === 0 ? '上市' : idx === points.length - 1 ? '現在' : `${Math.round(monthsOld * pct)}月`,
-        price: value,
-      }
-    })
-  }
-
-  const preIncreaseLow = Math.round((current * 0.92) / 100) * 100
-  const points = [
-    { pct: 0, label: '上市', phase: 'decline' },
-    { pct: 0.25, phase: 'decline' },
-    { pct: 0.5, phase: 'decline' },
-    { pct: 0.75, phase: 'decline' },
-    { pct: 0.92, label: '幾天前', phase: 'low' },
-    { pct: 1, label: '現在', phase: 'rebound' },
-  ]
-  return points.map(point => {
-    let value
-    if (point.phase === 'rebound') {
-      value = current
-    } else if (point.phase === 'low') {
-      value = preIncreaseLow
-    } else {
-      const declinePct = point.pct / 0.92
-      value = launch - (launch - preIncreaseLow) * Math.pow(declinePct, 0.72)
-    }
-    const roundedValue = Math.round(value / 100) * 100
+  const points = [0, 0.2, 0.4, 0.6, 0.8, 1]
+  return points.map((pct, idx) => {
+    const value = Math.round((launch - (launch - current) * Math.pow(pct, 0.72)) / 100) * 100
     return {
-      label: point.label ?? `${Math.round(monthsOld * point.pct)}月`,
-      price: roundedValue,
+      label: idx === 0 ? '上市' : idx === points.length - 1 ? '現在' : `${Math.round(monthsOld * pct)}月`,
+      price: value,
     }
   })
+}
+
+function buildReportedPriceTrend(rows) {
+  const byDay = new Map()
+  for (const row of rows) {
+    const day = row.created_at?.slice(0, 10)
+    if (!day) continue
+    const prices = byDay.get(day) || []
+    prices.push(Number(row.price))
+    byDay.set(day, prices)
+  }
+
+  return [...byDay.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([day, prices]) => ({
+      label: day.slice(5).replace('-', '/'),
+      price: Math.round((prices.reduce((sum, price) => sum + price, 0) / prices.length) / 100) * 100,
+    }))
 }
 
 function buildStorageBars(product) {
@@ -478,6 +468,7 @@ export default function QueryPage() {
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState('')
   const [liveAvg, setLiveAvg] = useState(null)   // null = 尚未載入, false = 無資料
+  const [liveDailyPrices, setLiveDailyPrices] = useState([])
   const [avgLoading, setAvgLoading] = useState(false)
 
   const filtered = useMemo(() => {
@@ -505,6 +496,7 @@ export default function QueryPage() {
       setAiAnalysis('')
       setAiError('')
       setLiveAvg(null)
+      setLiveDailyPrices([])
       return
     }
 
@@ -515,6 +507,7 @@ export default function QueryPage() {
       setAiAnalysis('')
       setAiError('')
       setLiveAvg(null)
+      setLiveDailyPrices([])
     }
   }, [filtered, selectedProduct])
 
@@ -529,6 +522,7 @@ export default function QueryPage() {
     setAiAnalysis('')
     setAiError('')
     setLiveAvg(null)
+    setLiveDailyPrices([])
   }, [macConfig])
 
   function selectProduct(product) {
@@ -539,6 +533,7 @@ export default function QueryPage() {
     setAiAnalysis('')
     setAiError('')
     setLiveAvg(null)
+    setLiveDailyPrices([])
     // 手機版：選完產品自動捲到詳情區
     if (window.innerWidth < 1024) {
       setTimeout(() => {
@@ -571,10 +566,16 @@ export default function QueryPage() {
     const loadingId = setTimeout(() => {
       if (!cancelled) setAvgLoading(true)
     }, 0)
-    getMarketPrice(selectedProduct.name, selectedStorage).then(result => {
+    const referencePrice = selectedProduct.marketAvg[selectedStorage]
+    Promise.all([
+      getMarketPrice(selectedProduct.name, selectedStorage, { referencePrice }),
+      getDailyPrices(selectedProduct.name, selectedStorage, { referencePrice }),
+    ]).then(([result, dailyPrices]) => {
       if (cancelled) return
       // result = { avg, count, trimmedCount } 或 null
-      setLiveAvg(result && result.count >= 5 ? result : false)
+      // 真實成交回報有 2 筆即可優先使用；其餘來源維持至少 5 筆才採用。
+      setLiveAvg(result && (result.reportCount >= 2 || result.count >= 5) ? result : false)
+      setLiveDailyPrices(dailyPrices)
       setAvgLoading(false)
     })
     return () => {
@@ -619,8 +620,7 @@ export default function QueryPage() {
   }
 
   // loading 中沿用 mockData，載入完才切換（避免數字閃跳）。
-  // If recent live transactions lag behind a broad official-price adjustment, keep the adjusted
-  // reference price as the floor so the page reflects current replacement-cost pressure.
+  // 真實成交優先於模型預設；Miko 僅保留為二手價不可超過新品的單向上限。
   const adjustedReference = selectedProduct && selectedStorage
     ? selectedProduct.marketAvg[selectedStorage]
     : null
@@ -629,7 +629,7 @@ export default function QueryPage() {
     : null
   const avgRaw = selectedProduct && selectedStorage
     ? capToMarketCeiling(liveAvg && !avgLoading
-        ? (selectedProduct.marketAdjusted ? Math.max(liveAvg.avg, adjustedReference ?? 0) : liveAvg.avg)
+        ? liveAvg.avg
         : adjustedReference, marketCeiling)
     : null
   const avgValue = avgRaw != null ? Math.round(avgRaw / 100) * 100 : null
@@ -655,7 +655,8 @@ export default function QueryPage() {
   const discount = !lowLiquidityIphone && displayAvgValue && displayRetail ? Math.round((1 - displayAvgValue / displayRetail) * 100) : null
   const isLiveMarketPrice = Boolean(liveAvg && !avgLoading)
   const monthsOld = getMonthsOld(selectedProduct)
-  const depreciationTrend = buildDepreciationTrend(selectedProduct, selectedStorage, displayAvgValue, {
+  const reportedPriceTrend = buildReportedPriceTrend(liveDailyPrices)
+  const depreciationTrend = reportedPriceTrend.length >= 2 ? reportedPriceTrend : buildDepreciationTrend(selectedProduct, selectedStorage, displayAvgValue, {
     launchPrice: macEstimate?.estimatedRetail,
   })
   const storageBars = buildStorageBars(selectedProduct)
@@ -950,6 +951,9 @@ export default function QueryPage() {
                     )}
                     {!avgLoading && !lowLiquidityIphone && !macEstimate && !isLiveMarketPrice && (
                       <p className="text-[10px] text-[#6e6e73] mt-1">成交筆數不足時顯示資料庫參考值</p>
+                    )}
+                    {isLiveMarketPrice && liveAvg.reportCount > 0 && (
+                      <p className="text-[10px] text-[#248a3d] mt-1">含 {liveAvg.reportCount} 筆成交回報，已優先採計</p>
                     )}
                   </div>
                   <div className="bg-[#e3f2fd] rounded-2xl p-4">

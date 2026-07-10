@@ -95,8 +95,8 @@ export default function ReportPage() {
         purchaseChannel: '', warrantyStatus: '', warrantyMonthsLeft: '',
         price: '', tradeMethod: '', note: '',
       })
-    } catch {
-      setError('送出失敗，請稍後再試')
+    } catch (submitError) {
+      setError(submitError?.message || '送出失敗，請稍後再試')
     } finally {
       setLoading(false)
     }
@@ -116,7 +116,7 @@ export default function ReportPage() {
           <div className="mb-8 bg-[#e8f5e9] border border-[rgba(52,199,89,0.2)] rounded-2xl p-6 text-center">
             <p className="text-[32px] mb-2">✅</p>
             <p className="text-[15px] font-semibold text-[#1d8a3b]">感謝你的回報！</p>
-            <p className="text-[13px] text-[#6e6e73] mt-1">資料已加入行情資料庫，幫助了其他社員</p>
+            <p className="text-[13px] text-[#6e6e73] mt-1">資料會先進入 7 天冷卻與異常檢查，再納入公開行情</p>
           </div>
         )}
         {error && (
