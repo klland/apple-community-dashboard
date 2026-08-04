@@ -5,6 +5,60 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
+const SEARCH_VISITOR_KEY = 'market_search_visitor_id'
+const SEARCH_EVENT_KEYS = 'market_search_event_keys'
+
+function getAnonymousVisitorId() {
+  const existing = localStorage.getItem(SEARCH_VISITOR_KEY)
+  if (existing) return existing
+  const id = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  localStorage.setItem(SEARCH_VISITOR_KEY, id)
+  return id
+}
+
+function consumeSearchEventKey(key) {
+  try {
+    const today = new Date().toISOString().slice(0, 10)
+    const stored = JSON.parse(localStorage.getItem(SEARCH_EVENT_KEYS) || '{}')
+    const active = Object.fromEntries(Object.entries(stored).filter(([storedKey]) => storedKey.startsWith(today)))
+    if (active[key]) return false
+    active[key] = true
+    localStorage.setItem(SEARCH_EVENT_KEYS, JSON.stringify(active))
+    return true
+  } catch {
+    return true
+  }
+}
+
+export async function trackSearchEvent({ eventType, query = '', product = null, storage = '' }) {
+  const normalizedQuery = query.trim().slice(0, 80)
+  if (eventType === 'search' && normalizedQuery.length < 2) return
+
+  const visitorId = getAnonymousVisitorId()
+  const day = new Date().toISOString().slice(0, 10)
+  const productId = product?.id || ''
+  const eventKey = `${day}|${eventType}|${normalizedQuery.toLowerCase()}|${productId}|${storage}`
+  if (!consumeSearchEventKey(eventKey)) return
+
+  await supabase.from('search_events').insert([{
+    anonymous_id: visitorId,
+    event_type: eventType,
+    query: normalizedQuery || null,
+    product_id: productId || null,
+    product_name: product?.name || null,
+    storage: storage || null,
+  }])
+}
+
+export async function getPopularSearches(days = 30, limit = 8) {
+  const { data, error } = await supabase.rpc('get_popular_searches', {
+    p_days: days,
+    p_limit: limit,
+  })
+  if (error) return []
+  return data || []
+}
+
 // Rate limiting：localStorage 記錄送出時間，1 小時最多 10 筆
 const RATE_KEY = 'submit_timestamps'
 const RATE_LIMIT = 10

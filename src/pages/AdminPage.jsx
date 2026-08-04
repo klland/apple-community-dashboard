@@ -25,7 +25,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { supabase, getReports, updateReportStatus, deleteReport } from '../lib/supabase'
+import { supabase, getPopularSearches, getReports, updateReportStatus, deleteReport } from '../lib/supabase'
 import { APPLE_PRODUCTS } from '../data/mockData'
 import marketAdjustments from '../data/marketAdjustments.json'
 
@@ -230,6 +230,8 @@ export default function AdminPage() {
   const [chartRange, setChartRange] = useState('90')
   const [reports, setReports] = useState([])
   const [reportsLoading, setReportsLoading] = useState(false)
+  const [popularSearches, setPopularSearches] = useState([])
+  const [popularSearchesLoading, setPopularSearchesLoading] = useState(false)
   const [filters, setFilters] = useState({
     search: '',
     storage: '',
@@ -245,6 +247,13 @@ export default function AdminPage() {
     const r = await getReports().catch(() => [])
     setReports(r)
     setReportsLoading(false)
+  }
+
+  async function fetchPopularSearches() {
+    setPopularSearchesLoading(true)
+    const rows = await getPopularSearches().catch(() => [])
+    setPopularSearches(rows)
+    setPopularSearchesLoading(false)
   }
 
   async function toggleResolved(id, current) {
@@ -295,6 +304,7 @@ export default function AdminPage() {
     const id = setTimeout(() => {
       fetchData()
       fetchReports()
+      fetchPopularSearches()
     }, 0)
     return () => clearTimeout(id)
   }, [authed])
@@ -480,6 +490,19 @@ export default function AdminPage() {
     return { lowSample, anomalyRate, realWeightStatus }
   }, [data, enrichedData])
 
+  const searchInsights = useMemo(() => {
+    const queries = popularSearches.filter(item => item.kind === 'query').slice(0, 8)
+    const products = popularSearches.filter(item => item.kind === 'product').slice(0, 8)
+    const totalEvents = popularSearches.reduce((sum, item) => sum + Number(item.event_count || 0), 0)
+    return {
+      queries,
+      products,
+      totalEvents,
+      maxQuery: Math.max(...queries.map(item => Number(item.event_count)), 1),
+      maxProduct: Math.max(...products.map(item => Number(item.event_count)), 1),
+    }
+  }, [popularSearches])
+
   if (!authed) return null
 
   return (
@@ -496,6 +519,7 @@ export default function AdminPage() {
             onClick={() => {
               fetchData()
               fetchReports()
+              fetchPopularSearches()
             }}
             className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#d2d2d7] bg-white px-3 text-xs font-medium text-[#1d1d1f] transition hover:bg-[#f5f5f7] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/25"
           >
@@ -513,15 +537,59 @@ export default function AdminPage() {
           </Card>
         ) : (
           <div className="space-y-5">
-            <section className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
+            <section className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
               <KpiCard title="總成交筆數" value={stats.total.toLocaleString('zh-TW')} sub="自開站累計" icon={Database} tone="blue" />
               <KpiCard title="本月新增" value={stats.month.toLocaleString('zh-TW')} sub="本月回報量" icon={BarChart3} tone="neutral" />
               <KpiCard title="近 7 天" value={stats.week.toLocaleString('zh-TW')} sub="近期活躍度" icon={Activity} tone="green" />
               <KpiCard title="今日新增" value={stats.today.toLocaleString('zh-TW')} sub={new Date().toLocaleDateString('zh-TW')} icon={Clock} tone="neutral" />
+              <KpiCard title="熱門互動" value={searchInsights.totalEvents.toLocaleString('zh-TW')} sub="近 30 天匿名去重事件" icon={Search} tone="blue" />
               <KpiCard title="平均成交價" value={formatMoney(stats.avgPrice)} sub="全站成交均值" icon={BarChart3} tone="blue" />
               <KpiCard title="異常價格" value={stats.anomalies.toLocaleString('zh-TW')} sub={`超過同規格均價 ${PRICE_ANOMALY_THRESHOLD * 100}%`} icon={AlertTriangle} tone={stats.anomalies ? 'orange' : 'green'} />
               <KpiCard title="待處理回報" value={stats.pendingReports.toLocaleString('zh-TW')} sub="使用者問題回報" icon={ShieldCheck} tone={stats.pendingReports ? 'red' : 'green'} />
             </section>
+
+            <Card>
+              <SectionHeader icon={Search} title="熱門搜尋" subtitle="近 30 天匿名去重統計，同一裝置同日的相同操作只計一次" />
+              {popularSearchesLoading ? (
+                <div className="flex min-h-[150px] items-center justify-center gap-2 text-xs text-[#6e6e73]">
+                  <RefreshCw size={14} className="animate-spin" aria-hidden="true" />
+                  載入搜尋趨勢中
+                </div>
+              ) : searchInsights.totalEvents === 0 ? (
+                <EmptyState title="尚無搜尋資料" description="套用資料庫 migration 後，使用者搜尋與產品點擊會從這裡開始累積。" />
+              ) : (
+                <div className="grid grid-cols-1 divide-y divide-[#f2f2f7] md:grid-cols-2 md:divide-x md:divide-y-0">
+                  <div className="space-y-3 p-4">
+                    <p className="text-xs font-semibold text-[#1d1d1f]">熱門搜尋字詞</p>
+                    {searchInsights.queries.length === 0 ? (
+                      <p className="text-xs text-[#86868b]">尚無足夠的關鍵字搜尋。</p>
+                    ) : searchInsights.queries.map(item => (
+                      <BarRow
+                        key={`query-${item.label}`}
+                        label={`${item.label}・${item.visitor_count} 位訪客`}
+                        count={Number(item.event_count)}
+                        max={searchInsights.maxQuery}
+                        color="bg-[#0071e3]"
+                      />
+                    ))}
+                  </div>
+                  <div className="space-y-3 p-4">
+                    <p className="text-xs font-semibold text-[#1d1d1f]">熱門產品與規格</p>
+                    {searchInsights.products.length === 0 ? (
+                      <p className="text-xs text-[#86868b]">尚無足夠的產品點擊資料。</p>
+                    ) : searchInsights.products.map(item => (
+                      <BarRow
+                        key={`product-${item.label}`}
+                        label={`${item.label}・${item.visitor_count} 位訪客`}
+                        count={Number(item.event_count)}
+                        max={searchInsights.maxProduct}
+                        color="bg-[#34c759]"
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Card>
 
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.8fr)_minmax(320px,0.9fr)]">
               <Card>

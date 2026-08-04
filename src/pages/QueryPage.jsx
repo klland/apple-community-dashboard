@@ -10,7 +10,7 @@ import {
 } from '../data/macSpecRules'
 import { Smartphone, Laptop, Tablet, Watch, Headphones, Monitor, Grid2x2, Package, TrendingDown, Activity, CircleDollarSign } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { getDailyPrices, getMarketPrice } from '../lib/supabase'
+import { getDailyPrices, getMarketPrice, trackSearchEvent } from '../lib/supabase'
 
 const CATEGORY_ICONS = {
   '全部': Grid2x2,
@@ -490,6 +490,15 @@ export default function QueryPage() {
   )
 
   useEffect(() => {
+    const query = search.trim()
+    if (query.length < 2) return
+    const id = setTimeout(() => {
+      void trackSearchEvent({ eventType: 'search', query })
+    }, 700)
+    return () => clearTimeout(id)
+  }, [search])
+
+  useEffect(() => {
     if (filtered.length === 0) {
       setSelectedProduct(null)
       setSelectedStorage('')
@@ -526,6 +535,7 @@ export default function QueryPage() {
   }, [macConfig])
 
   function selectProduct(product) {
+    void trackSearchEvent({ eventType: 'product_view', product })
     setSelectedProduct(product)
     const config = getMacSpecConfig(product.id)
     setSelectedStorage(config?.baseStorage ?? product.storages[0])
@@ -543,6 +553,9 @@ export default function QueryPage() {
   }
 
   function changeStorage(storage) {
+    if (selectedProduct) {
+      void trackSearchEvent({ eventType: 'storage_select', product: selectedProduct, storage })
+    }
     setSelectedStorage(storage)
     setAiAnalysis('')
     setAiError('')
