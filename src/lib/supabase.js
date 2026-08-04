@@ -30,14 +30,20 @@ function consumeSearchEventKey(key) {
   }
 }
 
-export async function trackSearchEvent({ eventType, query = '', product = null, storage = '' }) {
+export async function trackSearchEvent({
+  eventType,
+  query = '',
+  product = null,
+  storage = '',
+  resultCount = null,
+}) {
   const normalizedQuery = query.trim().slice(0, 80)
   if (eventType === 'search' && normalizedQuery.length < 2) return
 
   const visitorId = getAnonymousVisitorId()
   const day = new Date().toISOString().slice(0, 10)
   const productId = product?.id || ''
-  const eventKey = `${day}|${eventType}|${normalizedQuery.toLowerCase()}|${productId}|${storage}`
+  const eventKey = `${day}|${eventType}|${normalizedQuery.toLowerCase()}|${productId}|${storage}|${resultCount ?? ''}`
   if (!consumeSearchEventKey(eventKey)) return
 
   await supabase.from('search_events').insert([{
@@ -46,7 +52,9 @@ export async function trackSearchEvent({ eventType, query = '', product = null, 
     query: normalizedQuery || null,
     product_id: productId || null,
     product_name: product?.name || null,
+    category: product?.category || null,
     storage: storage || null,
+    result_count: Number.isInteger(resultCount) ? Math.max(0, resultCount) : null,
   }])
 }
 
@@ -57,6 +65,12 @@ export async function getPopularSearches(days = 30, limit = 8) {
   })
   if (error) return []
   return data || []
+}
+
+export async function getSearchAnalytics(days = 30) {
+  const { data, error } = await supabase.rpc('get_search_analytics', { p_days: days })
+  if (error || !data) return null
+  return data
 }
 
 // Rate limiting：localStorage 記錄送出時間，1 小時最多 10 筆

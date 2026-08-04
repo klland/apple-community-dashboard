@@ -493,10 +493,10 @@ export default function QueryPage() {
     const query = search.trim()
     if (query.length < 2) return
     const id = setTimeout(() => {
-      void trackSearchEvent({ eventType: 'search', query })
+      void trackSearchEvent({ eventType: 'search', query, resultCount: filtered.length })
     }, 700)
     return () => clearTimeout(id)
-  }, [search])
+  }, [search, filtered.length])
 
   useEffect(() => {
     if (filtered.length === 0) {

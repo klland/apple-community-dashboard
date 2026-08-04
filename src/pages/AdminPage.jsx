@@ -25,7 +25,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { supabase, getPopularSearches, getReports, updateReportStatus, deleteReport } from '../lib/supabase'
+import { supabase, getPopularSearches, getReports, getSearchAnalytics, updateReportStatus, deleteReport } from '../lib/supabase'
 import { APPLE_PRODUCTS } from '../data/mockData'
 import marketAdjustments from '../data/marketAdjustments.json'
 
@@ -232,6 +232,8 @@ export default function AdminPage() {
   const [reportsLoading, setReportsLoading] = useState(false)
   const [popularSearches, setPopularSearches] = useState([])
   const [popularSearchesLoading, setPopularSearchesLoading] = useState(false)
+  const [searchAnalytics, setSearchAnalytics] = useState(null)
+  const [searchAnalyticsLoading, setSearchAnalyticsLoading] = useState(false)
   const [filters, setFilters] = useState({
     search: '',
     storage: '',
@@ -254,6 +256,13 @@ export default function AdminPage() {
     const rows = await getPopularSearches().catch(() => [])
     setPopularSearches(rows)
     setPopularSearchesLoading(false)
+  }
+
+  async function fetchSearchAnalytics() {
+    setSearchAnalyticsLoading(true)
+    const analytics = await getSearchAnalytics().catch(() => null)
+    setSearchAnalytics(analytics)
+    setSearchAnalyticsLoading(false)
   }
 
   async function toggleResolved(id, current) {
@@ -305,6 +314,7 @@ export default function AdminPage() {
       fetchData()
       fetchReports()
       fetchPopularSearches()
+      fetchSearchAnalytics()
     }, 0)
     return () => clearTimeout(id)
   }, [authed])
@@ -503,6 +513,48 @@ export default function AdminPage() {
     }
   }, [popularSearches])
 
+  const demandAnalytics = useMemo(() => {
+    const toRows = value => Array.isArray(value) ? value : []
+    const dailyRows = toRows(searchAnalytics?.daily)
+    const dailyByDate = new Map(dailyRows.map(row => [String(row.date), row]))
+    const trend = Array.from({ length: 30 }, (_, index) => {
+      const day = new Date()
+      day.setDate(day.getDate() - (29 - index))
+      const key = day.toISOString().slice(0, 10)
+      const row = dailyByDate.get(key)
+      return {
+        key,
+        label: key.slice(5),
+        events: Number(row?.event_count || 0),
+        visitors: Number(row?.visitor_count || 0),
+      }
+    })
+    const conversion = searchAnalytics?.conversion || {}
+    const searchVisitors = Number(conversion.search_visitors || 0)
+    const convertedVisitors = Number(conversion.converted_visitors || 0)
+    const productVisitors = Number(conversion.product_visitors || 0)
+    const currentWeekEvents = trend.slice(-7).reduce((sum, row) => sum + row.events, 0)
+    const previousWeekEvents = trend.slice(-14, -7).reduce((sum, row) => sum + row.events, 0)
+    return {
+      trend,
+      zeroResults: toRows(searchAnalytics?.zero_results).slice(0, 8),
+      storage: toRows(searchAnalytics?.storage).slice(0, 8),
+      categories: toRows(searchAnalytics?.categories).slice(0, 8),
+      trending: toRows(searchAnalytics?.trending).slice(0, 8),
+      searchVisitors,
+      convertedVisitors,
+      productVisitors,
+      conversionRate: searchVisitors ? Math.round((convertedVisitors / searchVisitors) * 100) : 0,
+      currentWeekEvents,
+      previousWeekEvents,
+      weeklyGrowth: previousWeekEvents ? Math.round(((currentWeekEvents - previousWeekEvents) / previousWeekEvents) * 100) : null,
+      maxZero: Math.max(...toRows(searchAnalytics?.zero_results).map(row => Number(row.event_count)), 1),
+      maxStorage: Math.max(...toRows(searchAnalytics?.storage).map(row => Number(row.event_count)), 1),
+      maxCategory: Math.max(...toRows(searchAnalytics?.categories).map(row => Number(row.event_count)), 1),
+      maxTrending: Math.max(...toRows(searchAnalytics?.trending).map(row => Number(row.current_count)), 1),
+    }
+  }, [searchAnalytics])
+
   if (!authed) return null
 
   return (
@@ -520,6 +572,7 @@ export default function AdminPage() {
               fetchData()
               fetchReports()
               fetchPopularSearches()
+              fetchSearchAnalytics()
             }}
             className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#d2d2d7] bg-white px-3 text-xs font-medium text-[#1d1d1f] transition hover:bg-[#f5f5f7] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/25"
           >
@@ -590,6 +643,154 @@ export default function AdminPage() {
                 </div>
               )}
             </Card>
+
+            <Card>
+              <SectionHeader icon={Activity} title="搜尋需求分析" subtitle="以匿名搜尋、產品點擊與容量選擇判讀需求，不蒐集帳號或個人資料" />
+              {searchAnalyticsLoading ? (
+                <div className="flex min-h-[220px] items-center justify-center gap-2 text-xs text-[#6e6e73]">
+                  <RefreshCw size={14} className="animate-spin" aria-hidden="true" />
+                  載入需求分析中
+                </div>
+              ) : demandAnalytics.searchVisitors === 0 && demandAnalytics.productVisitors === 0 ? (
+                <EmptyState title="尚無足夠的需求資料" description="搜尋、點擊產品與選擇容量後，這裡會顯示需求趨勢與轉換。" />
+              ) : (
+                <div className="grid grid-cols-1 divide-y divide-[#f2f2f7] lg:grid-cols-[minmax(0,1.6fr)_minmax(280px,0.8fr)] lg:divide-x lg:divide-y-0">
+                  <div className="p-4">
+                    <p className="mb-3 text-xs font-semibold text-[#1d1d1f]">近 30 天搜尋趨勢</p>
+                    <div className="h-[220px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={demandAnalytics.trend} margin={{ top: 10, right: 14, left: -16, bottom: 0 }} accessibilityLayer>
+                          <CartesianGrid stroke="#f2f2f7" vertical={false} />
+                          <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#86868b' }} interval="preserveStartEnd" />
+                          <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#86868b' }} />
+                          <Tooltip
+                            cursor={{ stroke: '#d2d2d7', strokeDasharray: '3 3' }}
+                            contentStyle={{ borderRadius: 8, borderColor: '#e5e5ea', fontSize: 12 }}
+                            formatter={(value, name) => [`${value} 筆`, name === 'events' ? '搜尋互動' : '訪客']}
+                          />
+                          <Line type="monotone" dataKey="events" name="events" stroke="#0071e3" strokeWidth={2.4} dot={false} activeDot={{ r: 4 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-px bg-[#f2f2f7]">
+                    <div className="bg-white p-4">
+                      <p className="text-xs text-[#6e6e73]">搜尋訪客</p>
+                      <p className="mt-1 text-2xl font-semibold text-[#1d1d1f]">{demandAnalytics.searchVisitors}</p>
+                      <p className="mt-2 text-xs text-[#86868b]">近 30 天去重</p>
+                    </div>
+                    <div className="bg-white p-4">
+                      <p className="text-xs text-[#6e6e73]">搜尋後點擊</p>
+                      <p className="mt-1 text-2xl font-semibold text-[#0071e3]">{demandAnalytics.conversionRate}%</p>
+                      <p className="mt-2 text-xs text-[#86868b]">同日搜尋到產品</p>
+                    </div>
+                    <div className="col-span-2 bg-white p-4">
+                      <div className="flex items-end justify-between gap-3">
+                        <div>
+                          <p className="text-xs text-[#6e6e73]">近 7 天搜尋趨勢</p>
+                          <p className="mt-1 text-xl font-semibold text-[#1d1d1f]">{demandAnalytics.currentWeekEvents} 筆</p>
+                        </div>
+                        <p className={`text-xs font-medium ${demandAnalytics.weeklyGrowth === null || demandAnalytics.weeklyGrowth >= 0 ? 'text-[#248a3d]' : 'text-[#d70015]'}`}>
+                          {demandAnalytics.weeklyGrowth === null
+                            ? '前 7 天無樣本'
+                            : `較前 7 天 ${demandAnalytics.weeklyGrowth >= 0 ? '+' : ''}${demandAnalytics.weeklyGrowth}%`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="col-span-2 bg-white p-4">
+                      <p className="text-xs font-semibold text-[#1d1d1f]">零結果關鍵字</p>
+                      {demandAnalytics.zeroResults.length === 0 ? (
+                        <p className="mt-2 text-xs text-[#86868b]">目前沒有零結果搜尋。</p>
+                      ) : (
+                        <div className="mt-3 space-y-2">
+                          {demandAnalytics.zeroResults.slice(0, 3).map(item => (
+                            <BarRow
+                              key={`zero-${item.label}`}
+                              label={`${item.label}・${item.visitor_count} 位訪客`}
+                              count={Number(item.event_count)}
+                              max={demandAnalytics.maxZero}
+                              color="bg-[#ff9500]"
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Card>
+
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+              <Card>
+                <SectionHeader icon={Database} title="容量偏好" subtitle="使用者點進產品後主動選擇的容量" />
+                <div className="space-y-3 p-4">
+                  {demandAnalytics.storage.length === 0 ? (
+                    <p className="text-xs text-[#86868b]">尚無容量選擇資料。</p>
+                  ) : demandAnalytics.storage.map(item => (
+                    <BarRow
+                      key={`storage-${item.label}`}
+                      label={`${item.label}・${item.visitor_count} 位訪客`}
+                      count={Number(item.event_count)}
+                      max={demandAnalytics.maxStorage}
+                      color="bg-[#34c759]"
+                    />
+                  ))}
+                </div>
+              </Card>
+              <Card>
+                <SectionHeader icon={BarChart3} title="分類熱度" subtitle="以產品點擊次數計算" />
+                <div className="space-y-3 p-4">
+                  {demandAnalytics.categories.length === 0 ? (
+                    <p className="text-xs text-[#86868b]">尚無分類點擊資料。</p>
+                  ) : demandAnalytics.categories.map(item => (
+                    <BarRow
+                      key={`category-${item.label}`}
+                      label={`${item.label}・${item.visitor_count} 位訪客`}
+                      count={Number(item.event_count)}
+                      max={demandAnalytics.maxCategory}
+                      color="bg-[#0071e3]"
+                    />
+                  ))}
+                </div>
+              </Card>
+              <Card>
+                <SectionHeader icon={Activity} title="近期升溫產品" subtitle="最近 7 天與前 7 天的產品點擊比較" />
+                <div className="space-y-3 p-4">
+                  {demandAnalytics.trending.length === 0 ? (
+                    <p className="text-xs text-[#86868b]">尚無足夠的近期產品點擊資料。</p>
+                  ) : demandAnalytics.trending.map(item => {
+                    const current = Number(item.current_count)
+                    const previous = Number(item.previous_count)
+                    const growth = previous ? `+${Math.round(((current - previous) / previous) * 100)}%` : '新出現'
+                    return (
+                      <BarRow
+                        key={`trending-${item.label}`}
+                        label={`${item.label}・${growth}`}
+                        count={current}
+                        max={demandAnalytics.maxTrending}
+                        color="bg-[#ff9500]"
+                      />
+                    )
+                  })}
+                </div>
+              </Card>
+              <Card>
+                <SectionHeader icon={Search} title="需要補齊的型號" subtitle="零結果搜尋，可用來安排產品資料優先順序" />
+                <div className="space-y-3 p-4">
+                  {demandAnalytics.zeroResults.length === 0 ? (
+                    <p className="text-xs text-[#86868b]">目前沒有需要補齊的搜尋字詞。</p>
+                  ) : demandAnalytics.zeroResults.map(item => (
+                    <BarRow
+                      key={`missing-${item.label}`}
+                      label={`${item.label}・${item.visitor_count} 位訪客`}
+                      count={Number(item.event_count)}
+                      max={demandAnalytics.maxZero}
+                      color="bg-[#ff9500]"
+                    />
+                  ))}
+                </div>
+              </Card>
+            </div>
 
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.8fr)_minmax(320px,0.9fr)]">
               <Card>
