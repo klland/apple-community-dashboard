@@ -234,6 +234,7 @@ export default function AdminPage() {
   const [popularSearchesLoading, setPopularSearchesLoading] = useState(false)
   const [searchAnalytics, setSearchAnalytics] = useState(null)
   const [searchAnalyticsLoading, setSearchAnalyticsLoading] = useState(false)
+  const [activeWorkspace, setActiveWorkspace] = useState('overview')
   const [filters, setFilters] = useState({
     search: '',
     storage: '',
@@ -581,6 +582,27 @@ export default function AdminPage() {
           </button>
         </header>
 
+        <nav className="mb-5 flex gap-1 overflow-x-auto rounded-lg border border-[#e5e5ea] bg-white p-1" aria-label="後台工作區">
+          {[
+            { id: 'overview', label: '總覽' },
+            { id: 'demand', label: '需求洞察' },
+            { id: 'operations', label: '資料與回報' },
+          ].map(item => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setActiveWorkspace(item.id)}
+              className={`h-9 shrink-0 rounded-md px-4 text-xs font-semibold transition ${
+                activeWorkspace === item.id
+                  ? 'bg-[#1d1d1f] text-white'
+                  : 'text-[#6e6e73] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+
         {loading ? (
           <Card className="p-10">
             <div role="status" className="flex items-center justify-center gap-3 text-sm text-[#6e6e73]">
@@ -590,17 +612,15 @@ export default function AdminPage() {
           </Card>
         ) : (
           <div className="space-y-5">
-            <section className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
+            <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <KpiCard title="總成交筆數" value={stats.total.toLocaleString('zh-TW')} sub="自開站累計" icon={Database} tone="blue" />
-              <KpiCard title="本月新增" value={stats.month.toLocaleString('zh-TW')} sub="本月回報量" icon={BarChart3} tone="neutral" />
               <KpiCard title="近 7 天" value={stats.week.toLocaleString('zh-TW')} sub="近期活躍度" icon={Activity} tone="green" />
-              <KpiCard title="今日新增" value={stats.today.toLocaleString('zh-TW')} sub={new Date().toLocaleDateString('zh-TW')} icon={Clock} tone="neutral" />
               <KpiCard title="熱門互動" value={searchInsights.totalEvents.toLocaleString('zh-TW')} sub="近 30 天匿名去重事件" icon={Search} tone="blue" />
-              <KpiCard title="平均成交價" value={formatMoney(stats.avgPrice)} sub="全站成交均值" icon={BarChart3} tone="blue" />
-              <KpiCard title="異常價格" value={stats.anomalies.toLocaleString('zh-TW')} sub={`超過同規格均價 ${PRICE_ANOMALY_THRESHOLD * 100}%`} icon={AlertTriangle} tone={stats.anomalies ? 'orange' : 'green'} />
               <KpiCard title="待處理回報" value={stats.pendingReports.toLocaleString('zh-TW')} sub="使用者問題回報" icon={ShieldCheck} tone={stats.pendingReports ? 'red' : 'green'} />
             </section>
 
+            {(activeWorkspace === 'overview' || activeWorkspace === 'demand') && (
+              <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)]">
             <Card>
               <SectionHeader icon={Search} title="熱門搜尋" subtitle="近 30 天匿名去重統計，同一裝置同日的相同操作只計一次" />
               {popularSearchesLoading ? (
@@ -720,6 +740,10 @@ export default function AdminPage() {
               )}
             </Card>
 
+              </div>
+            )}
+
+            {activeWorkspace === 'demand' && (
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
               <Card>
                 <SectionHeader icon={Database} title="容量偏好" subtitle="使用者點進產品後主動選擇的容量" />
@@ -791,7 +815,10 @@ export default function AdminPage() {
                 </div>
               </Card>
             </div>
+            )}
 
+            {activeWorkspace === 'operations' && (
+              <>
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.8fr)_minmax(320px,0.9fr)]">
               <Card>
                 <SectionHeader
@@ -1101,18 +1128,27 @@ export default function AdminPage() {
               )}
             </Card>
 
-            <Card className="overflow-hidden">
-              <SectionHeader icon={Activity} title="網站流量分析" subtitle="資料來源：Google Analytics 4 / Looker Studio" />
-              <iframe
-                src="https://datastudio.google.com/embed/reporting/ca1def25-014a-45c1-a67a-3d51065fdebf/page/XKcvF"
-                width="100%"
-                height="500"
-                frameBorder="0"
-                allowFullScreen
-                className="block"
-                title="網站流量分析"
-              />
-            </Card>
+              </>
+            )}
+
+            {activeWorkspace === 'overview' && (
+              <details className="rounded-lg border border-[#e5e5ea] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+                <summary className="flex h-12 cursor-pointer list-none items-center gap-2 px-4 text-sm font-semibold text-[#1d1d1f] marker:content-none">
+                  <Activity size={17} className="text-[#0071e3]" aria-hidden="true" />
+                  網站流量分析
+                  <span className="ml-1 text-xs font-normal text-[#86868b]">Google Analytics 4 / Looker Studio</span>
+                </summary>
+                <iframe
+                  src="https://datastudio.google.com/embed/reporting/ca1def25-014a-45c1-a67a-3d51065fdebf/page/XKcvF"
+                  width="100%"
+                  height="500"
+                  frameBorder="0"
+                  allowFullScreen
+                  className="block border-t border-[#f2f2f7]"
+                  title="網站流量分析"
+                />
+              </details>
+            )}
           </div>
         )}
       </main>
