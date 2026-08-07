@@ -1,4 +1,5 @@
 const HUNDRED = 100
+const SSD_LADDER = ['256G', '512G', '1T', '2T', '4T']
 
 function roundHundred(value) {
   return Math.round(value / HUNDRED) * HUNDRED
@@ -32,7 +33,14 @@ const maxRules = [
   },
 ]
 
-function makeAirConfig({ id, chipLabel = 'M5', baseStorage, baseSsd, baseMarketLabel }) {
+function storageRange(baseSsd, maxSsd) {
+  const start = SSD_LADDER.indexOf(baseSsd)
+  const end = SSD_LADDER.indexOf(maxSsd)
+  if (start < 0 || end < start) return [baseSsd]
+  return SSD_LADDER.slice(start, end + 1)
+}
+
+function makeAirConfig({ id, chipLabel = 'M5', baseStorage, baseSsd, baseMarketLabel, maxSsd = '2T' }) {
   return {
     id,
     mode: 'air',
@@ -61,11 +69,7 @@ function makeAirConfig({ id, chipLabel = 'M5', baseStorage, baseSsd, baseMarketL
       {
         key: 'ssd',
         label: 'SSD',
-        options: [
-          { value: baseSsd, label: baseSsd },
-          { value: '1T', label: '1T' },
-          { value: '2T', label: '2T' },
-        ],
+        options: storageRange(baseSsd, maxSsd).map(value => ({ value, label: value })),
       },
     ],
     addons: {
@@ -77,8 +81,10 @@ function makeAirConfig({ id, chipLabel = 'M5', baseStorage, baseSsd, baseMarketL
         '32G': { label: '32G 記憶體', market: 5200, retail: 14000 },
       },
       ssd: {
+        '512G': { label: '512G SSD', market: baseSsd === '512G' ? 0 : 1600, retail: baseSsd === '512G' ? 0 : 7000 },
         '1T': { label: '1T SSD', market: baseSsd === '1T' ? 0 : 3000, retail: baseSsd === '1T' ? 0 : 7000 },
         '2T': { label: '2T SSD', market: 6500, retail: baseSsd === '1T' ? 7000 : 14000 },
+        '4T': { label: '4T SSD', market: 14500, retail: 42000 },
       },
     },
     rules: airRules,
@@ -132,7 +138,7 @@ function makeLegacyAirConfig({ id, chipLabel, baseStorage, baseRam, baseSsd, bas
   }
 }
 
-function makeLegacyProConfig({ id, chipLabel, baseStorage, baseRam, baseSsd, baseMarketLabel, ramOptions }) {
+function makeLegacyProConfig({ id, chipLabel, baseStorage, baseRam, baseSsd, baseMarketLabel, ramOptions, maxSsd = '4T' }) {
   return {
     id,
     mode: 'pro-legacy',
@@ -154,7 +160,7 @@ function makeLegacyProConfig({ id, chipLabel, baseStorage, baseRam, baseSsd, bas
       {
         key: 'ssd',
         label: 'SSD',
-        options: ['512G', '1T', '2T', '4T'].map(value => ({ value, label: value })),
+        options: storageRange(baseSsd, maxSsd).map(value => ({ value, label: value })),
       },
     ],
     addons: {
@@ -169,6 +175,7 @@ function makeLegacyProConfig({ id, chipLabel, baseStorage, baseRam, baseSsd, bas
         '128G': { label: '128G 記憶體', market: 26000, retail: 84000 },
       },
       ssd: {
+        '512G': { label: '512G SSD', market: baseSsd === '512G' ? 0 : 1700, retail: baseSsd === '512G' ? 0 : 6000 },
         '1T': { label: '1T SSD', market: baseSsd === '1T' ? 0 : 3500, retail: baseSsd === '1T' ? 0 : 10000 },
         '2T': { label: '2T SSD', market: baseSsd === '2T' ? 0 : 7200, retail: baseSsd === '2T' ? 0 : 24000 },
         '4T': { label: '4T SSD', market: 16000, retail: 54000 },
@@ -210,6 +217,7 @@ function makeDesktopConfig({ id, productLine, chipOptions, chipAddons = {}, base
         ...chipAddons,
       },
       ram: {
+        '16G': { label: '16G 記憶體', market: baseRam === '16G' ? 0 : 2200, retail: baseRam === '16G' ? 0 : 6000 },
         '24G': { label: '24G 記憶體', market: 2800, retail: 8000 },
         '32G': { label: '32G 記憶體', market: 5200, retail: 14000 },
         '36G': { label: '36G 記憶體', market: 6200, retail: 16000 },
@@ -217,6 +225,7 @@ function makeDesktopConfig({ id, productLine, chipOptions, chipAddons = {}, base
         '64G': { label: '64G 記憶體', market: 12000, retail: 40000 },
         '96G': { label: '96G 記憶體', market: 18500, retail: 60000 },
         '128G': { label: '128G 記憶體', market: 26000, retail: 85000 },
+        '192G': { label: '192G 記憶體', market: 38000, retail: 112000 },
       },
       ssd: {
         '512G': { label: '512G SSD', market: baseSsd === '512G' ? 0 : 1800, retail: baseSsd === '512G' ? 0 : 6000 },
@@ -246,12 +255,14 @@ export const MAC_SPEC_CONFIGS = {
     baseStorage: '16G/512G',
     baseSsd: '512G',
     baseMarketLabel: '16G / 512G 低配基準',
+    maxSsd: '4T',
   }),
   'macbook-air-m5-15': makeAirConfig({
     id: 'macbook-air-m5-15',
     baseStorage: '16G/512G',
     baseSsd: '512G',
     baseMarketLabel: '16G / 512G 低配基準',
+    maxSsd: '4T',
   }),
   'macbook-air-m4-13': makeAirConfig({
     id: 'macbook-air-m4-13',
@@ -428,6 +439,7 @@ export const MAC_SPEC_CONFIGS = {
     baseSsd: '256G',
     baseMarketLabel: 'M2 / 8G / 256G 基準',
     ramOptions: ['8G', '16G', '24G'],
+    maxSsd: '2T',
   }),
   'macbook-pro-14-m4-pro': makeLegacyProConfig({
     id: 'macbook-pro-14-m4-pro',
@@ -491,6 +503,7 @@ export const MAC_SPEC_CONFIGS = {
     baseSsd: '256G',
     baseMarketLabel: 'M1 / 8G / 256G 基準',
     ramOptions: ['8G', '16G'],
+    maxSsd: '2T',
   }),
   'macbook-pro-14-m5': {
     id: 'macbook-pro-14-m5',
