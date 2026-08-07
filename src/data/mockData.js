@@ -1,5 +1,6 @@
 import marketAdjustments from './marketAdjustments.json'
 import mikoPriceCeilings from './mikoPriceCeilings.json'
+import jyesPriceCeilings from './jyesPriceCeilings.json'
 
 // Apple 產品完整資料庫
 export const APPLE_PRODUCTS = [
@@ -1851,22 +1852,38 @@ for (const product of APPLE_PRODUCTS) {
   }
 }
 
-const mikoCeilings = mikoPriceCeilings?.ceilings || {}
+const MAX_NEW_PRICE_SOURCE_AGE_DAYS = 14
+const isFreshNewPriceSource = source => {
+  const scrapedAt = new Date(source?.meta?.scrapedAt)
+  if (Number.isNaN(scrapedAt.getTime())) return false
+  return (Date.now() - scrapedAt.getTime()) <= MAX_NEW_PRICE_SOURCE_AGE_DAYS * 24 * 60 * 60 * 1000
+}
+const newProductPriceSources = [mikoPriceCeilings, jyesPriceCeilings]
+  .filter(isFreshNewPriceSource)
+  .map(source => source.ceilings || {})
 const toHundredFloor = price => Math.floor(price / 100) * 100
 const toSecondHandCeiling = price => toHundredFloor(price * 0.95)
 
 enforceLatestProductDiscountFloors(APPLE_PRODUCTS)
 
 for (const product of APPLE_PRODUCTS) {
-  const ceilings = mikoCeilings[product.id]
-  if (!ceilings) continue
+  const sourceCeilings = newProductPriceSources
+    .map(source => source[product.id])
+    .filter(Boolean)
+  if (!sourceCeilings.length) continue
 
-  product.mikoPriceCeiling = Object.fromEntries(
-    Object.entries(ceilings).map(([storage, price]) => [storage, toSecondHandCeiling(price)])
+  product.newProductPriceCeiling = Object.fromEntries(
+    product.storages.flatMap(storage => {
+      const availablePrices = sourceCeilings
+        .map(ceilings => ceilings[storage])
+        .filter(Number.isFinite)
+      if (!availablePrices.length) return []
+      return [[storage, toSecondHandCeiling(Math.min(...availablePrices))]]
+    })
   )
 
   for (const storage of product.storages) {
-    const ceiling = product.mikoPriceCeiling[storage]
+    const ceiling = product.newProductPriceCeiling[storage]
     const current = product.marketAvg?.[storage]
     if (!ceiling || !current) continue
 

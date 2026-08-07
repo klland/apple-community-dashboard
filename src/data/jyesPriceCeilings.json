@@ -1,0 +1,28 @@
+{
+  "meta": {
+    "source": "JYES 傑昇通信",
+    "scrapedAt": "2026-08-08T00:00:00+08:00",
+    "priceField": "空機破盤價",
+    "rule": "Only in-stock, precisely matched new-product cash prices participate in the second-hand ceiling.",
+    "url": "https://www.jyes.com.tw/product.php"
+  },
+  "ceilings": {
+    "iphone-17e": { "256G": 20490, "512G": 26290 },
+    "iphone-17-pro-max": { "256G": 41190, "512G": 47990, "1T": 55390, "2T": 67990 },
+    "iphone-17-pro": { "256G": 36790, "512G": 43890, "1T": 50890 },
+    "iphone-17-air": { "256G": 31490, "512G": 34490, "1T": 40390 },
+    "iphone-17": { "256G": 28490, "512G": 34490 },
+    "ipad-pro-m5-13": { "256G": 45490, "512G": 53190, "1T": 66490, "2T": 78990 },
+    "ipad-pro-m5-11": { "256G": 35490, "512G": 41690, "1T": 55990, "2T": 69390 },
+    "ipad-air-m4-13": { "128G": 28790, "256G": 31890, "512G": 38990, "1T": 46390 },
+    "ipad-air-m4-11": { "128G": 21990, "256G": 25890, "512G": 31790, "1T": 40290 },
+    "ipad-11": { "128G": 13290, "256G": 16290, "512G": 22390 },
+    "ipad-mini-7": { "128G": 16990, "256G": 21090, "512G": 26790 },
+    "apple-watch-ultra-3": { "鈦金屬": 24990 },
+    "apple-watch-s11": { "42mm": 11390, "46mm": 11890 },
+    "apple-watch-se-3": { "40mm": 7190, "44mm": 8190 },
+    "airpods-pro-3": { "標準版": 6090 },
+    "airpods-4-anc": { "標準版": 4890 },
+    "airpods-4": { "標準版": 3790 }
+  }
+}

@@ -114,7 +114,7 @@ function buildStorageBars(product) {
 }
 
 function getMarketCeiling(product, storage) {
-  return product?.mikoPriceCeiling?.[storage] ?? null
+  return product?.newProductPriceCeiling?.[storage] ?? null
 }
 
 function capToMarketCeiling(value, ceiling) {
@@ -633,7 +633,7 @@ export default function QueryPage() {
   }
 
   // loading 中沿用 mockData，載入完才切換（避免數字閃跳）。
-  // 真實成交優先於模型預設；Miko 僅保留為二手價不可超過新品的單向上限。
+  // 真實成交優先於模型預設；新品通路最低價只作為二手價的單向上限。
   const adjustedReference = selectedProduct && selectedStorage
     ? selectedProduct.marketAvg[selectedStorage]
     : null
