@@ -37,7 +37,7 @@ crontab -e
 加入這行：
 
 ```bash
-0 10 1 * * cd /Users/klland/Documents/apple-community-dashboard && /usr/bin/env npm run price:update:monthly >> /Users/klland/Documents/apple-community-dashboard/data/monthly-price-cron.log 2>&1
+0 10 1 * * cd /Users/klland/Documents/apple-community-dashboard && /usr/bin/env npm run price:update:monthly:publish >> /Users/klland/Documents/apple-community-dashboard/data/monthly-price-cron.log 2>&1
 ```
 
 ## 真實資料接入建議
