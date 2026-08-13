@@ -70,9 +70,9 @@ const SEED_PRODUCTS = [
   { model: 'iPad Pro 11吋 M4', storage: '256G', avg: 25000, color: '銀色', isIphone: false },
   { model: 'iPad mini 第7代', storage: '128G', avg: 14000, color: '星光色', isIphone: false },
   // Apple Watch
-  { model: 'Apple Watch Series 11', storage: '46mm', avg: 13000, color: '午夜色', isIphone: false },
-  { model: 'Apple Watch Series 10', storage: '46mm', avg: 11500, color: '銀色', isIphone: false },
-  { model: 'Apple Watch Ultra 2', storage: '鈦金屬', avg: 24000, color: '鈦金屬原色', isIphone: false },
+  { model: 'Apple Watch Series 11', storage: '46mm', avg: 9500, color: '午夜色', isIphone: false },
+  { model: 'Apple Watch Series 10', storage: '46mm', avg: 8000, color: '銀色', isIphone: false },
+  { model: 'Apple Watch Ultra 2', storage: '鈦金屬', avg: 15000, color: '鈦金屬原色', isIphone: false },
   // Mac mini
   { model: 'Mac mini M4', storage: '16G/256G', avg: 14500, color: '銀色', isIphone: false },
   { model: 'Mac mini M4', storage: '16G/512G', avg: 18000, color: '銀色', isIphone: false },

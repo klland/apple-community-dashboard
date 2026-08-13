@@ -122,12 +122,16 @@ function capToMarketCeiling(value, ceiling) {
   return ceiling ? Math.min(value, ceiling) : value
 }
 
-function getPriceBand(avgValue, ceiling) {
+function getPriceBand(product, avgValue, ceiling) {
   if (!avgValue) return null
+  const isWatch = product?.category === 'Apple Watch'
+  const lowMultiplier = isWatch ? 0.65 : 0.95
+  const highMultiplier = isWatch ? 1.15 : 1.08
   return {
-    low: Math.round(avgValue * 0.95 / 100) * 100,
+    low: Math.round(avgValue * lowMultiplier / 100) * 100,
     target: avgValue,
-    high: capToMarketCeiling(Math.round(avgValue * 1.08 / 100) * 100, ceiling),
+    high: capToMarketCeiling(Math.round(avgValue * highMultiplier / 100) * 100, ceiling),
+    isWatch,
   }
 }
 
@@ -673,7 +677,7 @@ export default function QueryPage() {
     launchPrice: macEstimate?.estimatedRetail,
   })
   const storageBars = buildStorageBars(selectedProduct)
-  const priceBand = lowLiquidityIphone ? null : getPriceBand(displayAvgValue, macEstimate?.newProductGuardrail ?? marketCeiling)
+  const priceBand = lowLiquidityIphone ? null : getPriceBand(selectedProduct, displayAvgValue, macEstimate?.newProductGuardrail ?? marketCeiling)
   const categoryProducts = selectedProduct
     ? APPLE_PRODUCTS.filter(p => p.category === selectedProduct.category)
     : []
@@ -1043,7 +1047,9 @@ export default function QueryPage() {
                     <div className="flex items-center justify-between mb-5">
                       <div>
                         <p className="text-[11px] font-semibold text-[#6e6e73] uppercase tracking-wider">成交區間建議</p>
-                        <p className="text-[13px] text-[#6e6e73] mt-1">以目前均價估算合理買賣帶</p>
+                        <p className="text-[13px] text-[#6e6e73] mt-1">
+                          {priceBand.isWatch ? '手錶受電池、碰傷、錶帶與保固影響，價差較大' : '以目前均價估算合理買賣帶'}
+                        </p>
                       </div>
                       <CircleDollarSign size={18} className="text-[#34c759]" />
                     </div>
@@ -1053,7 +1059,7 @@ export default function QueryPage() {
                     </div>
                     <div className="grid grid-cols-3 gap-3 mt-4">
                       <div>
-                        <p className="text-[11px] text-[#6e6e73]">好買價</p>
+                        <p className="text-[11px] text-[#6e6e73]">{priceBand.isWatch ? '碰傷／低電池' : '好買價'}</p>
                         <p className="text-[15px] font-semibold text-[#34c759]">{formatMoney(priceBand.low)}</p>
                       </div>
                       <div className="text-center">
@@ -1061,7 +1067,7 @@ export default function QueryPage() {
                         <p className="text-[15px] font-semibold text-[#1d1d1f]">{formatMoney(priceBand.target)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[11px] text-[#6e6e73]">偏高價</p>
+                        <p className="text-[11px] text-[#6e6e73]">{priceBand.isWatch ? '極新／保固完整' : '偏高價'}</p>
                         <p className="text-[15px] font-semibold text-[#ff9500]">{formatMoney(priceBand.high)}</p>
                       </div>
                     </div>

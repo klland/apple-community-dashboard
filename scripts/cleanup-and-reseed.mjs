@@ -124,12 +124,12 @@ const SEED_PRODUCTS = [
   { model: 'iPad mini 第7代',   storage: '256G', avg: 17000, color: '藍色',  isIphone: false, count: [1, 2], condWeights: [5, 22, 44, 20, 8, 1] },
 
   // ── Apple Watch（≤3筆）───────────────────────────────────────────
-  { model: 'Apple Watch Series 11', storage: '42mm', avg: 11500, color: '銀色',    isIphone: false, count: [2, 3], condWeights: [5, 25, 45, 18, 6, 1] },
-  { model: 'Apple Watch Series 11', storage: '46mm', avg: 12500, color: '午夜色',  isIphone: false, count: [2, 3], condWeights: [5, 25, 45, 18, 6, 1] },
-  { model: 'Apple Watch Series 10', storage: '42mm', avg: 10500, color: '銀色',    isIphone: false, count: [1, 2], condWeights: [3, 18, 44, 22, 10, 3] },
-  { model: 'Apple Watch Series 10', storage: '46mm', avg: 11500, color: '玫瑰金',  isIphone: false, count: [1, 2], condWeights: [3, 18, 44, 22, 10, 3] },
-  { model: 'Apple Watch Ultra 2',   storage: '鈦金屬', avg: 24000, color: '鈦金屬原色', isIphone: false, count: [1, 2], condWeights: [5, 25, 45, 18, 6, 1] },
-  { model: 'Apple Watch SE 3',      storage: '40mm', avg: 7200,  color: '午夜色',  isIphone: false, count: [1, 2], condWeights: [10, 35, 42, 12, 1, 0] },
+  { model: 'Apple Watch Series 11', storage: '42mm', avg: 8500, color: '銀色',    isIphone: false, count: [2, 3], condWeights: [5, 25, 45, 18, 6, 1] },
+  { model: 'Apple Watch Series 11', storage: '46mm', avg: 9500, color: '午夜色',  isIphone: false, count: [2, 3], condWeights: [5, 25, 45, 18, 6, 1] },
+  { model: 'Apple Watch Series 10', storage: '42mm', avg: 7500, color: '銀色',    isIphone: false, count: [1, 2], condWeights: [3, 18, 44, 22, 10, 3] },
+  { model: 'Apple Watch Series 10', storage: '46mm', avg: 8000, color: '玫瑰金',  isIphone: false, count: [1, 2], condWeights: [3, 18, 44, 22, 10, 3] },
+  { model: 'Apple Watch Ultra 2',   storage: '鈦金屬', avg: 15000, color: '鈦金屬原色', isIphone: false, count: [1, 2], condWeights: [5, 25, 45, 18, 6, 1] },
+  { model: 'Apple Watch SE 3',      storage: '40mm', avg: 6200,  color: '午夜色',  isIphone: false, count: [1, 2], condWeights: [10, 35, 42, 12, 1, 0] },
 
   // ── AirPods（耳機幾乎全新，≤3筆）────────────────────────────────
   { model: 'AirPods Pro 第3代', storage: '標準版', avg: 6800, color: '白色', isIphone: false, count: [2, 3], condWeights: [65, 30, 5, 0, 0, 0] },

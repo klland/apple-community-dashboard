@@ -698,7 +698,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2025-09-19',
     launchPrice: { '鈦金屬': 26900 },
     basePrice: { '鈦金屬': 26900 },
-    marketAvg: { '鈦金屬': 24500 },
+    marketAvg: { '鈦金屬': 18000 },
     tradeInPrice: null,
   },
   {
@@ -710,7 +710,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2025-09-19',
     launchPrice: { '42mm': 12900, '46mm': 13900 },
     basePrice: { '42mm': 12900, '46mm': 13900 },
-    marketAvg: { '42mm': 11500, '46mm': 12500 },
+    marketAvg: { '42mm': 8500, '46mm': 9500 },
     tradeInPrice: null,
   },
   {
@@ -1212,7 +1212,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2023-09-22',
     launchPrice: { '鈦金屬': 29900 },
     basePrice: { '鈦金屬': 29900 },
-    marketAvg: { '鈦金屬': 24000 },
+    marketAvg: { '鈦金屬': 15000 },
     tradeInPrice: 7800,
   },
   {
@@ -1224,7 +1224,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2024-09-20',
     launchPrice: { '42mm': 12900, '46mm': 13900 },
     basePrice: { '42mm': 12900, '46mm': 13900 },
-    marketAvg: { '42mm': 10500, '46mm': 11500 },
+    marketAvg: { '42mm': 7500, '46mm': 8000 },
     tradeInPrice: 8000,
   },
   {
@@ -1236,7 +1236,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2023-09-22',
     launchPrice: { '41mm': 12900, '45mm': 13900 },
     basePrice: { '41mm': 12900, '45mm': 13900 },
-    marketAvg: { '41mm': 8000, '45mm': 9000 },
+    marketAvg: { '41mm': 6500, '45mm': 7200 },
     tradeInPrice: 3500,
   },
   {
@@ -1248,7 +1248,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2025-09-19',
     launchPrice: { '40mm': 7900, '44mm': 8900 },
     basePrice: { '40mm': 7900, '44mm': 8900 },
-    marketAvg: { '40mm': 7200, '44mm': 8100 },
+    marketAvg: { '40mm': 6200, '44mm': 7200 },
     tradeInPrice: null,
   },
   {
@@ -1260,7 +1260,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2022-09-16',
     launchPrice: { '40mm': 8900, '44mm': 9900 },
     basePrice: { '40mm': 8900, '44mm': 9900 },
-    marketAvg: { '40mm': 5500, '44mm': 6500 },
+    marketAvg: { '40mm': 4000, '44mm': 4600 },
     tradeInPrice: 1100,
   },
 
@@ -1274,7 +1274,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2022-09-23',
     launchPrice: { '鈦金屬': 26900 },
     basePrice: { '鈦金屬': 26900 },
-    marketAvg: { '鈦金屬': 16000 },
+    marketAvg: { '鈦金屬': 10000 },
     tradeInPrice: 5700,
   },
   {
@@ -1286,7 +1286,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2022-09-16',
     launchPrice: { '41mm': 12900, '45mm': 13900 },
     basePrice: { '41mm': 12900, '45mm': 13900 },
-    marketAvg: { '41mm': 6000, '45mm': 7000 },
+    marketAvg: { '41mm': 5800, '45mm': 6600 },
     tradeInPrice: 2200,
   },
   {
@@ -1298,7 +1298,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2021-10-15',
     launchPrice: { '41mm': 12900, '45mm': 13900 },
     basePrice: { '41mm': 12900, '45mm': 13900 },
-    marketAvg: { '41mm': 4500, '45mm': 5500 },
+    marketAvg: { '41mm': 3000, '45mm': 3800 },
     tradeInPrice: 1200,
   },
   {
@@ -1310,7 +1310,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2020-09-18',
     launchPrice: { '40mm': 12900, '44mm': 13900 },
     basePrice: { '40mm': 12900, '44mm': 13900 },
-    marketAvg: { '40mm': 3500, '44mm': 4500 },
+    marketAvg: { '40mm': 2800, '44mm': 3500 },
     tradeInPrice: 800,
   },
   {
@@ -1322,7 +1322,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2020-09-18',
     launchPrice: { '40mm': 8900, '44mm': 9900 },
     basePrice: { '40mm': 8900, '44mm': 9900 },
-    marketAvg: { '40mm': 2500, '44mm': 3000 },
+    marketAvg: { '40mm': 1800, '44mm': 2200 },
     tradeInPrice: null,
   },
   {
@@ -1334,7 +1334,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2019-09-20',
     launchPrice: { '40mm': 12900, '44mm': 13900 },
     basePrice: { '40mm': 12900, '44mm': 13900 },
-    marketAvg: { '40mm': 2500, '44mm': 3000 },
+    marketAvg: { '40mm': 1600, '44mm': 2200 },
     tradeInPrice: null,
   },
   {
@@ -1346,7 +1346,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2017-09-22',
     launchPrice: { '38mm': 9200, '42mm': 10200 },
     basePrice: { '38mm': 9200, '42mm': 10200 },
-    marketAvg: { '38mm': 800, '42mm': 1000 },
+    marketAvg: { '38mm': 500, '42mm': 800 },
     tradeInPrice: null,
   },
 
@@ -1787,6 +1787,9 @@ function enforceLatestProductDiscountFloors(products) {
   const latestByLine = latestLaunchTimeByLine(products)
 
   for (const product of products) {
+    // Apple Watch 的電池、外觀與配件狀況會造成遠大於其他品類的價差，
+    // 不用新品保值下限覆蓋人工行情或真實成交基準。
+    if (product.category === 'Apple Watch') continue
     if (!product.launchDate || !product.marketAvg) continue
 
     const launchTime = new Date(`${product.launchDate}T00:00:00+08:00`).getTime()
