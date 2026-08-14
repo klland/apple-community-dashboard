@@ -5,6 +5,15 @@
     "note": "Visible but conservative Taiwan second-hand market uplift after Apple Taiwan official price increases. Values are rounded to the nearest NT$100."
   },
   "marketAvg": {
+    "iphone-17e": {
+      "256G": 16900,
+      "512G": 22000
+    },
+    "iphone-17-air": {
+      "256G": 25000,
+      "512G": 31000,
+      "1T": 36000
+    },
     "macbook-pro-14-m5": {
       "16G/1T": 50400
     },
@@ -39,13 +48,13 @@
       "8G/256G": 32200
     },
     "macbook-pro-16-m4-pro": {
-      "24G/512G": 68300
+      "24G/512G": 60000
     },
     "macbook-pro-14-m4-pro": {
-      "24G/512G": 58800
+      "24G/512G": 55000
     },
     "macbook-pro-14-m4": {
-      "16G/512G": 44100
+      "16G/512G": 40000
     },
     "ipad-air-m3-11": {
       "128G": 14500,
@@ -60,15 +69,15 @@
       "1T": 41800
     },
     "ipad-11": {
-      "128G": 10600,
-      "256G": 15700,
-      "512G": 21400
+      "128G": 9000,
+      "256G": 12500,
+      "512G": 17000
     },
     "ipad-pro-m4-13": {
-      "256G": 38000,
-      "512G": 47000,
-      "1T": 60500,
-      "2T": 73900
+      "256G": 30000,
+      "512G": 32000,
+      "1T": 45000,
+      "2T": 55000
     },
     "ipad-pro-m4-11": {
       "256G": 28000,
@@ -107,7 +116,7 @@
       "16G/256G": 37100
     },
     "mac-studio-m4-max": {
-      "36G/512G": 64500
+      "36G/512G": 47000
     },
     "mac-studio-m3-ultra": {
       "96G/1T": 131000
@@ -121,6 +130,13 @@
     },
     "homepod-mini": {
       "標準版": 1900
+    },
+    "apple-watch-se-3": {
+      "40mm": 5500,
+      "44mm": 6500
+    },
+    "airpods-pro-2": {
+      "標準版": 3200
     }
   }
 }
