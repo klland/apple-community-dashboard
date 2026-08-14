@@ -12,12 +12,21 @@ const sources = ['mikoPriceCeilings.json', 'jyesPriceCeilings.json']
 
 const toHundredFloor = value => Math.floor(value / 100) * 100
 const parsePairs = text => Object.fromEntries([...text.matchAll(/'([^']+)':\s*(\d+)/g)].map(([, key, value]) => [key, Number(value)]))
-const blocks = [...mockData.matchAll(/\{\s*id:\s*'([^']+)'[\s\S]*?name:\s*'([^']+)'[\s\S]*?storages:\s*\[([^\]]*)\][\s\S]*?marketAvg:\s*\{([\s\S]*?)\}\s*,[\s\S]*?tradeInPrice:/g)]
+const blocks = [...mockData.matchAll(/\{\s*id:\s*'([^']+)'[\s\S]*?name:\s*'([^']+)'[\s\S]*?category:\s*'([^']+)'[\s\S]*?storages:\s*\[([^\]]*)\][\s\S]*?marketAvg:\s*\{([\s\S]*?)\}\s*,[\s\S]*?tradeInPrice:/g)]
+const highMultiplierByCategory = {
+  iPhone: 1.13,
+  MacBook: 1.12,
+  iPad: 1.14,
+  'Apple Watch': 1.15,
+  AirPods: 1.18,
+  Mac: 1.14,
+  其他: 1.15,
+}
 
 let corrected = 0
 const invalidBands = []
 
-for (const [, id, name, storageText, marketText] of blocks) {
+for (const [, id, name, category, storageText, marketText] of blocks) {
   const marketAvg = { ...parsePairs(marketText), ...(adjustments[id] || {}) }
   for (const match of storageText.matchAll(/'([^']+)'/g)) {
     const storage = match[1]
@@ -26,7 +35,7 @@ for (const [, id, name, storageText, marketText] of blocks) {
     if (!rawAverage || !Number.isFinite(newCashPrice)) continue
 
     const average = Math.min(rawAverage, toHundredFloor(newCashPrice * 0.88))
-    const high = Math.min(toHundredFloor(average * 1.08), toHundredFloor(newCashPrice * 0.95))
+    const high = Math.min(toHundredFloor(average * (highMultiplierByCategory[category] || 1.12)), toHundredFloor(newCashPrice * 0.95))
     if (rawAverage !== average) corrected += 1
     if (high <= average) invalidBands.push(`${name} ${storage}`)
   }

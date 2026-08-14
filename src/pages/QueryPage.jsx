@@ -124,13 +124,21 @@ function capToMarketCeiling(value, ceiling) {
 
 function getPriceBand(product, avgValue, ceiling) {
   if (!avgValue) return null
-  const isWatch = product?.category === 'Apple Watch'
-  const lowMultiplier = isWatch ? 0.65 : 0.95
-  const highMultiplier = isWatch ? 1.15 : 1.08
+  const category = product?.category
+  const isWatch = category === 'Apple Watch'
+  const multipliers = {
+    iPhone: { low: 0.86, high: 1.13 },
+    MacBook: { low: 0.86, high: 1.12 },
+    iPad: { low: 0.84, high: 1.14 },
+    'Apple Watch': { low: 0.65, high: 1.15 },
+    AirPods: { low: 0.78, high: 1.18 },
+    Mac: { low: 0.84, high: 1.14 },
+    其他: { low: 0.82, high: 1.15 },
+  }[category] || { low: 0.85, high: 1.12 }
   return {
-    low: Math.round(avgValue * lowMultiplier / 100) * 100,
+    low: Math.round(avgValue * multipliers.low / 100) * 100,
     target: avgValue,
-    high: capToMarketCeiling(Math.round(avgValue * highMultiplier / 100) * 100, ceiling),
+    high: capToMarketCeiling(Math.round(avgValue * multipliers.high / 100) * 100, ceiling),
     isWatch,
   }
 }
@@ -1053,7 +1061,7 @@ export default function QueryPage() {
                       <div>
                         <p className="text-[11px] font-semibold text-[#6e6e73] uppercase tracking-wider">成交區間建議</p>
                         <p className="text-[13px] text-[#6e6e73] mt-1">
-                          {priceBand.isWatch ? '手錶受電池、碰傷、錶帶與保固影響，價差較大' : '以目前均價估算合理買賣帶'}
+                          {priceBand.isWatch ? '手錶受電池、碰傷、錶帶與保固影響，價差較大' : '依成色、電池、保固與配件保留合理價差'}
                         </p>
                       </div>
                       <CircleDollarSign size={18} className="text-[#34c759]" />
@@ -1064,7 +1072,7 @@ export default function QueryPage() {
                     </div>
                     <div className="grid grid-cols-3 gap-3 mt-4">
                       <div>
-                        <p className="text-[11px] text-[#6e6e73]">{priceBand.isWatch ? '碰傷／低電池' : '好買價'}</p>
+                        <p className="text-[11px] text-[#6e6e73]">{priceBand.isWatch ? '碰傷／低電池' : '使用痕跡／低保固'}</p>
                         <p className="text-[15px] font-semibold text-[#34c759]">{formatMoney(priceBand.low)}</p>
                       </div>
                       <div className="text-center">
@@ -1072,7 +1080,7 @@ export default function QueryPage() {
                         <p className="text-[15px] font-semibold text-[#1d1d1f]">{formatMoney(priceBand.target)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[11px] text-[#6e6e73]">{priceBand.isWatch ? '極新／保固完整' : '偏高價'}</p>
+                        <p className="text-[11px] text-[#6e6e73]">極新／保固完整</p>
                         <p className="text-[15px] font-semibold text-[#ff9500]">{formatMoney(priceBand.high)}</p>
                       </div>
                     </div>
