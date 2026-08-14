@@ -219,16 +219,16 @@ function getProductVariantGroup(product, options = {}) {
     const iPadAirMatch = product.name.match(/^iPad Air (11吋|13吋)/)
     if (iPadAirMatch) {
       return {
-        key: 'ipad-air',
-        name: 'iPad Air',
+        key: `ipad-air-${iPadAirMatch[1]}`,
+        name: `iPad Air ${iPadAirMatch[1]}`,
         kind: 'ipad-air',
       }
     }
 
     if (product.name.startsWith('iPad Air 第')) {
       return {
-        key: 'ipad-air',
-        name: 'iPad Air',
+        key: 'ipad-air-10.9吋',
+        name: 'iPad Air 10.9吋',
         kind: 'ipad-air',
       }
     }
@@ -343,7 +343,7 @@ function getVariantLabel(product, options = {}) {
     return product.name.replace(/^MacBook Air (13吋|15吋) /, '')
   }
   if (group.kind === 'ipad-air') {
-    return product.name.replace('iPad Air ', '')
+    return product.name.replace(/^iPad Air (?:11吋|13吋) /, '').replace('iPad Air ', '')
   }
   if (group.kind === 'ipad-pro') {
     return product.name.replace(/^iPad Pro (11吋|13吋|12\.9吋) /, '')
@@ -837,20 +837,25 @@ export default function QueryPage() {
                 </div>
 
                 {selectedGroupVariants.length > 1 && (
-                  <div className="flex gap-2 flex-wrap">
-                    {selectedGroupVariants.map(product => (
-                      <button
-                        key={product.id}
-                        onClick={() => selectProduct(product)}
-                        className={`px-4 py-1.5 rounded-full text-[13px] font-medium border transition-all duration-200 ${
-                          selectedProduct?.id === product.id
-                            ? 'border-[#1d1d1f] bg-[#1d1d1f] text-white'
-                            : 'border-[rgba(0,0,0,0.15)] text-[#1d1d1f] hover:border-[#1d1d1f]'
-                        }`}
-                      >
-                        {getVariantLabel(product, selectedGroupingOptions)}
-                      </button>
-                    ))}
+                  <div>
+                    {selectedVariantGroup?.kind === 'ipad-air' && (
+                      <p className="text-[11px] font-semibold text-[#6e6e73] mb-2">晶片／世代</p>
+                    )}
+                    <div className="flex gap-2 flex-wrap">
+                      {selectedGroupVariants.map(product => (
+                        <button
+                          key={product.id}
+                          onClick={() => selectProduct(product)}
+                          className={`px-4 py-1.5 rounded-full text-[13px] font-medium border transition-all duration-200 ${
+                            selectedProduct?.id === product.id
+                              ? 'border-[#1d1d1f] bg-[#1d1d1f] text-white'
+                              : 'border-[rgba(0,0,0,0.15)] text-[#1d1d1f] hover:border-[#1d1d1f]'
+                          }`}
+                        >
+                          {getVariantLabel(product, selectedGroupingOptions)}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
 
