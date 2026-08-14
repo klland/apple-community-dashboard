@@ -856,7 +856,7 @@ export const APPLE_PRODUCTS = [
     launchDate: '2023-11-07',
     launchPrice: { '18G/512G': 69900 },
     basePrice: { '18G/512G': 69900 },
-    marketAvg: { '18G/512G': 47000 },
+    marketAvg: { '18G/512G': 41000 },
     tradeInPrice: 20100,
   },
   {
@@ -1707,7 +1707,7 @@ function getProductLineKey(product) {
     if (pro) return pro[1] === '11吋' ? 'ipad-pro-11' : 'ipad-pro-large'
 
     const air = name.match(/^iPad Air (11吋|13吋)/)
-    if (air) return 'ipad-air'
+    if (air) return `ipad-air-${air[1]}`
 
     if (name.startsWith('iPad mini')) return 'ipad-mini'
     if (name.startsWith('iPad Air 第')) return 'ipad-air'
@@ -1814,6 +1814,47 @@ function enforceLatestProductDiscountFloors(products) {
   }
 }
 
+function comparableStorageKey(product, storage) {
+  if (product.category === 'Apple Watch') {
+    const size = /^(\d+)mm$/.exec(storage)
+    if (size) return Number(size[1]) <= 42 ? 'small' : 'large'
+  }
+
+  // Mac 的記憶體與 SSD 組合差異太大，只比較完全相同的規格。
+  return storage
+}
+
+function enforceNewerGenerationOrder(products) {
+  const productsByLine = new Map()
+  for (const product of products) {
+    if (!product.launchDate || !product.marketAvg) continue
+    const line = getProductLineKey(product)
+    if (!productsByLine.has(line)) productsByLine.set(line, [])
+    productsByLine.get(line).push(product)
+  }
+
+  for (const lineProducts of productsByLine.values()) {
+    const newerPriceByVariant = new Map()
+    const newestFirst = [...lineProducts].sort((a, b) => b.launchDate.localeCompare(a.launchDate))
+
+    for (const product of newestFirst) {
+      for (const storage of product.storages) {
+        const current = product.marketAvg?.[storage]
+        if (!current) continue
+
+        const variant = comparableStorageKey(product, storage)
+        const newerPrice = newerPriceByVariant.get(variant)
+        if (newerPrice != null && current > newerPrice) {
+          product.marketAvg[storage] = newerPrice
+          product.generationOrderAdjusted = true
+        }
+
+        newerPriceByVariant.set(variant, product.marketAvg[storage])
+      }
+    }
+  }
+}
+
 function firstYearIphoneDrop(productName) {
   if (productName.includes('Pro Max')) return 13000
   if (productName.includes('Pro')) return 11000
@@ -1893,6 +1934,8 @@ for (const product of APPLE_PRODUCTS) {
     product.marketAvg[storage] = Math.min(current, ceiling)
   }
 }
+
+enforceNewerGenerationOrder(APPLE_PRODUCTS)
 
 // 類別列表
 export const CATEGORIES = ['全部', 'iPhone', 'MacBook', 'iPad', 'Apple Watch', 'AirPods', 'Mac', '其他']

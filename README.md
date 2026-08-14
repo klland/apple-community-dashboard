@@ -26,6 +26,8 @@ npm run price:update:monthly
 - `src/data/marketAdjustments.json`（前端實際讀取的覆蓋價格）
 - `data/monthly-price-changelog/YYYY-MM.json`（每月調整清單）
 
+同產品線、同尺寸與可對應規格下，較新世代的二手行情不得低於前一代；若發生衝突，會下修舊款而不拉高新款。
+
 ## cron（每月 1 號 10:00）
 
 在專案根目錄執行：
