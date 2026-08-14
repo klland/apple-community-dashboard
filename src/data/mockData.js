@@ -1696,7 +1696,7 @@ function getProductLineKey(product) {
     if (name.includes('Pro Max')) return 'iphone-pro-max'
     if (name.includes('Pro')) return 'iphone-pro'
     if (name.includes('Plus') || name.includes('Air')) return 'iphone-air'
-    if (name.includes('e')) return 'iphone-e'
+    if (/^iPhone\s+\d+e\b/.test(name)) return 'iphone-e'
     return 'iphone'
   }
 
