@@ -1253,7 +1253,7 @@ const PRODUCT_CATALOG = [
   },
   {
     id: 'apple-watch-se-2',
-    name: 'Apple Watch SE 第2代',
+    name: 'Apple Watch SE 2',
     category: 'Apple Watch',
     storages: ['40mm', '44mm'],
     colors: ['午夜色', '星光色', '銀色'],
@@ -1315,7 +1315,7 @@ const PRODUCT_CATALOG = [
   },
   {
     id: 'apple-watch-se-1',
-    name: 'Apple Watch SE 第1代',
+    name: 'Apple Watch SE 1',
     category: 'Apple Watch',
     storages: ['40mm', '44mm'],
     colors: ['銀色', '太空灰', '金色'],
