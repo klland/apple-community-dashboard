@@ -3,7 +3,7 @@ import mikoPriceCeilings from './mikoPriceCeilings.json'
 import jyesPriceCeilings from './jyesPriceCeilings.json'
 
 // Apple 產品完整資料庫
-export const APPLE_PRODUCTS = [
+const PRODUCT_CATALOG = [
   // ==================== 2026 新品 ====================
   {
     id: 'iphone-17e',
@@ -1620,6 +1620,15 @@ export const APPLE_PRODUCTS = [
     tradeInPrice: null,
   },
 ]
+
+const PRODUCT_MAX_AGE_YEARS = 5
+const productCutoffDate = new Date()
+productCutoffDate.setFullYear(productCutoffDate.getFullYear() - PRODUCT_MAX_AGE_YEARS)
+
+export const APPLE_PRODUCTS = PRODUCT_CATALOG.filter(product => {
+  if (!product.launchDate) return false
+  return new Date(`${product.launchDate}T00:00:00+08:00`) >= productCutoffDate
+})
 
 const currentOfficialPriceOverrides = {
   'macbook-pro-14-m5': { '16G/1T': 64900 },

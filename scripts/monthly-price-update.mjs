@@ -138,6 +138,14 @@ function monthsSince(fromDate, toDate) {
   return years * 12 + months
 }
 
+function isWithinProductWindow(product, now) {
+  const launchDate = parseIsoDate(product.launchDate)
+  if (!launchDate) return false
+  const cutoff = new Date(now)
+  cutoff.setUTCFullYear(cutoff.getUTCFullYear() - 5)
+  return launchDate >= cutoff
+}
+
 function getAgeSlope(months) {
   if (months < 6) return { min: -0.010, max: 0 }
   if (months < 18) return { min: -0.018, max: -0.004 }
@@ -184,14 +192,15 @@ function realSignalWeight(signal) {
 function main() {
   const mockDataContent = fs.readFileSync(mockDataPath, 'utf8')
   const allProducts = parseProductsFromMockData(mockDataContent)
+  const nowCtx = buildTodayContext()
+  const activeProducts = allProducts.filter(product => isWithinProductWindow(product, nowCtx.now))
   const products = onlyProduct
-    ? allProducts.filter(product => product.id === onlyProduct)
-    : allProducts
+    ? activeProducts.filter(product => product.id === onlyProduct)
+    : activeProducts
   if (products.length === 0) {
     throw new Error('找不到產品資料，請檢查 mockData.js 格式。')
   }
 
-  const nowCtx = buildTodayContext()
   const existingAdjustments = safeReadJson(adjustmentsPath, { meta: {}, marketAvg: {} })
   if (!dryRun && !forceRun && existingAdjustments.meta?.month === nowCtx.monthKey) {
     console.log(`[monthly-price-update] month=${nowCtx.monthKey} already updated; use --force to run again.`)
@@ -210,8 +219,8 @@ function main() {
     const ageRange = getAgeSlope(ageMonths)
     const slopeMin = (categoryRange.min + ageRange.min) / 2
     const slopeMax = (categoryRange.max + ageRange.max) / 2
-    const previous = previousGeneration(p, allProducts)
-    const replaced = hasNewerGeneration(p, allProducts)
+    const previous = previousGeneration(p, activeProducts)
+    const replaced = hasNewerGeneration(p, activeProducts)
 
     for (const [storage, baseMarket] of Object.entries(p.marketAvg)) {
       const oldValue = existingOverrides[p.id]?.[storage] ?? baseMarket
