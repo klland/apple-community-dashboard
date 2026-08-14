@@ -1915,6 +1915,9 @@ const newProductPriceSources = [mikoPriceCeilings, jyesPriceCeilings]
   .filter(isFreshNewPriceSource)
   .map(source => source.ceilings || {})
 const toHundredFloor = price => Math.floor(price / 100) * 100
+// 新品現金價是二手的硬上限，不是二手均價的目標。保留至少 12% 價差，
+// 避免買家看到二手均價與新品價過於接近，或成交區間的偏高價被截成均價。
+const toSecondHandAverageCeiling = price => toHundredFloor(price * 0.88)
 const toSecondHandCeiling = price => toHundredFloor(price * 0.95)
 
 enforceLatestProductDiscountFloors(APPLE_PRODUCTS)
@@ -1940,7 +1943,10 @@ for (const product of APPLE_PRODUCTS) {
     const current = product.marketAvg?.[storage]
     if (!ceiling || !current) continue
 
-    product.marketAvg[storage] = Math.min(current, ceiling)
+    const lowestNewPrice = Math.min(...sourceCeilings
+      .map(ceilings => ceilings[storage])
+      .filter(Number.isFinite))
+    product.marketAvg[storage] = Math.min(current, toSecondHandAverageCeiling(lowestNewPrice))
   }
 }
 
