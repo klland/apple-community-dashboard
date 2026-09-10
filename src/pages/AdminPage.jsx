@@ -225,6 +225,8 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(false)
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
+  const [lastFetchedAt, setLastFetchedAt] = useState(null)
+  const [dataError, setDataError] = useState('')
   const [deleting, setDeleting] = useState(null)
   const [chartModel, setChartModel] = useState('')
   const [chartRange, setChartRange] = useState('90')
@@ -278,24 +280,31 @@ export default function AdminPage() {
 
   async function fetchData() {
     setLoading(true)
-    let all = []
-    let from = 0
-    const PAGE = 1000
-    while (true) {
-      const { data: page, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .range(from, from + PAGE - 1)
-      if (error) break
-      if (!page || page.length === 0) break
-      all = all.concat(page)
-      if (page.length < PAGE) break
-      from += PAGE
+    setDataError('')
+    try {
+      let all = []
+      let from = 0
+      const PAGE = 1000
+      while (true) {
+        const { data: page, error } = await supabase
+          .from('transactions')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .range(from, from + PAGE - 1)
+        if (error) throw error
+        if (!page || page.length === 0) break
+        all = all.concat(page)
+        if (page.length < PAGE) break
+        from += PAGE
+      }
+      const deletedIds = readDeletedTransactionIds()
+      setData(all.filter(row => !isDeletedTransaction(row, deletedIds)))
+      setLastFetchedAt(new Date().toISOString())
+    } catch {
+      setDataError('成交資料讀取失敗，尚未更新；請重新整理。')
+    } finally {
+      setLoading(false)
     }
-    const deletedIds = readDeletedTransactionIds()
-    setData(all.filter(row => !isDeletedTransaction(row, deletedIds)))
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -565,10 +574,13 @@ export default function AdminPage() {
           <div>
             <p className="text-xs font-medium text-[#6e6e73]">Apple 二手行情資料營運</p>
             <h1 className="mt-1 text-2xl font-semibold tracking-normal text-[#1d1d1f]">管理員後台</h1>
-            <p className="mt-1 text-xs text-[#86868b]">最後資料時間：{stats.latest ? formatDateTime(stats.latest) : '尚無資料'}</p>
+            <p className="mt-1 text-xs text-[#86868b]">最新成交建立時間：{stats.latest ? formatDateTime(stats.latest) : '尚無資料'}</p>
+            <p className="mt-1 text-xs text-[#86868b]">成交資料成功讀取：{lastFetchedAt ? formatDateTime(lastFetchedAt) : '尚未完成'}</p>
+            {dataError && <p role="alert" className="mt-1 text-xs text-red-600">{dataError}</p>}
           </div>
           <button
             type="button"
+            disabled={loading}
             onClick={() => {
               fetchData()
               fetchReports()
