@@ -2,7 +2,162 @@
   "meta": {
     "lastUpdated": "2026-06-30",
     "month": "2026-06",
-    "note": "Visible but conservative Taiwan second-hand market uplift after Apple Taiwan official price increases. Values are rounded to the nearest NT$100."
+    "note": "Visible but conservative Taiwan second-hand market uplift after Apple Taiwan official price increases. Values are rounded to the nearest NT$100.",
+    "referenceReview": {
+      "checkedAt": "2026-09-07T13:16:31.600Z",
+      "sources": [
+        {
+          "source": "JYES 傑昇通信",
+          "checkedAt": "2026-09-01T17:00:00+08:00"
+        }
+      ],
+      "changes": [
+        {
+          "id": "iphone-17-pro-max",
+          "storage": "1T",
+          "previous": 48800,
+          "next": 48700
+        },
+        {
+          "id": "iphone-17-pro-max",
+          "storage": "2T",
+          "previous": 62000,
+          "next": 59800
+        },
+        {
+          "id": "iphone-17-pro",
+          "storage": "1T",
+          "previous": 45300,
+          "next": 44700
+        },
+        {
+          "id": "iphone-17-air",
+          "storage": "512G",
+          "previous": 31000,
+          "next": 30300
+        },
+        {
+          "id": "iphone-17-air",
+          "storage": "1T",
+          "previous": 36000,
+          "next": 35500
+        },
+        {
+          "id": "iphone-17",
+          "storage": "512G",
+          "previous": 30700,
+          "next": 30600
+        },
+        {
+          "id": "ipad-pro-m5-13",
+          "storage": "256G",
+          "previous": 47500,
+          "next": 40000
+        },
+        {
+          "id": "ipad-pro-m5-13",
+          "storage": "512G",
+          "previous": 54000,
+          "next": 46800
+        },
+        {
+          "id": "ipad-pro-m5-13",
+          "storage": "1T",
+          "previous": 67000,
+          "next": 58500
+        },
+        {
+          "id": "ipad-pro-m5-13",
+          "storage": "2T",
+          "previous": 83500,
+          "next": 69500
+        },
+        {
+          "id": "ipad-pro-m5-11",
+          "storage": "256G",
+          "previous": 37400,
+          "next": 31200
+        },
+        {
+          "id": "ipad-pro-m5-11",
+          "storage": "512G",
+          "previous": 44000,
+          "next": 36900
+        },
+        {
+          "id": "ipad-pro-m5-11",
+          "storage": "1T",
+          "previous": 57000,
+          "next": 49200
+        },
+        {
+          "id": "ipad-pro-m5-11",
+          "storage": "2T",
+          "previous": 73500,
+          "next": 61000
+        },
+        {
+          "id": "ipad-air-m4-13",
+          "storage": "128G",
+          "previous": 26500,
+          "next": 25300
+        },
+        {
+          "id": "ipad-air-m4-13",
+          "storage": "256G",
+          "previous": 29500,
+          "next": 28000
+        },
+        {
+          "id": "ipad-air-m4-13",
+          "storage": "512G",
+          "previous": 35300,
+          "next": 33800
+        },
+        {
+          "id": "ipad-air-m4-13",
+          "storage": "1T",
+          "previous": 44000,
+          "next": 40800
+        },
+        {
+          "id": "ipad-air-m4-11",
+          "storage": "128G",
+          "previous": 20500,
+          "next": 19600
+        },
+        {
+          "id": "ipad-air-m4-11",
+          "storage": "256G",
+          "previous": 23500,
+          "next": 22700
+        },
+        {
+          "id": "ipad-air-m4-11",
+          "storage": "512G",
+          "previous": 29500,
+          "next": 27900
+        },
+        {
+          "id": "ipad-air-m4-11",
+          "storage": "1T",
+          "previous": 38200,
+          "next": 35400
+        },
+        {
+          "id": "airpods-pro-3",
+          "storage": "標準版",
+          "previous": 6800,
+          "next": 5300
+        },
+        {
+          "id": "ipad-mini-7",
+          "storage": "512G",
+          "previous": 25400,
+          "next": 23500
+        }
+      ]
+    }
   },
   "marketAvg": {
     "iphone-17e": {
@@ -11,8 +166,8 @@
     },
     "iphone-17-air": {
       "256G": 25000,
-      "512G": 31000,
-      "1T": 36000
+      "512G": 30300,
+      "1T": 35500
     },
     "macbook-pro-14-m5": {
       "16G/1T": 50400
@@ -100,7 +255,7 @@
     "ipad-mini-7": {
       "128G": 14600,
       "256G": 18400,
-      "512G": 25400
+      "512G": 23500
     },
     "ipad-10": {
       "64G": 7500,
@@ -137,6 +292,43 @@
     },
     "airpods-pro-2": {
       "標準版": 3200
+    },
+    "iphone-17-pro-max": {
+      "1T": 48700,
+      "2T": 59800
+    },
+    "iphone-17-pro": {
+      "1T": 44700
+    },
+    "iphone-17": {
+      "512G": 30600
+    },
+    "ipad-pro-m5-13": {
+      "256G": 40000,
+      "512G": 46800,
+      "1T": 58500,
+      "2T": 69500
+    },
+    "ipad-pro-m5-11": {
+      "256G": 31200,
+      "512G": 36900,
+      "1T": 49200,
+      "2T": 61000
+    },
+    "ipad-air-m4-13": {
+      "128G": 25300,
+      "256G": 28000,
+      "512G": 33800,
+      "1T": 40800
+    },
+    "ipad-air-m4-11": {
+      "128G": 19600,
+      "256G": 22700,
+      "512G": 27900,
+      "1T": 35400
+    },
+    "airpods-pro-3": {
+      "標準版": 5300
     }
   }
 }

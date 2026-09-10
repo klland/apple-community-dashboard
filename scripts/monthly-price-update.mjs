@@ -208,7 +208,7 @@ function main() {
   }
   const existingOverrides = existingAdjustments.marketAvg || {}
   const realSignals = safeReadJson(realSignalsPath, { products: {} }).products || {}
-  const nextOverrides = {}
+  const nextOverrides = structuredClone(existingOverrides)
   const changes = []
 
   for (const p of products) {
@@ -279,16 +279,15 @@ function main() {
   }
 
   if (!dryRun) {
-    fs.writeFileSync(adjustmentsPath, `${JSON.stringify(output, null, 2)}\n`, 'utf8')
     fs.mkdirSync(changelogDir, { recursive: true })
     fs.writeFileSync(
-      path.join(changelogDir, `${nowCtx.monthKey}.json`),
-      `${JSON.stringify({ generatedAt: nowCtx.isoDate, changes }, null, 2)}\n`,
+      path.join(changelogDir, `${nowCtx.monthKey}${onlyProduct ? `-${onlyProduct}` : ''}.proposal.json`),
+      `${JSON.stringify({ status: 'pending_review', basis: 'model_estimate_not_market_evidence', generatedAt: nowCtx.isoDate, changes, proposed: output }, null, 2)}\n`,
       'utf8',
     )
   }
 
-  console.log(`[monthly-price-update] month=${nowCtx.monthKey} changed=${changes.length} dryRun=${dryRun}`)
+  console.log(`[monthly-price-update] REVIEW ONLY month=${nowCtx.monthKey} proposed=${changes.length} dryRun=${dryRun}; live prices unchanged`)
   for (const item of changes.slice(0, 25)) {
     const sign = item.pct > 0 ? '+' : ''
     console.log(`- ${item.id} ${item.storage}: ${item.oldValue} -> ${item.newValue} (${sign}${item.pct}%)`)

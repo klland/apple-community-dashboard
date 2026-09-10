@@ -1673,10 +1673,11 @@ for (const product of APPLE_PRODUCTS) {
   const override = marketAvgOverrides[product.id]
   if (!override) continue
   product.marketAvg = { ...product.marketAvg, ...override }
+  product.referenceStatus = 'legacy_unverified'
   product.marketAdjusted = true
 }
 
-const MARKET_REFERENCE_DATE = new Date('2026-06-30T00:00:00+08:00')
+const MARKET_REFERENCE_DATE = new Date()
 const MAX_DISCOUNT_TIERS = [
   { months: 6, standard: 0.16, highSpec: 0.12 },
   { months: 18, standard: 0.28, highSpec: 0.24 },
@@ -1693,6 +1694,8 @@ function getProductLineKey(product) {
   const name = product.name || ''
 
   if (product.category === 'iPhone') {
+    if (name.startsWith('iPhone SE')) return 'iphone-se'
+    if (name.includes('mini')) return 'iphone-mini'
     if (name.includes('Pro Max')) return 'iphone-pro-max'
     if (name.includes('Pro')) return 'iphone-pro'
     if (name.includes('Plus') || name.includes('Air')) return 'iphone-air'
@@ -1807,6 +1810,7 @@ function enforceLatestProductDiscountFloors(products) {
 
     const monthsOld = monthsSinceLaunch(product.launchDate)
     for (const storage of product.storages) {
+      if (Number.isFinite(marketAvgOverrides[product.id]?.[storage])) continue
       const official = product.currentOfficialPrice?.[storage] ?? product.basePrice?.[storage]
       const current = product.marketAvg?.[storage]
       if (!official || !current) continue
@@ -1893,14 +1897,16 @@ for (const product of APPLE_PRODUCTS) {
   if (product.category !== 'iPhone' || !product.launchDate) continue
 
   const monthsOld = monthsSinceLaunch(product.launchDate)
-  const expectedDrop = cumulativeIphoneDrop(monthsOld, firstYearIphoneDrop(product.name))
-
   for (const storage of product.storages) {
     const launch = product.launchPrice?.[storage] ?? product.basePrice?.[storage]
     const current = product.marketAvg?.[storage]
     if (!launch || !current) continue
 
-    const inferred = Math.round(Math.max(0, launch - expectedDrop) / 100) * 100
+    const firstYearDrop = product.name.startsWith('iPhone SE')
+      ? Math.min(8000, launch * 0.3)
+      : firstYearIphoneDrop(product.name)
+    const expectedDrop = cumulativeIphoneDrop(monthsOld, firstYearDrop)
+    const inferred = Math.round(Math.max(500, launch * 0.1, launch - expectedDrop) / 100) * 100
     product.marketAvg[storage] = Math.min(current, inferred)
   }
 }
@@ -1909,7 +1915,8 @@ const MAX_NEW_PRICE_SOURCE_AGE_DAYS = 14
 const isFreshNewPriceSource = source => {
   const scrapedAt = new Date(source?.meta?.scrapedAt)
   if (Number.isNaN(scrapedAt.getTime())) return false
-  return (Date.now() - scrapedAt.getTime()) <= MAX_NEW_PRICE_SOURCE_AGE_DAYS * 24 * 60 * 60 * 1000
+  const age = Date.now() - scrapedAt.getTime()
+  return age >= 0 && age <= MAX_NEW_PRICE_SOURCE_AGE_DAYS * 24 * 60 * 60 * 1000
 }
 const newProductPriceSources = [mikoPriceCeilings, jyesPriceCeilings]
   .filter(isFreshNewPriceSource)
@@ -1951,6 +1958,16 @@ for (const product of APPLE_PRODUCTS) {
 }
 
 enforceNewerGenerationOrder(APPLE_PRODUCTS)
+
+// A larger capacity cannot lower the baseline price for the same model.
+for (const product of APPLE_PRODUCTS) {
+  if (!['iPhone', 'iPad'].includes(product.category)) continue
+  let nextPrice = Infinity
+  for (const storage of [...product.storages].reverse()) {
+    product.marketAvg[storage] = Math.min(product.marketAvg[storage], nextPrice)
+    nextPrice = product.marketAvg[storage]
+  }
+}
 
 // 類別列表
 export const CATEGORIES = ['全部', 'iPhone', 'MacBook', 'iPad', 'Apple Watch', 'AirPods', 'Mac', '其他']

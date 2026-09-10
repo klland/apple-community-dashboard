@@ -625,21 +625,12 @@ export default function QueryPage() {
         return
       }
       const ceiling = macEstimate?.newProductGuardrail ?? getMarketCeiling(selectedProduct, selectedStorage)
-      const retail = displayRetail
-      const discount = Math.round((1 - avg / retail) * 100)
       const lowOffer = capToMarketCeiling(Math.round(avg*0.95/100)*100, ceiling)
       const highOffer = capToMarketCeiling(Math.round(avg*1.05/100)*100, ceiling)
-      const sellerLimit = capToMarketCeiling(Math.round(avg*1.08/100)*100, ceiling)
-      const buyerTarget = capToMarketCeiling(Math.round(avg*0.97/100)*100, ceiling)
-      const overpayLimit = capToMarketCeiling(Math.round(avg*1.1/100)*100, ceiling)
-
-      const analyses = [
-        `目前 ${selectedProduct.name} ${displayStorageLabel} 參考行情 $${avg.toLocaleString()}，較官方參考價便宜 ${discount}%。近期供給量穩定，建議買家從均價再低 3-5% 開始出價，9成新以上品項較容易成交。`,
-        `${selectedProduct.name} ${displayStorageLabel} 目前行情合理，成交價集中在 $${lowOffer} – $${highOffer} 之間。有盒裝且保固內的機子可溢價 5-8%，賣家定價建議不超過 $${sellerLimit}。`,
-        `市場觀察：${selectedProduct.name} ${displayStorageLabel} 近期成交筆數正常，價格波動在 ±5% 範圍內。買家可安心在 $${buyerTarget} 左右入手，超過 $${overpayLimit} 建議再議價。`,
-      ]
-      const randomAnalysis = analyses[Math.floor(Math.random() * analyses.length)]
-      setAiAnalysis(randomAnalysis)
+      const basis = isLiveMarketPrice
+        ? `採計 ${liveAvg.trimmedCount} 筆資料，其中成交回報 ${liveAvg.reportCount} 筆。`
+        : '有效成交樣本不足，目前採用參考估價。'
+      setAiAnalysis(`${selectedProduct.name} ${displayStorageLabel} 參考價 $${avg.toLocaleString()}。${basis}${macEstimate ? '高配差額為模型估算，並非該組合成交均價。' : ''} 議價試算約 $${lowOffer.toLocaleString()}–$${highOffer.toLocaleString()}，不是實測成交分布；請依電池、外觀、保固與配件判斷。`)
       setAiLoading(false)
     }, 800)
   }
