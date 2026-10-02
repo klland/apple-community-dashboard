@@ -241,6 +241,30 @@ function makeDesktopConfig({ id, productLine, chipOptions, chipAddons = {}, base
 }
 
 export const MAC_SPEC_CONFIGS = {
+  'mac-mini-m6': makeDesktopConfig({
+    id: 'mac-mini-m6', productLine: 'Mac mini M6',
+    chipOptions: [{ value: 'base', label: 'M6 / 12 核心 CPU / 12 核心 GPU' }],
+    baseStorage: '16G/256G', baseRam: '16G', baseSsd: '256G',
+    baseMarketLabel: 'M6 / 16G / 256G 基準', ramOptions: ['16G'], ssdOptions: ['256G'],
+  }),
+  'mac-mini-m5-pro': makeDesktopConfig({
+    id: 'mac-mini-m5-pro', productLine: 'Mac mini M5 Pro',
+    chipOptions: [{ value: 'base', label: 'M5 Pro / 15 核心 CPU / 16 核心 GPU' }],
+    baseStorage: '24G/512G', baseRam: '24G', baseSsd: '512G',
+    baseMarketLabel: 'M5 Pro / 24G / 512G 基準', ramOptions: ['24G'], ssdOptions: ['512G'],
+  }),
+  'mac-studio-m5-max': makeDesktopConfig({
+    id: 'mac-studio-m5-max', productLine: 'Mac Studio M5 Max',
+    chipOptions: [{ value: 'base', label: 'M5 Max / 18 核心 CPU / 32 核心 GPU' }],
+    baseStorage: '36G/512G', baseRam: '36G', baseSsd: '512G',
+    baseMarketLabel: 'M5 Max / 36G / 512G 基準', ramOptions: ['36G'], ssdOptions: ['512G'],
+  }),
+  'mac-studio-m5-ultra': makeDesktopConfig({
+    id: 'mac-studio-m5-ultra', productLine: 'Mac Studio M5 Ultra',
+    chipOptions: [{ value: 'base', label: 'M5 Ultra / 30 核心 CPU / 64 核心 GPU' }],
+    baseStorage: '96G/1T', baseRam: '96G', baseSsd: '1T',
+    baseMarketLabel: 'M5 Ultra / 96G / 1T 基準', ramOptions: ['96G'], ssdOptions: ['1T'],
+  }),
   'macbook-neo-13': makeLegacyAirConfig({
     id: 'macbook-neo-13',
     chipLabel: 'Neo / 入門晶片',

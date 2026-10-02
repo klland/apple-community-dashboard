@@ -785,7 +785,7 @@ export default function QueryPage() {
                 const subtitle = entry.type === 'product'
                   ? isLowLiquidityIphone(product, product.marketAvg[product.storages[0]])
                     ? `低流動性 ${formatMarketValue(product, product.marketAvg[product.storages[0]])}`
-                    : `參考均價 $${product.marketAvg[product.storages[0]]?.toLocaleString()}+`
+                    : `${product.referenceStatus === 'new_product_estimate' ? '參考估價' : '參考均價'} $${product.marketAvg[product.storages[0]]?.toLocaleString()}+`
                   : isLowLiquidityIphone(product, primaryPrice)
                     ? `${entry.variants.length} 個型號，低流動性 ${formatMarketValue(product, primaryPrice)}`
                     : `${entry.variants.length} 個型號，參考均價 $${primaryPrice?.toLocaleString()} 起`
@@ -829,6 +829,7 @@ export default function QueryPage() {
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <span className="text-[11px] px-2 py-0.5 rounded-full bg-white text-[#6e6e73] border border-[rgba(0,0,0,0.06)]">{selectedProduct.category}</span>
                       {monthsOld != null && <span className="text-[11px] px-2 py-0.5 rounded-full bg-white text-[#6e6e73] border border-[rgba(0,0,0,0.06)]">上市 {monthsOld} 個月</span>}
+                      {selectedProduct.referenceStatus === 'new_product_estimate' && !isLiveMarketPrice && <span className="text-[11px] px-2 py-0.5 rounded-full bg-white text-[#6e6e73] border border-[rgba(0,0,0,0.06)]">新品估價</span>}
                     </div>
                     <h2 className="text-[28px] font-semibold text-[#1d1d1f] tracking-tight">{selectedProduct.name}</h2>
                     <p className="text-[13px] text-[#6e6e73] mt-1">用成交均價、原廠售價與折舊曲線判斷買賣區間</p>
@@ -864,7 +865,7 @@ export default function QueryPage() {
                       <div>
                         <p className="text-[11px] font-semibold text-[#6e6e73] uppercase tracking-wider">Mac 規格估算</p>
                         <h3 className="text-[18px] font-semibold text-[#1d1d1f] mt-1">基準規格：{macConfig.baseMarketLabel}</h3>
-                        <p className="text-[12px] text-[#6e6e73] mt-1">高配為規格加值估算，不假裝每個組合都有足夠成交樣本。</p>
+                        <p className="text-[12px] text-[#6e6e73] mt-1">{selectedProduct.referenceStatus === 'new_product_estimate' ? '已核對基準規格；高配組合尚未提供估價。' : '高配為規格加值估算，不假裝每個組合都有足夠成交樣本。'}</p>
                       </div>
                       <span className="shrink-0 px-3 py-1 rounded-full bg-[#fff7e6] text-[#b36b00] text-[11px] font-semibold border border-[#ffe0a3]">估算</span>
                     </div>
@@ -956,7 +957,7 @@ export default function QueryPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="bg-[#f5f5f7] rounded-2xl p-4">
                     <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">
-                      {lowLiquidityIphone ? '低流動性區間' : isLiveMarketPrice ? `社團均價（${liveAvg.count} 筆）` : '參考均價'}
+                      {lowLiquidityIphone ? '低流動性區間' : isLiveMarketPrice ? `社團均價（${liveAvg.count} 筆）` : selectedProduct.referenceStatus === 'new_product_estimate' ? '新品參考估價' : '參考均價'}
                     </p>
                     {avgLoading
                       ? <p className="text-[18px] font-semibold text-[#6e6e73] tracking-tight">載入中…</p>
@@ -968,11 +969,12 @@ export default function QueryPage() {
                       <p className="text-[10px] text-[#6e6e73] mt-1">不再用精準均價，外觀與電池影響較大</p>
                     )}
                     {!avgLoading && macEstimate && (
-                      <p className="text-[10px] text-[#6e6e73] mt-1">含規格加值估算，基準為社團行情</p>
+                      <p className="text-[10px] text-[#6e6e73] mt-1">{isLiveMarketPrice ? '含規格加值估算，基準為社團行情' : '基準為參考估價，非實際成交均價'}</p>
                     )}
                     {!avgLoading && !lowLiquidityIphone && !macEstimate && !isLiveMarketPrice && (
-                      <p className="text-[10px] text-[#6e6e73] mt-1">成交筆數不足時顯示資料庫參考值</p>
+                      <p className="text-[10px] text-[#6e6e73] mt-1">{selectedProduct.referenceStatus === 'new_product_estimate' ? '依新品售價與折舊規則估算，非實際成交均價' : '成交筆數不足時顯示資料庫參考值'}</p>
                     )}
+                    {selectedProduct.specLabel && <p className="text-[10px] text-[#6e6e73] mt-1">{selectedProduct.specLabel}</p>}
                     {isLiveMarketPrice && liveAvg.reportCount > 0 && (
                       <p className="text-[10px] text-[#248a3d] mt-1">含 {liveAvg.reportCount} 筆成交回報，已優先採計</p>
                     )}

@@ -4,6 +4,88 @@ import jyesPriceCeilings from './jyesPriceCeilings.json'
 
 // Apple 產品完整資料庫
 const PRODUCT_CATALOG = [
+  // September 2026 Taiwan releases. These are estimates, not observed trades.
+  {
+    id: 'iphone-18-pro-max', name: 'iPhone 18 Pro Max', category: 'iPhone',
+    storages: ['256G', '512G', '1T', '2T'],
+    colors: ['勃根地紅色', '冰川藍色', '銀色', '黑色'], launchDate: '2026-09-18',
+    launchPrice: { '256G': 49900, '512G': 56900, '1T': 71900, '2T': 93900 },
+    basePrice: { '256G': 49900, '512G': 56900, '1T': 71900, '2T': 93900 },
+    marketAvg: { '256G': 44900, '512G': 51200, '1T': 64700, '2T': 84500 },
+    referenceStatus: 'new_product_estimate',
+    sourceUrl: 'https://www.apple.com/tw/shop/buy-iphone/iphone-18-pro',
+    tradeInPrice: null,
+  },
+  {
+    id: 'iphone-18-pro', name: 'iPhone 18 Pro', category: 'iPhone',
+    storages: ['256G', '512G', '1T', '2T'],
+    colors: ['勃根地紅色', '冰川藍色', '銀色', '黑色'], launchDate: '2026-09-18',
+    launchPrice: { '256G': 44900, '512G': 51900, '1T': 66900, '2T': 88900 },
+    basePrice: { '256G': 44900, '512G': 51900, '1T': 66900, '2T': 88900 },
+    marketAvg: { '256G': 40400, '512G': 46700, '1T': 60200, '2T': 80000 },
+    referenceStatus: 'new_product_estimate',
+    sourceUrl: 'https://www.apple.com/tw/shop/buy-iphone/iphone-18-pro',
+    tradeInPrice: null,
+  },
+  {
+    id: 'apple-watch-s12', name: 'Apple Watch Series 12', category: 'Apple Watch',
+    storages: ['42mm', '46mm'], colors: ['深古銅色', '黑色', '淺金色', '太空灰色'],
+    launchDate: '2026-09-18',
+    launchPrice: { '42mm': 13900, '46mm': 15400 },
+    basePrice: { '42mm': 13900, '46mm': 15400 },
+    marketAvg: { '42mm': 11100, '46mm': 12300 },
+    specLabel: '鋁金屬 / GPS / 運動型錶帶', referenceStatus: 'new_product_estimate',
+    sourceUrl: 'https://www.apple.com/tw/shop/buy-watch/apple-watch', tradeInPrice: null,
+  },
+  {
+    id: 'apple-watch-ultra-4', name: 'Apple Watch Ultra 4', category: 'Apple Watch',
+    storages: ['鈦金屬'], colors: ['原色', '黑色'], launchDate: '2026-09-18',
+    launchPrice: { '鈦金屬': 27900 }, basePrice: { '鈦金屬': 27900 },
+    marketAvg: { '鈦金屬': 22300 }, specLabel: '49mm / GPS + 行動網路 / 標準錶帶',
+    referenceStatus: 'new_product_estimate',
+    sourceUrl: 'https://www.apple.com/tw/shop/buy-watch/apple-watch-ultra', tradeInPrice: null,
+  },
+  {
+    id: 'airpods-5', name: 'AirPods 5', category: 'AirPods',
+    storages: ['USB-C 充電盒', '無線充電盒'], colors: ['白色'], launchDate: '2026-09-18',
+    launchPrice: { 'USB-C 充電盒': 4490, '無線充電盒': 5190 },
+    basePrice: { 'USB-C 充電盒': 4490, '無線充電盒': 5190 },
+    marketAvg: { 'USB-C 充電盒': 3700, '無線充電盒': 4300 },
+    referenceStatus: 'new_product_estimate',
+    sourceUrl: 'https://www.apple.com/tw/shop/buy-airpods/airpods-5', tradeInPrice: null,
+  },
+  {
+    id: 'mac-mini-m6', name: 'Mac mini M6', category: 'Mac',
+    storages: ['16G/256G'], colors: ['銀色'], launchDate: '2026-09-22',
+    launchPrice: { '16G/256G': 29900 }, basePrice: { '16G/256G': 29900 },
+    marketAvg: { '16G/256G': 26900 }, specLabel: '12 核心 CPU / 12 核心 GPU',
+    referenceStatus: 'new_product_estimate',
+    sourceUrl: 'https://www.apple.com/tw/shop/buy-mac/mac-mini', tradeInPrice: null,
+  },
+  {
+    id: 'mac-mini-m5-pro', name: 'Mac mini M5 Pro', category: 'Mac',
+    storages: ['24G/512G'], colors: ['銀色'], launchDate: '2026-09-22',
+    launchPrice: { '24G/512G': 59900 }, basePrice: { '24G/512G': 59900 },
+    marketAvg: { '24G/512G': 53900 }, specLabel: '15 核心 CPU / 16 核心 GPU',
+    referenceStatus: 'new_product_estimate',
+    sourceUrl: 'https://www.apple.com/tw/shop/buy-mac/mac-mini', tradeInPrice: null,
+  },
+  {
+    id: 'mac-studio-m5-max', name: 'Mac Studio M5 Max', category: 'Mac',
+    storages: ['36G/512G'], colors: ['銀色'], launchDate: '2026-09-22',
+    launchPrice: { '36G/512G': 84900 }, basePrice: { '36G/512G': 84900 },
+    marketAvg: { '36G/512G': 76400 }, specLabel: '18 核心 CPU / 32 核心 GPU',
+    referenceStatus: 'new_product_estimate',
+    sourceUrl: 'https://www.apple.com/tw/shop/buy-mac/mac-studio', tradeInPrice: null,
+  },
+  {
+    id: 'mac-studio-m5-ultra', name: 'Mac Studio M5 Ultra', category: 'Mac',
+    storages: ['96G/1T'], colors: ['銀色'], launchDate: '2026-09-22',
+    launchPrice: { '96G/1T': 199900 }, basePrice: { '96G/1T': 199900 },
+    marketAvg: { '96G/1T': 179900 }, specLabel: '30 核心 CPU / 64 核心 GPU',
+    referenceStatus: 'new_product_estimate',
+    sourceUrl: 'https://www.apple.com/tw/shop/buy-mac/mac-studio', tradeInPrice: null,
+  },
   // ==================== 2026 新品 ====================
   {
     id: 'iphone-17e',
@@ -1627,7 +1709,8 @@ productCutoffDate.setFullYear(productCutoffDate.getFullYear() - PRODUCT_MAX_AGE_
 
 export const APPLE_PRODUCTS = PRODUCT_CATALOG.filter(product => {
   if (!product.launchDate) return false
-  return new Date(`${product.launchDate}T00:00:00+08:00`) >= productCutoffDate
+  const launch = new Date(`${product.launchDate}T00:00:00+08:00`)
+  return launch >= productCutoffDate && launch <= new Date()
 })
 
 const currentOfficialPriceOverrides = {

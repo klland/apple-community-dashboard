@@ -57,6 +57,32 @@ for (const product of beforeExpiry) {
       `${product.id}/${storage}: source expiry raises price`)
   }
 }
-const standard13 = now.find(p => p.name === 'iPhone 13')
+const standard13 = beforeExpiry.find(p => p.name === 'iPhone 13')
 assert(standard13.marketAvg['256G'] > 3600, 'SE must not cap iPhone 13')
+const septemberReleases = {
+  'iphone-18-pro': { '256G': 44900, '512G': 51900, '1T': 66900, '2T': 88900 },
+  'iphone-18-pro-max': { '256G': 49900, '512G': 56900, '1T': 71900, '2T': 93900 },
+  'apple-watch-s12': { '42mm': 13900, '46mm': 15400 },
+  'apple-watch-ultra-4': { '鈦金屬': 27900 },
+  'airpods-5': { 'USB-C 充電盒': 4490, '無線充電盒': 5190 },
+  'mac-mini-m6': { '16G/256G': 29900 },
+  'mac-mini-m5-pro': { '24G/512G': 59900 },
+  'mac-studio-m5-max': { '36G/512G': 84900 },
+  'mac-studio-m5-ultra': { '96G/1T': 199900 },
+}
+const released = evaluate('2026-10-03T12:00:00+08:00')
+assert.equal(new Set(released.map(p => p.id)).size, released.length, 'duplicate product IDs')
+for (const [id, prices] of Object.entries(septemberReleases)) {
+  const product = released.find(p => p.id === id)
+  assert(product, `${id}: missing release`)
+  assert.equal(product.referenceStatus, 'new_product_estimate')
+  assert(product.sourceUrl.startsWith('https://www.apple.com/tw/'))
+  assert.deepEqual(JSON.parse(JSON.stringify(product.launchPrice)), prices)
+  assert.equal(product.storages.length, Object.keys(prices).length)
+  for (const storage of product.storages) {
+    assert(product.marketAvg[storage] < prices[storage], `${id}: estimate must be below new price`)
+  }
+  assert(!beforeExpiry.some(p => p.id === id), `${id}: shown before release`)
+}
+validate(released)
 console.log(`Pricing pipeline passed: ${now.length} models, ${variants} variants; expiry regression passed.`)
