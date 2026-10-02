@@ -25,11 +25,31 @@ iPhone 18 or iPhone Air 18 is inferred from the Pro announcement.
 ## Estimate Basis
 
 No observed secondhand transactions were used to establish these new entries.
-Initial phone and Mac references use 90% of official retail, watches 80%,
+Initial phone and Mac references use 90% of official retail, Series 12 watches 80%,
 AirPods approximately 84%, rounded down to NT$100. Existing pricing guardrails
 still apply. These are explicitly labeled new-product estimates, not measured
 means or transaction distributions. Qualified transaction evidence continues
 to take precedence through the existing application flow.
+
+### October 3 Review
+
+- Ultra 4: revised the overly broad 80% launch estimate from NT$22,300 to
+  NT$24,000 (about 14% below official retail). This is a judgment-based estimate
+  for an intact, fully functional watch with standard accessories, not an
+  observed Taiwan secondhand mean. A SOGI new-retail index shows NT$25,990;
+  retailer availability is unverified, so that index is not installed as a cap.
+- AirPods 5 USB-C case: NT$3,700 to NT$3,800, consistent with an identified
+  near-new opened/tested listing. Wireless case remains NT$4,300: a near-new
+  opened/tested listing asks NT$4,000, while unopened listings ask NT$4,700-4,800.
+  Asking prices are not completed transactions and never count as trade reports.
+- No other products or guardrails were raised. One listing is not sufficient
+  evidence to apply a new retention floor to every current-generation product.
+
+Review evidence:
+
+- https://tw.carousell.com/airpods-5/q/ (USB-C opened/tested NT$3,800; unopened wireless NT$4,700-4,800)
+- https://tw.carousell.com/p/%E5%94%AE-airpods-5-%E7%84%A1%E7%B7%9A%E5%85%85%E9%9B%BB%E7%89%88-%E5%B7%B2%E6%8B%86%E5%B0%81-1462997228/ (wireless opened/tested NT$4,000)
+- https://www.sogi.com.tw/quicksearch/%E6%99%BA%E6%85%A7%E6%89%8B%E9%8C%B6/9 (Ultra 4 new-retail index)
 
 ## Sources
 

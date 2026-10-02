@@ -85,4 +85,7 @@ for (const [id, prices] of Object.entries(septemberReleases)) {
   assert(!beforeExpiry.some(p => p.id === id), `${id}: shown before release`)
 }
 validate(released)
+assert.equal(released.find(p => p.id === 'apple-watch-ultra-4').marketAvg['鈦金屬'], 24000)
+assert.equal(released.find(p => p.id === 'airpods-5').marketAvg['USB-C 充電盒'], 3800)
+assert.equal(released.find(p => p.id === 'airpods-5').marketAvg['無線充電盒'], 4300)
 console.log(`Pricing pipeline passed: ${now.length} models, ${variants} variants; expiry regression passed.`)
