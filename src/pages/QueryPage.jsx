@@ -8,7 +8,7 @@ import {
   isMacOptionDisabled,
   normalizeMacSpec,
 } from '../data/macSpecRules'
-import { Smartphone, Laptop, Tablet, Watch, Headphones, Monitor, Grid2x2, Package, TrendingDown, Activity, CircleDollarSign } from 'lucide-react'
+import { Smartphone, Laptop, Tablet, Watch, Headphones, Monitor, Grid2x2, Package, TrendingDown, Activity, CircleDollarSign, Info } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { getMarketPrice, trackSearchEvent } from '../lib/supabase'
 import { quantile } from '../lib/marketEvidence'
@@ -966,9 +966,19 @@ export default function QueryPage() {
                 {/* KPI cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="bg-[#f5f5f7] rounded-2xl p-4">
-                    <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">
+                    <div className="text-[11px] text-[#6e6e73] mb-1 font-medium flex items-center gap-1">
                       {lowLiquidityIphone ? '低流動性區間' : `${evidenceLabel}${isLiveMarketPrice ? `（${liveAvg.count} 個來源）` : ''}`}
-                    </p>
+                      {!isLiveMarketPrice && !lowLiquidityIphone && !macEstimate && (
+                        <details className="relative">
+                          <summary aria-label="價格資料依據" title="價格資料依據" className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                            <Info size={14} aria-hidden="true" />
+                          </summary>
+                          <span className="absolute left-0 top-5 z-20 block w-[220px] max-w-[calc(100vw-64px)] rounded-md border border-[#d2d2d7] bg-white p-3 text-[12px] font-normal leading-relaxed shadow-sm">
+                            依規格與市場資料估算，非已確認成交中位數。
+                          </span>
+                        </details>
+                      )}
+                    </div>
                     {avgLoading
                       ? <p className="text-[18px] font-semibold text-[#6e6e73] tracking-tight">載入中…</p>
                       : <p className="text-[22px] font-semibold text-[#1d1d1f] tracking-tight">
@@ -980,9 +990,6 @@ export default function QueryPage() {
                     )}
                     {!avgLoading && macEstimate && (
                       <p className="text-[10px] text-[#6e6e73] mt-1">規格差額為模型估算，非該組合實際成交價</p>
-                    )}
-                    {!avgLoading && !lowLiquidityIphone && !macEstimate && !isLiveMarketPrice && (
-                      <p className="text-[10px] text-[#6e6e73] mt-1">有效樣本不足，非實際成交價 · 低可信度</p>
                     )}
                     {selectedProduct.specLabel && <p className="text-[10px] text-[#6e6e73] mt-1">{selectedProduct.specLabel}</p>}
                     {isLiveMarketPrice && liveAvg.reportCount > 0 && (
