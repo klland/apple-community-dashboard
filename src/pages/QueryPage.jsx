@@ -992,7 +992,7 @@ export default function QueryPage() {
                     {!avgLoading && liveAvg?.pendingCount > 0 && <p className="text-[10px] text-[#b36b00] mt-1">{liveAvg.pendingCount} 筆待審核，尚未計價</p>}
                     {!avgLoading && liveAvg?.coolingCount > 0 && <p className="text-[10px] text-[#b36b00] mt-1">{liveAvg.coolingCount} 筆已審核資料等待發布批次</p>}
                     {!avgLoading && liveAvg === false && <p className="text-[10px] text-[#b36b00] mt-1">市場資料讀取失敗，暫用模型估價</p>}
-                    <p className="text-[10px] text-[#b36b00] mt-1">{marketCeiling ? `同規格新品上限 ${formatMoney(marketCeiling)}` : NEW_PRICE_SOURCE_STATUS.freshSourceCount === 0 ? '新品上限待更新：通路資料已過期' : '此規格尚無可驗證新品上限'}</p>
+                    {(marketCeiling || NEW_PRICE_SOURCE_STATUS.freshSourceCount > 0) && <p className="text-[10px] text-[#b36b00] mt-1">{marketCeiling ? `同規格新品上限 ${formatMoney(marketCeiling)}` : '此規格尚無可驗證新品上限'}</p>}
                   </div>
                   <div className="bg-[#e3f2fd] rounded-2xl p-4">
                     <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">{lowLiquidityIphone ? '市場狀態' : '參考折扣'}</p>
