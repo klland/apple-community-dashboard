@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { APPLE_PRODUCTS, CATEGORIES } from '../data/mockData'
+import { APPLE_PRODUCTS, CATEGORIES, NEW_PRICE_SOURCE_STATUS } from '../data/mockData'
 import {
   estimateMacSpec,
   getDefaultMacSpec,
@@ -10,7 +10,8 @@ import {
 } from '../data/macSpecRules'
 import { Smartphone, Laptop, Tablet, Watch, Headphones, Monitor, Grid2x2, Package, TrendingDown, Activity, CircleDollarSign } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { getDailyPrices, getMarketPrice, trackSearchEvent } from '../lib/supabase'
+import { getMarketPrice, trackSearchEvent } from '../lib/supabase'
+import { quantile } from '../lib/marketEvidence'
 
 const CATEGORY_ICONS = {
   '全部': Grid2x2,
@@ -100,7 +101,7 @@ function buildReportedPriceTrend(rows) {
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([day, prices]) => ({
       label: day.slice(5).replace('-', '/'),
-      price: Math.round((prices.reduce((sum, price) => sum + price, 0) / prices.length) / 100) * 100,
+      price: Math.round(quantile(prices, 0.5) / 100) * 100,
     }))
 }
 
@@ -591,16 +592,16 @@ export default function QueryPage() {
     const loadingId = setTimeout(() => {
       if (!cancelled) setAvgLoading(true)
     }, 0)
-    const referencePrice = selectedProduct.marketAvg[selectedStorage]
-    Promise.all([
-      getMarketPrice(selectedProduct.name, selectedStorage, { referencePrice }),
-      getDailyPrices(selectedProduct.name, selectedStorage, { referencePrice }),
-    ]).then(([result, dailyPrices]) => {
+    getMarketPrice(selectedProduct.name, selectedStorage).then(result => {
       if (cancelled) return
-      // result = { avg, count, trimmedCount } 或 null
-      // 真實成交回報有 2 筆即可優先使用；其餘來源維持至少 5 筆才採用。
-      setLiveAvg(result && (result.reportCount >= 2 || result.count >= 5) ? result : false)
-      setLiveDailyPrices(dailyPrices)
+      // Only reviewed independent evidence can replace the model estimate.
+      setLiveAvg(result)
+      setLiveDailyPrices(result.reportRows)
+      setAvgLoading(false)
+    }).catch(() => {
+      if (cancelled) return
+      setLiveAvg(false)
+      setLiveDailyPrices([])
       setAvgLoading(false)
     })
     return () => {
@@ -628,7 +629,7 @@ export default function QueryPage() {
       const lowOffer = capToMarketCeiling(Math.round(avg*0.95/100)*100, ceiling)
       const highOffer = capToMarketCeiling(Math.round(avg*1.05/100)*100, ceiling)
       const basis = isLiveMarketPrice
-        ? `採計 ${liveAvg.trimmedCount} 筆資料，其中成交回報 ${liveAvg.reportCount} 筆。`
+        ? `採計 ${liveAvg.count} 個已審核獨立來源，依${liveAvg.basis === 'confirmed_sales' ? '成交' : '刊登'}價格中位數計算。`
         : '有效成交樣本不足，目前採用參考估價。'
       setAiAnalysis(`${selectedProduct.name} ${displayStorageLabel} 參考價 $${avg.toLocaleString()}。${basis}${macEstimate ? '高配差額為模型估算，並非該組合成交均價。' : ''} 議價試算約 $${lowOffer.toLocaleString()}–$${highOffer.toLocaleString()}，不是實測成交分布；請依電池、外觀、保固與配件判斷。`)
       setAiLoading(false)
@@ -644,7 +645,7 @@ export default function QueryPage() {
     ? getMarketCeiling(selectedProduct, selectedStorage)
     : null
   const avgRaw = selectedProduct && selectedStorage
-    ? capToMarketCeiling(liveAvg && !avgLoading
+    ? capToMarketCeiling(liveAvg?.avg != null && !avgLoading
         ? liveAvg.avg
         : adjustedReference, marketCeiling)
     : null
@@ -669,14 +670,23 @@ export default function QueryPage() {
   const lowLiquidityIphone = isLowLiquidityIphone(selectedProduct, displayAvgValue)
   const lowLiquidityRange = lowLiquidityIphone ? getLowLiquidityRange(displayAvgValue) : null
   const discount = !lowLiquidityIphone && displayAvgValue && displayRetail ? Math.round((1 - displayAvgValue / displayRetail) * 100) : null
-  const isLiveMarketPrice = Boolean(liveAvg && !avgLoading)
+  const isLiveMarketPrice = Boolean(liveAvg?.avg != null && !avgLoading)
+  const evidenceLabel = macEstimate?.marketAddOn > 0 ? '規格加值估價' : isLiveMarketPrice
+    ? liveAvg.basis === 'confirmed_sales' ? '已審核成交行情' : '近期刊登行情'
+    : '參考行情'
   const monthsOld = getMonthsOld(selectedProduct)
   const reportedPriceTrend = buildReportedPriceTrend(liveDailyPrices)
-  const depreciationTrend = reportedPriceTrend.length >= 2 ? reportedPriceTrend : buildDepreciationTrend(selectedProduct, selectedStorage, displayAvgValue, {
+  const hasReportedTrend = isLiveMarketPrice && liveAvg.basis === 'confirmed_sales' && !macEstimate?.marketAddOn && reportedPriceTrend.length >= 2
+  const depreciationTrend = hasReportedTrend ? reportedPriceTrend : buildDepreciationTrend(selectedProduct, selectedStorage, displayAvgValue, {
     launchPrice: macEstimate?.estimatedRetail,
   })
-  const storageBars = buildStorageBars(selectedProduct)
-  const priceBand = lowLiquidityIphone ? null : getPriceBand(selectedProduct, displayAvgValue, macEstimate?.newProductGuardrail ?? marketCeiling)
+  const storageBars = buildStorageBars(selectedProduct).map(row => row.storage === selectedStorage
+    ? { ...row, market: displayAvgValue, retail: displayRetail } : row)
+  const empiricalRange = isLiveMarketPrice && (!macEstimate || macEstimate.marketAddOn === 0) ? liveAvg.range : null
+  const priceBand = lowLiquidityIphone ? null : empiricalRange ? {
+    low: capToMarketCeiling(empiricalRange.low, marketCeiling), target: displayAvgValue,
+    high: capToMarketCeiling(empiricalRange.high, marketCeiling), isWatch: selectedProduct.category === 'Apple Watch', observed: true,
+  } : getPriceBand(selectedProduct, displayAvgValue, macEstimate?.newProductGuardrail ?? marketCeiling)
   const categoryProducts = selectedProduct
     ? APPLE_PRODUCTS.filter(p => p.category === selectedProduct.category)
     : []
@@ -785,10 +795,10 @@ export default function QueryPage() {
                 const subtitle = entry.type === 'product'
                   ? isLowLiquidityIphone(product, product.marketAvg[product.storages[0]])
                     ? `低流動性 ${formatMarketValue(product, product.marketAvg[product.storages[0]])}`
-                    : `${product.referenceStatus === 'new_product_estimate' ? '參考估價' : '參考均價'} $${product.marketAvg[product.storages[0]]?.toLocaleString()}+`
+                    : `參考估價 $${product.marketAvg[product.storages[0]]?.toLocaleString()}+`
                   : isLowLiquidityIphone(product, primaryPrice)
                     ? `${entry.variants.length} 個型號，低流動性 ${formatMarketValue(product, primaryPrice)}`
-                    : `${entry.variants.length} 個型號，參考均價 $${primaryPrice?.toLocaleString()} 起`
+                    : `${entry.variants.length} 個型號，參考估價 $${primaryPrice?.toLocaleString()} 起`
                 return (
               <button key={entry.key} onClick={() => selectProduct(product)}
                 className={`w-full text-left px-4 py-3.5 rounded-2xl text-sm transition-all duration-200 ${
@@ -832,7 +842,7 @@ export default function QueryPage() {
                       {selectedProduct.referenceStatus === 'new_product_estimate' && !isLiveMarketPrice && <span className="text-[11px] px-2 py-0.5 rounded-full bg-white text-[#6e6e73] border border-[rgba(0,0,0,0.06)]">新品估價</span>}
                     </div>
                     <h2 className="text-[28px] font-semibold text-[#1d1d1f] tracking-tight">{selectedProduct.name}</h2>
-                    <p className="text-[13px] text-[#6e6e73] mt-1">用成交均價、原廠售價與折舊曲線判斷買賣區間</p>
+                    <p className="text-[13px] text-[#6e6e73] mt-1">{evidenceLabel} · 原廠參考售價</p>
                   </div>
                 </div>
 
@@ -957,7 +967,7 @@ export default function QueryPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="bg-[#f5f5f7] rounded-2xl p-4">
                     <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">
-                      {lowLiquidityIphone ? '低流動性區間' : isLiveMarketPrice ? `社團均價（${liveAvg.count} 筆）` : selectedProduct.referenceStatus === 'new_product_estimate' ? '新品參考估價' : '參考均價'}
+                      {lowLiquidityIphone ? '低流動性區間' : `${evidenceLabel}${isLiveMarketPrice ? `（${liveAvg.count} 個來源）` : ''}`}
                     </p>
                     {avgLoading
                       ? <p className="text-[18px] font-semibold text-[#6e6e73] tracking-tight">載入中…</p>
@@ -969,18 +979,23 @@ export default function QueryPage() {
                       <p className="text-[10px] text-[#6e6e73] mt-1">不再用精準均價，外觀與電池影響較大</p>
                     )}
                     {!avgLoading && macEstimate && (
-                      <p className="text-[10px] text-[#6e6e73] mt-1">{isLiveMarketPrice ? '含規格加值估算，基準為社團行情' : '基準為參考估價，非實際成交均價'}</p>
+                      <p className="text-[10px] text-[#6e6e73] mt-1">規格差額為模型估算，非該組合實際成交價</p>
                     )}
                     {!avgLoading && !lowLiquidityIphone && !macEstimate && !isLiveMarketPrice && (
-                      <p className="text-[10px] text-[#6e6e73] mt-1">{selectedProduct.referenceStatus === 'new_product_estimate' ? '依新品售價與折舊規則估算，非實際成交均價' : '成交筆數不足時顯示資料庫參考值'}</p>
+                      <p className="text-[10px] text-[#6e6e73] mt-1">有效樣本不足，非實際成交價 · 低可信度</p>
                     )}
                     {selectedProduct.specLabel && <p className="text-[10px] text-[#6e6e73] mt-1">{selectedProduct.specLabel}</p>}
                     {isLiveMarketPrice && liveAvg.reportCount > 0 && (
-                      <p className="text-[10px] text-[#248a3d] mt-1">含 {liveAvg.reportCount} 筆成交回報，已優先採計</p>
+                      <p className="text-[10px] text-[#248a3d] mt-1">成交 {liveAvg.reportCount} 筆 · 刊登 {liveAvg.listingCount} 筆，分開採計</p>
                     )}
+                    {isLiveMarketPrice && <p className="text-[10px] text-[#6e6e73] mt-1">批次日期 {new Date(liveAvg.publicationAt).toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei' })} · 正常無拆修</p>}
+                    {!avgLoading && liveAvg?.pendingCount > 0 && <p className="text-[10px] text-[#b36b00] mt-1">{liveAvg.pendingCount} 筆待審核，尚未計價</p>}
+                    {!avgLoading && liveAvg?.coolingCount > 0 && <p className="text-[10px] text-[#b36b00] mt-1">{liveAvg.coolingCount} 筆已審核資料等待發布批次</p>}
+                    {!avgLoading && liveAvg === false && <p className="text-[10px] text-[#b36b00] mt-1">市場資料讀取失敗，暫用模型估價</p>}
+                    <p className="text-[10px] text-[#b36b00] mt-1">{marketCeiling ? `同規格新品上限 ${formatMoney(marketCeiling)}` : NEW_PRICE_SOURCE_STATUS.freshSourceCount === 0 ? '新品上限待更新：通路資料已過期' : '此規格尚無可驗證新品上限'}</p>
                   </div>
                   <div className="bg-[#e3f2fd] rounded-2xl p-4">
-                    <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">{lowLiquidityIphone ? '市場狀態' : '平均折扣'}</p>
+                    <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">{lowLiquidityIphone ? '市場狀態' : '參考折扣'}</p>
                     <p className="text-[22px] font-semibold text-[#0071e3] tracking-tight">{lowLiquidityIphone ? '低流動性' : discount != null ? `${discount}% off` : '—'}</p>
                   </div>
                   <a href="https://www.apple.com/tw/trade-in/" target="_blank" rel="noreferrer"
@@ -1007,8 +1022,8 @@ export default function QueryPage() {
                   <div className="border border-[rgba(0,0,0,0.08)] rounded-2xl p-5 bg-white">
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <p className="text-[11px] font-semibold text-[#6e6e73] uppercase tracking-wider">折舊曲線</p>
-                        <p className="text-[13px] text-[#6e6e73] mt-1">上市價到目前行情</p>
+                        <p className="text-[11px] font-semibold text-[#6e6e73] uppercase tracking-wider">{hasReportedTrend ? '成交歷史中位數' : '示意折舊曲線'}</p>
+                        <p className="text-[13px] text-[#6e6e73] mt-1">{hasReportedTrend ? '依回報日期整理，非連續每日報價' : '模型試算，非真實歷史成交'}</p>
                       </div>
                       <TrendingDown size={18} className="text-[#ff3b30]" />
                     </div>
@@ -1029,7 +1044,7 @@ export default function QueryPage() {
                     <div className="flex items-center justify-between mb-4">
                       <div>
                         <p className="text-[11px] font-semibold text-[#6e6e73] uppercase tracking-wider">容量價差</p>
-                        <p className="text-[13px] text-[#6e6e73] mt-1">官方參考價 vs 參考均價</p>
+                        <p className="text-[13px] text-[#6e6e73] mt-1">原廠價 vs 參考價；僅選中規格採即時資料</p>
                       </div>
                       <Activity size={18} className="text-[#0071e3]" />
                     </div>
@@ -1052,9 +1067,9 @@ export default function QueryPage() {
                   <div className="border border-[rgba(0,0,0,0.08)] rounded-2xl p-5 bg-white">
                     <div className="flex items-center justify-between mb-5">
                       <div>
-                        <p className="text-[11px] font-semibold text-[#6e6e73] uppercase tracking-wider">成交區間建議</p>
+                        <p className="text-[11px] font-semibold text-[#6e6e73] uppercase tracking-wider">{priceBand.observed ? `${evidenceLabel}樣本區間（P10–P90）` : '議價試算區間'}</p>
                         <p className="text-[13px] text-[#6e6e73] mt-1">
-                          {priceBand.isWatch ? '手錶受電池、碰傷、錶帶與保固影響，價差較大' : '依成色、電池、保固與配件保留合理價差'}
+                          {priceBand.observed ? '來自正常無拆修樣本；不代表所有機況' : '依機況估算的範圍，非實測成交分布'}
                         </p>
                       </div>
                       <CircleDollarSign size={18} className="text-[#34c759]" />
@@ -1065,15 +1080,15 @@ export default function QueryPage() {
                     </div>
                     <div className="grid grid-cols-3 gap-3 mt-4">
                       <div>
-                        <p className="text-[11px] text-[#6e6e73]">{priceBand.isWatch ? '碰傷／低電池' : '使用痕跡／低保固'}</p>
+                        <p className="text-[11px] text-[#6e6e73]">{priceBand.observed ? '樣本低位' : '較低試算'}</p>
                         <p className="text-[15px] font-semibold text-[#34c759]">{formatMoney(priceBand.low)}</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-[11px] text-[#6e6e73]">均價</p>
+                        <p className="text-[11px] text-[#6e6e73]">{priceBand.observed ? '中位數' : '參考估價'}</p>
                         <p className="text-[15px] font-semibold text-[#1d1d1f]">{formatMoney(priceBand.target)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[11px] text-[#6e6e73]">極新／保固完整</p>
+                        <p className="text-[11px] text-[#6e6e73]">{priceBand.observed ? '樣本高位' : '較高試算'}</p>
                         <p className="text-[15px] font-semibold text-[#ff9500]">{formatMoney(priceBand.high)}</p>
                       </div>
                     </div>

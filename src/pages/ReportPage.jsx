@@ -15,6 +15,8 @@ export default function ReportPage() {
     productId: '',
     customModel: '',
     storage: '',
+    condition: '',
+    specDetails: '',
     batteryHealth: '',
     purchaseChannel: '',
     warrantyStatus: '',
@@ -46,7 +48,7 @@ export default function ReportPage() {
   }
 
   const modelName = isOtherModel ? form.customModel : (selectedProduct?.name ?? '')
-  const canSubmit = modelName && form.storage && form.price && form.tradeMethod && (!isOtherModel || form.customModel)
+  const canSubmit = modelName && form.storage && form.condition && form.specDetails.trim() && form.price && form.tradeMethod && (!isOtherModel || form.customModel)
   const selectedOfficialPrice = selectedProduct && form.storage
     ? getOfficialPrice(selectedProduct, form.storage)
     : null
@@ -76,9 +78,9 @@ export default function ReportPage() {
         model: modelName,
         storage: form.storage,
         color: null,
-        condition: null,
+        condition: form.condition,
         battery_health: form.batteryHealth ? parseInt(form.batteryHealth) : null,
-        has_damage: false,
+        has_damage: form.condition === '有碰傷／功能異常',
         purchase_channel: form.purchaseChannel,
         warranty_status: form.warrantyStatus,
         warranty_months: form.warrantyMonthsLeft ? parseInt(form.warrantyMonthsLeft) : null,
@@ -86,12 +88,12 @@ export default function ReportPage() {
         trade_method: form.tradeMethod,
         location: '',
         source: 'report',
-        note: form.note,
+        note: `規格：${form.specDetails.trim()}\n${form.note}`,
       })
       setSubmitted(true)
       setTimeout(() => setSubmitted(false), 4000)
       setForm({
-        productId: '', customModel: '', storage: '', batteryHealth: '',
+        productId: '', customModel: '', storage: '', condition: '', specDetails: '', batteryHealth: '',
         purchaseChannel: '', warrantyStatus: '', warrantyMonthsLeft: '',
         price: '', tradeMethod: '', note: '',
       })
@@ -116,7 +118,7 @@ export default function ReportPage() {
           <div className="mb-8 bg-[#e8f5e9] border border-[rgba(52,199,89,0.2)] rounded-2xl p-6 text-center">
             <p className="text-[32px] mb-2">✅</p>
             <p className="text-[15px] font-semibold text-[#1d8a3b]">感謝你的回報！</p>
-            <p className="text-[13px] text-[#6e6e73] mt-1">資料會先進入 7 天冷卻與異常檢查，再納入公開行情</p>
+            <p className="text-[13px] text-[#6e6e73] mt-1">資料須經審核、等待至少 7 天，再於每週批次納入行情</p>
           </div>
         )}
         {error && (
@@ -126,6 +128,17 @@ export default function ReportPage() {
         )}
 
         <form onSubmit={submit} className="space-y-5">
+          <div>
+            <label className={labelCls} htmlFor="report-condition">機況 *</label>
+            <select id="report-condition" required value={form.condition} onChange={e => update('condition', e.target.value)} className={inputCls}>
+              <option value="">選擇機況</option>
+              {['正常無拆修', '曾維修／更換零件', '有碰傷／功能異常'].map(value => <option key={value}>{value}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={labelCls} htmlFor="report-spec">完整規格 *</label>
+            <input id="report-spec" required maxLength={300} value={form.specDetails} onChange={e => update('specDetails', e.target.value)} className={inputCls} placeholder="Mac：CPU/GPU、RAM、SSD；平板：Wi-Fi/Cellular；手錶：材質、GPS/行動網路" />
+          </div>
           {/* 產品型號 */}
           <div>
             <label className={labelCls}>產品型號 <span className="text-[#ff3b30]">*</span></label>

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { analyzeMarketEvidence } from './marketEvidence'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -94,45 +95,21 @@ function checkRateLimit() {
 export async function submitTransaction(data) {
   assertReportNotDuplicated(data)
   checkRateLimit()
-  const { error } = await supabase.from('transactions').insert([data])
+  let { error } = data.source === 'report'
+    ? await supabase.rpc('submit_transaction_report', { p_data: data, p_device_id: getAnonymousVisitorId() })
+    : await supabase.from('transactions').insert([data])
+  // Legacy databases can still collect reports; missing review fields are never public evidence.
+  if (data.source === 'report' && error?.code === 'PGRST202') {
+    const fallback = await supabase.from('transactions').insert([data])
+    error = fallback.error
+  }
   if (error) throw error
   rememberSubmittedReport(data)
 }
 
-const LIVE_REPORT_WEIGHT = 6
-const OTHER_TRANSACTION_WEIGHT = 1
 const DAY_MS = 24 * 60 * 60 * 1000
-const PUBLIC_PRICE_DELAY_DAYS = 7
 const REPORT_DUPLICATE_WINDOW_DAYS = 30
-const PRICE_ANOMALY_RATIO = 0.3
 const REPORT_HISTORY_KEY = 'submitted_transaction_reports'
-
-function getRecencyWeight(createdAt) {
-  if (!createdAt) return 1
-  const ageInDays = Math.max(0, (Date.now() - new Date(createdAt).getTime()) / DAY_MS)
-  if (Number.isNaN(ageInDays)) return 1
-  if (ageInDays <= 30) return 1
-  if (ageInDays <= 90) return 0.7
-  return 0.45
-}
-
-function getWeightedAverage(rows) {
-  const totalWeight = rows.reduce((sum, row) => sum + row.weight, 0)
-  if (!totalWeight) return null
-  return rows.reduce((sum, row) => sum + row.price * row.weight, 0) / totalWeight
-}
-
-function isEligibleForPublicPrice(createdAt) {
-  if (!createdAt) return false
-  const submittedAt = new Date(createdAt).getTime()
-  if (Number.isNaN(submittedAt)) return false
-  return submittedAt <= Date.now() - PUBLIC_PRICE_DELAY_DAYS * DAY_MS
-}
-
-function isWithinReferenceRange(price, referencePrice) {
-  if (!referencePrice) return true
-  return Math.abs(Number(price) - Number(referencePrice)) / Number(referencePrice) <= PRICE_ANOMALY_RATIO
-}
 
 function readSubmittedReports() {
   try {
@@ -161,41 +138,29 @@ function rememberSubmittedReport(data) {
   localStorage.setItem(REPORT_HISTORY_KEY, JSON.stringify(history))
 }
 
-// 取得某型號+容量的市場均價。成交回報是少數可驗證的真實樣本，
-// 因此以 6:1 權重優先於貼文或其他來源，並讓近期成交有較高影響力。
-// 新回報會先冷卻 7 天，避免單筆資料即時操控公開均價與價格曲線。
-export async function getMarketPrice(model, storage, { referencePrice } = {}) {
-  const { data, error } = await supabase
+// One snapshot supplies the price, sample range and history; sources never mix.
+export async function getMarketPrice(model, storage) {
+  let rows = []
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase
     .from('transactions')
-    .select('price, source, created_at')
+    .select('*')
     .eq('model', model)
     .eq('storage', storage)
     .order('created_at', { ascending: false })
+    .range(from, from + 999)
+    if (error) throw error
+    rows = rows.concat(data || [])
+    if (!data || data.length < 1000) break
+  }
+  return analyzeMarketEvidence(rows)
+}
 
-  if (error || !data || data.length === 0) return null
-
-  const pendingCount = data.filter(row => !isEligibleForPublicPrice(row.created_at)).length
-  const prices = data
-    .filter(row => isEligibleForPublicPrice(row.created_at))
-    .filter(row => Number.isFinite(Number(row.price)) && Number(row.price) > 0)
-    .filter(row => isWithinReferenceRange(row.price, referencePrice))
-    .sort((a, b) => Number(a.price) - Number(b.price))
-  if (prices.length === 0) return null
-
-  const p10 = Math.floor(prices.length * 0.1)
-  const p90 = Math.ceil(prices.length * 0.9)
-  const trimmed = prices.slice(p10, p90)
-  if (trimmed.length === 0) return null
-
-  const weightedRows = trimmed.map(row => ({
-    price: Number(row.price),
-    weight: (row.source === 'report' ? LIVE_REPORT_WEIGHT : OTHER_TRANSACTION_WEIGHT)
-      * getRecencyWeight(row.created_at),
-  }))
-  const reportCount = trimmed.filter(row => row.source === 'report').length
-  const avg = Math.round(getWeightedAverage(weightedRows) / 100) * 100
-  const anomalyCount = data.length - pendingCount - prices.length
-  return { avg, count: prices.length, trimmedCount: trimmed.length, reportCount, pendingCount, anomalyCount }
+export async function reviewTransactionPrice(id, status, identity, note) {
+  const { error } = await supabase.rpc('review_transaction_price', {
+    p_id: id, p_status: status, p_identity: identity, p_note: note,
+  })
+  if (error) throw error
 }
 
 // 送出錯誤回報
@@ -230,21 +195,6 @@ export async function deleteReport(id) {
 }
 
 // 取得近 90 天每日成交紀錄（用於趨勢圖）
-export async function getDailyPrices(model, storage, { referencePrice } = {}) {
-  const since = new Date()
-  since.setDate(since.getDate() - 89)
-  const { data, error } = await supabase
-    .from('transactions')
-    .select('price, created_at, source')
-    .eq('model', model)
-    .eq('storage', storage)
-    .gte('created_at', since.toISOString())
-    .order('created_at')
-
-  if (error) return []
-  return (data || [])
-    .filter(row => isEligibleForPublicPrice(row.created_at))
-    .filter(row => Number.isFinite(Number(row.price)) && Number(row.price) > 0)
-    .filter(row => isWithinReferenceRange(row.price, referencePrice))
-    .filter(row => row.source === 'report')
+export async function getDailyPrices(model, storage) {
+  return (await getMarketPrice(model, storage)).reportRows
 }

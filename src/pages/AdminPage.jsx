@@ -25,13 +25,13 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { supabase, getPopularSearches, getReports, getSearchAnalytics, updateReportStatus, deleteReport } from '../lib/supabase'
+import { supabase, getPopularSearches, getReports, getSearchAnalytics, updateReportStatus, deleteReport, reviewTransactionPrice } from '../lib/supabase'
 import { APPLE_PRODUCTS } from '../data/mockData'
-import marketAdjustments from '../data/marketAdjustments.json'
+import { analyzeMarketEvidence, MIN_MARKET_SAMPLES } from '../lib/marketEvidence'
 
 const ADMIN_KEY = 'klland'
 const PRICE_ANOMALY_THRESHOLD = 0.3
-const DATA_QUALITY_MIN_SAMPLE = 3
+const DATA_QUALITY_MIN_SAMPLE = MIN_MARKET_SAMPLES
 const DELETED_TRANSACTION_IDS_KEY = 'admin_deleted_transaction_ids'
 const BLOCKED_TRANSACTION_IDS = new Set([
   'c89af0d6-6d7e-4d46-85bf-3dd5b9e58e15',
@@ -228,6 +228,11 @@ export default function AdminPage() {
   const [lastFetchedAt, setLastFetchedAt] = useState(null)
   const [dataError, setDataError] = useState('')
   const [deleting, setDeleting] = useState(null)
+  const [reviewing, setReviewing] = useState(null)
+  const [reviewEmail, setReviewEmail] = useState('')
+  const [reviewPassword, setReviewPassword] = useState('')
+  const [reviewSession, setReviewSession] = useState(null)
+  const [reviewError, setReviewError] = useState('')
   const [chartModel, setChartModel] = useState('')
   const [chartRange, setChartRange] = useState('90')
   const [reports, setReports] = useState([])
@@ -252,6 +257,45 @@ export default function AdminPage() {
     const r = await getReports().catch(() => [])
     setReports(r)
     setReportsLoading(false)
+  }
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setReviewSession(data.session))
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => setReviewSession(session))
+    return () => data.subscription.unsubscribe()
+  }, [])
+
+  async function loginReviewer(e) {
+    e.preventDefault()
+    setReviewError('')
+    const { error } = await supabase.auth.signInWithPassword({ email: reviewEmail, password: reviewPassword })
+    if (error) setReviewError('登入失敗，請確認管理員帳號與密碼。')
+    setReviewPassword('')
+  }
+
+  async function reviewPrice(row, status) {
+    setReviewError('')
+    let identity = ''
+    let note = ''
+    if (status === 'approved') {
+      if (!window.confirm('已核對完整同規格（Mac 含 CPU/GPU/RAM/SSD；平板含連線；手錶含材質與連線）、正常無拆修，並確認成交回報是真實成交／貼文是真實開價？')) return
+      identity = window.prompt('獨立來源識別（至少 8 字元）：同一人請使用固定代碼，不要輸入姓名、電話或其他個資。')
+      if (!identity) return
+      note = window.prompt('核對紀錄（至少 5 字元）：完整規格、機況與證據來源；勿輸入個資。')
+      if (!note) return
+    } else {
+      note = window.prompt('排除原因（資料仍保留）：')
+      if (!note) return
+    }
+    setReviewing(row.id)
+    try {
+      await reviewTransactionPrice(String(row.id), status, identity, note)
+      await fetchData()
+    } catch (error) {
+      setReviewError(`審核未儲存：${error.message}。請確認已執行資料庫更新檔，並以 pricing_admin 帳號登入。`)
+    } finally {
+      setReviewing(null)
+    }
   }
 
   async function fetchPopularSearches() {
@@ -494,19 +538,20 @@ export default function AdminPage() {
     for (const r of data) {
       if (!r.model || !r.storage) continue
       const key = `${r.model} ${r.storage}`
-      if (!groups[key]) groups[key] = { model: r.model, storage: r.storage, count: 0 }
-      groups[key].count += 1
+      if (!groups[key]) groups[key] = { model: r.model, storage: r.storage, rows: [] }
+      groups[key].rows.push(r)
     }
     const lowSample = Object.values(groups)
-      .filter(item => item.count > 0 && item.count < DATA_QUALITY_MIN_SAMPLE)
+      .map(item => {
+        const evidence = analyzeMarketEvidence(item.rows)
+        return { ...item, count: Math.max(evidence.reportCount, evidence.listingCount) }
+      })
+      .filter(item => item.count < DATA_QUALITY_MIN_SAMPLE)
       .sort((a, b) => a.count - b.count)
       .slice(0, 6)
     const anomalyCount = enrichedData.filter(row => row.anomaly).length
     const anomalyRate = data.length ? Math.round((anomalyCount / data.length) * 100) : 0
-    const adjustmentMeta = marketAdjustments?.meta || {}
-    const realWeightStatus = adjustmentMeta.lastUpdated
-      ? `月更覆蓋：${adjustmentMeta.lastUpdated}`
-      : '尚未匯入真實加權檔'
+    const realWeightStatus = `待審 ${data.filter(row => !['approved', 'rejected'].includes(row.price_review_status)).length} 筆；已核對 ${data.filter(row => row.price_review_status === 'approved').length} 筆`
     return { lowSample, anomalyRate, realWeightStatus }
   }, [data, enrichedData])
 
@@ -625,7 +670,7 @@ export default function AdminPage() {
         ) : (
           <div className="space-y-5">
             <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <KpiCard title="總成交筆數" value={stats.total.toLocaleString('zh-TW')} sub="自開站累計" icon={Database} tone="blue" />
+              <KpiCard title="總資料筆數" value={stats.total.toLocaleString('zh-TW')} sub="含刊登與待審回報" icon={Database} tone="blue" />
               <KpiCard title="近 7 天" value={stats.week.toLocaleString('zh-TW')} sub="近期活躍度" icon={Activity} tone="green" />
               <KpiCard title="熱門互動" value={searchInsights.totalEvents.toLocaleString('zh-TW')} sub="近 30 天匿名去重事件" icon={Search} tone="blue" />
               <KpiCard title="待處理回報" value={stats.pendingReports.toLocaleString('zh-TW')} sub="使用者問題回報" icon={ShieldCheck} tone={stats.pendingReports ? 'red' : 'green'} />
@@ -835,8 +880,8 @@ export default function AdminPage() {
               <Card>
                 <SectionHeader
                   icon={BarChart3}
-                  title="成交均價趨勢"
-                  subtitle="依型號追蹤均價與資料量，金額皆為 TWD 整數"
+                  title="原始資料均價趨勢"
+                  subtitle="含刊登及待審資料，不等同公開成交行情"
                   action={
                     <div className="flex flex-wrap items-center gap-2">
                       <select
@@ -918,14 +963,14 @@ export default function AdminPage() {
                       <p className="mt-1 text-xl font-semibold text-[#1d1d1f]">{dataHealth.anomalyRate}%</p>
                     </div>
                     <div className="rounded-lg border border-[#e5e5ea] p-3">
-                      <p className="text-xs text-[#6e6e73]">真實資料權重</p>
+                      <p className="text-xs text-[#6e6e73]">價格審核狀態</p>
                       <p className="mt-1 text-xs leading-5 text-[#1d1d1f]">{dataHealth.realWeightStatus}</p>
                     </div>
                   </div>
                   <div>
-                    <p className="mb-2 text-xs font-semibold text-[#1d1d1f]">樣本不足型號</p>
+                    <p className="mb-2 text-xs font-semibold text-[#1d1d1f]">有效獨立樣本不足型號</p>
                     {dataHealth.lowSample.length === 0 ? (
-                      <p className="rounded-lg bg-[#effaf2] px-3 py-2 text-xs text-[#248a3d]">目前沒有低於 {DATA_QUALITY_MIN_SAMPLE} 筆的已回報規格。</p>
+                      <p className="rounded-lg bg-[#effaf2] px-3 py-2 text-xs text-[#248a3d]">已收錄規格目前沒有低於 {DATA_QUALITY_MIN_SAMPLE} 個有效來源。</p>
                     ) : (
                       <div className="space-y-2">
                         {dataHealth.lowSample.map(item => (
@@ -979,6 +1024,17 @@ export default function AdminPage() {
                 subtitle={`顯示 ${filteredData.length.toLocaleString('zh-TW')} / ${data.length.toLocaleString('zh-TW')} 筆`}
               />
               <div className="border-b border-[#f2f2f7] p-4">
+                {reviewSession ? <div className="flex items-center justify-between gap-3 text-xs">
+                  <span>{reviewSession.user.app_metadata?.pricing_admin ? '價格審核員已登入' : '此帳號沒有價格審核權限'}</span>
+                  <button type="button" onClick={() => supabase.auth.signOut()} className="underline">登出審核帳號</button>
+                </div> : <form onSubmit={loginReviewer} className="flex flex-wrap items-end gap-3">
+                  <label className="text-xs">審核帳號<input type="email" required autoComplete="username" value={reviewEmail} onChange={e => setReviewEmail(e.target.value)} className={`${inputClass()} mt-1`} /></label>
+                  <label className="text-xs">密碼<input type="password" required autoComplete="current-password" value={reviewPassword} onChange={e => setReviewPassword(e.target.value)} className={`${inputClass()} mt-1`} /></label>
+                  <button type="submit" className="h-9 rounded-md border border-[#d2d2d7] px-3 text-xs">登入審核</button>
+                </form>}
+                {reviewError && <p role="alert" className="mt-2 text-xs text-[#d70015]">{reviewError}</p>}
+              </div>
+              <div className="border-b border-[#f2f2f7] p-4">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-7">
                   <Field label="搜尋">
                     <div className="relative">
@@ -1025,6 +1081,7 @@ export default function AdminPage() {
                       <th className="px-3 py-3">地點</th>
                       <th className="px-3 py-3">建立時間</th>
                       <th className="px-3 py-3">異常</th>
+                      <th className="px-3 py-3">價格審核</th>
                       <th className="px-4 py-3 text-center">操作</th>
                     </tr>
                   </thead>
@@ -1052,7 +1109,15 @@ export default function AdminPage() {
                             <span className="text-[#86868b]">正常</span>
                           )}
                         </td>
+                        <td className="px-3 py-3">
+                          <Pill tone={row.price_review_status === 'approved' ? 'green' : 'orange'}>{row.price_review_status === 'approved' ? '已核對' : row.price_review_status === 'rejected' ? '已排除' : '待審核'}</Pill>
+                          <p className="mt-1 max-w-[260px] whitespace-pre-wrap text-[11px] text-[#6e6e73]">{row.condition || '機況未核對'} · {row.note || '規格／證據未填寫'}</p>
+                        </td>
                         <td className="px-4 py-3 text-center">
+                          {['report', 'post'].includes(row.source) && <>
+                            <button type="button" onClick={() => reviewPrice(row, 'approved')} disabled={!reviewSession?.user?.app_metadata?.pricing_admin || reviewing === row.id} title="核對規格與獨立來源後採計" aria-label={`採計 ${row.model}`} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[#248a3d] hover:bg-[#e8f5e9] disabled:opacity-40"><CheckCircle2 size={15} /></button>
+                            <button type="button" onClick={() => reviewPrice(row, 'rejected')} disabled={!reviewSession?.user?.app_metadata?.pricing_admin || reviewing === row.id} title="排除計價，保留資料" aria-label={`排除 ${row.model}`} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[#b36b00] hover:bg-[#fffaf0] disabled:opacity-40"><XCircle size={15} /></button>
+                          </>}
                           <button
                             type="button"
                             onClick={() => deleteRow(row.id)}
@@ -1068,7 +1133,7 @@ export default function AdminPage() {
                     ))}
                     {filteredData.length === 0 && (
                       <tr>
-                        <td colSpan={9}>
+                        <td colSpan={10}>
                           <EmptyState title="找不到符合條件的成交資料" description="調整搜尋字、價格區間或日期範圍後再試一次。" />
                         </td>
                       </tr>

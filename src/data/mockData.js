@@ -2004,6 +2004,7 @@ const isFreshNewPriceSource = source => {
 const newProductPriceSources = [mikoPriceCeilings, jyesPriceCeilings]
   .filter(isFreshNewPriceSource)
   .map(source => source.ceilings || {})
+export const NEW_PRICE_SOURCE_STATUS = { freshSourceCount: newProductPriceSources.length }
 const toHundredFloor = price => Math.floor(price / 100) * 100
 // 新品現金價是二手的硬上限，不是二手均價的目標。保留至少 12% 價差，
 // 避免買家看到二手均價與新品價過於接近，或成交區間的偏高價被截成均價。
