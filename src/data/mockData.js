@@ -1,6 +1,7 @@
 import marketAdjustments from './marketAdjustments.json'
 import mikoPriceCeilings from './mikoPriceCeilings.json'
 import jyesPriceCeilings from './jyesPriceCeilings.json'
+import costcoPriceCeilings from './costcoPriceCeilings.json'
 
 // Apple 產品完整資料庫
 const PRODUCT_CATALOG = [
@@ -1751,7 +1752,10 @@ for (const product of APPLE_PRODUCTS) {
   })
 }
 
-const marketAvgOverrides = marketAdjustments?.marketAvg || {}
+const marketAdjustmentCheckedAt = new Date(marketAdjustments?.meta?.referenceReview?.checkedAt)
+const hasCurrentMarketAdjustment = Number.isNaN(marketAdjustmentCheckedAt.getTime()) ||
+  marketAdjustmentCheckedAt.getTime() <= Date.now()
+const marketAvgOverrides = hasCurrentMarketAdjustment ? (marketAdjustments?.marketAvg || {}) : {}
 for (const product of APPLE_PRODUCTS) {
   const override = marketAvgOverrides[product.id]
   if (!override) continue
@@ -2001,9 +2005,8 @@ const isFreshNewPriceSource = source => {
   const age = Date.now() - scrapedAt.getTime()
   return age >= 0 && age <= MAX_NEW_PRICE_SOURCE_AGE_DAYS * 24 * 60 * 60 * 1000
 }
-const newProductPriceSources = [mikoPriceCeilings, jyesPriceCeilings]
+const newProductPriceSources = [mikoPriceCeilings, jyesPriceCeilings, costcoPriceCeilings]
   .filter(isFreshNewPriceSource)
-  .map(source => source.ceilings || {})
 export const NEW_PRICE_SOURCE_STATUS = { freshSourceCount: newProductPriceSources.length }
 const toHundredFloor = price => Math.floor(price / 100) * 100
 // 新品現金價是二手的硬上限，不是二手均價的目標。保留至少 12% 價差，
@@ -2011,18 +2014,50 @@ const toHundredFloor = price => Math.floor(price / 100) * 100
 const toSecondHandAverageCeiling = price => toHundredFloor(price * 0.88)
 const toSecondHandCeiling = price => toHundredFloor(price * 0.95)
 
+function hasExactRetailSpecification(product, storage, source) {
+  if (['iPad', 'Apple Watch', 'Mac', 'MacBook'].includes(product.category)) {
+    const spec = source.specifications?.[product.id]?.[storage]
+    if (!spec) return false
+
+    if (product.category === 'iPad') {
+      const chip = product.id.match(/-(m\d+)-/)?.[1]?.toUpperCase()
+      const capacity = storage.match(/(\d+)(?:G|T)/)?.[1]
+      const storageGB = storage.endsWith('T') ? Number(capacity) * 1024 : Number(capacity)
+      const expectedMemory = product.id.includes('pro') && storageGB >= 1024 ? 16 : 12
+      return spec.connectivity === 'Wi-Fi' && spec.chip === chip &&
+        spec.storageGB === storageGB && spec.memoryGB === expectedMemory
+    }
+
+    if (product.category === 'Apple Watch') {
+      const ultra = product.id.includes('ultra')
+      const size = ultra ? '49mm' : storage
+      return spec.size === size && spec.case === (ultra ? 'titanium' : 'aluminum') &&
+        spec.connectivity === (ultra ? 'GPS+Cellular' : 'GPS')
+    }
+
+    const match = storage.match(/(\d+)G\/(\d+)(G|T)/)
+    const expectedMemory = Number(match?.[1])
+    const expectedStorage = Number(match?.[2]) * (match?.[3] === 'T' ? 1024 : 1)
+    const cpu = product.specLabel?.match(/(\d+)\s*核心 CPU/i)?.[1]
+    const gpu = product.specLabel?.match(/(\d+)\s*核心 GPU/i)?.[1]
+    return Boolean(match && product.specLabel?.includes(spec.chip) &&
+      expectedMemory === spec.memoryGB && expectedStorage === spec.storageGB &&
+      Number(cpu) === spec.cpuCores && Number(gpu) === spec.gpuCores)
+  }
+  return true
+}
+
 enforceLatestProductDiscountFloors(APPLE_PRODUCTS)
 
 for (const product of APPLE_PRODUCTS) {
-  const sourceCeilings = newProductPriceSources
-    .map(source => source[product.id])
-    .filter(Boolean)
-  if (!sourceCeilings.length) continue
+  const eligibleSources = newProductPriceSources.filter(source => source.ceilings?.[product.id])
+  if (!eligibleSources.length) continue
 
   product.newProductPriceCeiling = Object.fromEntries(
     product.storages.flatMap(storage => {
-      const availablePrices = sourceCeilings
-        .map(ceilings => ceilings[storage])
+      const availablePrices = eligibleSources
+        .filter(source => hasExactRetailSpecification(product, storage, source))
+        .map(source => source.ceilings[product.id][storage])
         .filter(Number.isFinite)
       if (!availablePrices.length) return []
       return [[storage, toSecondHandCeiling(Math.min(...availablePrices))]]
@@ -2034,9 +2069,11 @@ for (const product of APPLE_PRODUCTS) {
     const current = product.marketAvg?.[storage]
     if (!ceiling || !current) continue
 
-    const lowestNewPrice = Math.min(...sourceCeilings
-      .map(ceilings => ceilings[storage])
+    const lowestNewPrice = Math.min(...eligibleSources
+      .filter(source => hasExactRetailSpecification(product, storage, source))
+      .map(source => source.ceilings[product.id][storage])
       .filter(Number.isFinite))
+    if (!Number.isFinite(lowestNewPrice)) continue
     product.marketAvg[storage] = Math.min(current, toSecondHandAverageCeiling(lowestNewPrice))
   }
 }

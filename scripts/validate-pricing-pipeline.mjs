@@ -19,7 +19,9 @@ function evaluate(at) {
   return context.products
 }
 
-function validate(products) {
+function validate(products, evaluatedAt) {
+  const adjustmentCheckedAt = new Date(JSON.parse(fs.readFileSync(new URL('marketAdjustments.json', data))).meta.referenceReview.checkedAt)
+  const adjustmentsActive = adjustmentCheckedAt <= new Date(evaluatedAt)
   let variants = 0
   for (const product of products) {
     let previous = 0
@@ -32,7 +34,7 @@ function validate(products) {
         assert(price >= previous, `${label}: capacity inversion`)
       }
       const input = overrides[product.id]?.[storage]
-      if (Number.isFinite(input)) assert(price <= input, `${label}: override raised`)
+      if (adjustmentsActive && Number.isFinite(input)) assert(price <= input, `${label}: override raised`)
       const ceiling = product.newProductPriceCeiling?.[storage]
       if (ceiling) assert(price <= ceiling, `${label}: exceeds new-price ceiling`)
       previous = price
@@ -46,9 +48,9 @@ function validate(products) {
 const now = evaluate(new Date().toISOString())
 const beforeExpiry = evaluate('2026-09-07T12:00:00+08:00')
 const afterExpiry = evaluate('2026-09-16T12:00:00+08:00')
-const variants = validate(now)
-validate(beforeExpiry)
-validate(afterExpiry)
+const variants = validate(now, new Date().toISOString())
+validate(beforeExpiry, '2026-09-07T12:00:00+08:00')
+validate(afterExpiry, '2026-09-16T12:00:00+08:00')
 for (const product of beforeExpiry) {
   const future = afterExpiry.find(p => p.id === product.id)
   if (!future) continue
@@ -84,7 +86,7 @@ for (const [id, prices] of Object.entries(septemberReleases)) {
   }
   assert(!beforeExpiry.some(p => p.id === id), `${id}: shown before release`)
 }
-validate(released)
+validate(released, '2026-10-03T12:00:00+08:00')
 assert.equal(released.find(p => p.id === 'apple-watch-ultra-4').marketAvg['鈦金屬'], 24000)
 assert.equal(released.find(p => p.id === 'airpods-5').marketAvg['USB-C 充電盒'], 3800)
 assert.equal(released.find(p => p.id === 'airpods-5').marketAvg['無線充電盒'], 4300)

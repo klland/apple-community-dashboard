@@ -1,28 +1,76 @@
 {
   "meta": {
     "source": "JYES 傑昇通信",
-    "scrapedAt": "2026-09-01T17:00:00+08:00",
+    "scrapedAt": "2026-11-01T16:30:00+08:00",
     "priceField": "空機破盤價",
-    "rule": "Only in-stock, precisely matched new-product cash prices participate in the second-hand ceiling.",
-    "url": "https://www.jyes.com.tw/product.php"
+    "rule": "Only dated, explicitly specified cash listings are eligible; no price may raise second-hand references.",
+    "categoryUrls": [
+      "https://www.jyes.com.tw/product.php?act=search&keywords=iPhone+18",
+      "https://www.jyes.com.tw/product.php?act=search&keywords=airpods",
+      "https://www.jyes.com.tw/product.php?act=list&cid=105",
+      "https://www.jyes.com.tw/product.php?act=list&cid=103",
+      "https://www.jyes.com.tw/product.php?act=search&keywords=APPLE"
+    ]
   },
   "ceilings": {
-    "iphone-17e": { "256G": 20590, "512G": 26290 },
-    "iphone-17-pro-max": { "256G": 40890, "512G": 47790, "1T": 55390, "2T": 67990 },
-    "iphone-17-pro": { "256G": 36890, "512G": 43990, "1T": 50890 },
-    "iphone-17-air": { "256G": 31490, "512G": 34490, "1T": 40390 },
-    "iphone-17": { "256G": 28990, "512G": 34790 },
-    "ipad-pro-m5-13": { "256G": 45490, "512G": 53190, "1T": 66490, "2T": 78990 },
-    "ipad-pro-m5-11": { "256G": 35490, "512G": 41990, "1T": 55990, "2T": 69390 },
+    "iphone-18-pro-max": { "256G": 48690, "512G": 55890, "1T": 70890, "2T": 89890 },
+    "iphone-18-pro": { "256G": 42990, "512G": 49890, "1T": 65390, "2T": 84890 },
+    "iphone-17e": { "256G": 23890 },
+    "iphone-17-pro-max": { "256G": 39990, "512G": 46990, "1T": 53990 },
+    "iphone-17-pro": { "256G": 35990, "512G": 45890 },
+    "iphone-17": { "256G": 29990, "512G": 36990 },
+    "ipad-pro-m5-11": { "256G": 35790, "512G": 42290, "1T": 55990, "2T": 69390 },
+    "ipad-pro-m5-13": { "256G": 45790, "512G": 53790, "1T": 66490, "2T": 78990 },
+    "ipad-air-m4-11": { "128G": 21990, "256G": 25890, "512G": 31790, "1T": 40290 },
     "ipad-air-m4-13": { "128G": 28790, "256G": 31890, "512G": 38490, "1T": 46390 },
-    "ipad-air-m4-11": { "128G": 22290, "256G": 25890, "512G": 31790, "1T": 40290 },
-    "ipad-11": { "128G": 12890, "256G": 15990, "512G": 22390 },
-    "ipad-mini-7": { "128G": 16990, "256G": 21090, "512G": 26790 },
-    "apple-watch-ultra-3": { "鈦金屬": 24990 },
-    "apple-watch-s11": { "42mm": 11890, "46mm": 12890 },
+    "apple-watch-s12": { "42mm": 12990, "46mm": 14490 },
+    "apple-watch-s11": { "42mm": 11490, "46mm": 12490 },
+    "apple-watch-ultra-4": { "鈦金屬": 27900 },
     "apple-watch-se-3": { "40mm": 7190, "44mm": 8190 },
+    "airpods-5": { "USB-C 充電盒": 4290, "無線充電盒": 4990 },
     "airpods-pro-3": { "標準版": 6090 },
-    "airpods-4-anc": { "標準版": 4890 },
-    "airpods-4": { "標準版": 3790 }
+    "airpods-4": { "標準版": 3390 },
+    "airpods-4-anc": { "標準版": 3990 }
+  },
+  "specifications": {
+    "ipad-pro-m5-11": {
+      "256G": { "chip": "M5", "memoryGB": 12, "storageGB": 256, "connectivity": "Wi-Fi" },
+      "512G": { "chip": "M5", "memoryGB": 12, "storageGB": 512, "connectivity": "Wi-Fi" },
+      "1T": { "chip": "M5", "memoryGB": 16, "storageGB": 1024, "connectivity": "Wi-Fi" },
+      "2T": { "chip": "M5", "memoryGB": 16, "storageGB": 2048, "connectivity": "Wi-Fi" }
+    },
+    "ipad-pro-m5-13": {
+      "256G": { "chip": "M5", "memoryGB": 12, "storageGB": 256, "connectivity": "Wi-Fi" },
+      "512G": { "chip": "M5", "memoryGB": 12, "storageGB": 512, "connectivity": "Wi-Fi" },
+      "1T": { "chip": "M5", "memoryGB": 16, "storageGB": 1024, "connectivity": "Wi-Fi" },
+      "2T": { "chip": "M5", "memoryGB": 16, "storageGB": 2048, "connectivity": "Wi-Fi" }
+    },
+    "ipad-air-m4-11": {
+      "128G": { "chip": "M4", "memoryGB": 12, "storageGB": 128, "connectivity": "Wi-Fi" },
+      "256G": { "chip": "M4", "memoryGB": 12, "storageGB": 256, "connectivity": "Wi-Fi" },
+      "512G": { "chip": "M4", "memoryGB": 12, "storageGB": 512, "connectivity": "Wi-Fi" },
+      "1T": { "chip": "M4", "memoryGB": 12, "storageGB": 1024, "connectivity": "Wi-Fi" }
+    },
+    "ipad-air-m4-13": {
+      "128G": { "chip": "M4", "memoryGB": 12, "storageGB": 128, "connectivity": "Wi-Fi" },
+      "256G": { "chip": "M4", "memoryGB": 12, "storageGB": 256, "connectivity": "Wi-Fi" },
+      "512G": { "chip": "M4", "memoryGB": 12, "storageGB": 512, "connectivity": "Wi-Fi" },
+      "1T": { "chip": "M4", "memoryGB": 12, "storageGB": 1024, "connectivity": "Wi-Fi" }
+    },
+    "apple-watch-s12": {
+      "42mm": { "size": "42mm", "case": "aluminum", "connectivity": "GPS" },
+      "46mm": { "size": "46mm", "case": "aluminum", "connectivity": "GPS" }
+    },
+    "apple-watch-s11": {
+      "42mm": { "size": "42mm", "case": "aluminum", "connectivity": "GPS" },
+      "46mm": { "size": "46mm", "case": "aluminum", "connectivity": "GPS" }
+    },
+    "apple-watch-ultra-4": {
+      "鈦金屬": { "size": "49mm", "case": "titanium", "connectivity": "GPS+Cellular" }
+    },
+    "apple-watch-se-3": {
+      "40mm": { "size": "40mm", "case": "aluminum", "connectivity": "GPS" },
+      "44mm": { "size": "44mm", "case": "aluminum", "connectivity": "GPS" }
+    }
   }
 }

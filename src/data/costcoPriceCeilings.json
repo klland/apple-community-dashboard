@@ -1,0 +1,22 @@
+{
+  "meta": {
+    "source": "Costco Taiwan",
+    "scrapedAt": "2026-11-01T16:30:00+08:00",
+    "rule": "Only products currently shown as deliverable/in-stock and with exact model variant are included.",
+    "categoryUrls": [
+      "https://www.costco.com.tw/Digital-Mobile/Wearables-Audio/Headphones-Audio-Devices/c/10203",
+      "https://www.costco.com.tw/Apple/c/Apple"
+    ]
+  },
+  "ceilings": {
+    "airpods-5": { "USB-C 充電盒": 4249, "無線充電盒": 4899 },
+    "airpods-pro-3": { "標準版": 6699 },
+    "airpods-max-2": { "標準版": 16899 },
+    "ipad-air-m4-11": { "128G": 23399 }
+  },
+  "specifications": {
+    "ipad-air-m4-11": {
+      "128G": { "chip": "M4", "memoryGB": 12, "storageGB": 128, "connectivity": "Wi-Fi" }
+    }
+  }
+}

@@ -5,9 +5,12 @@ import { fileURLToPath } from 'node:url'
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const mockData = fs.readFileSync(path.join(rootDir, 'src/data/mockData.js'), 'utf8')
 const adjustments = JSON.parse(fs.readFileSync(path.join(rootDir, 'src/data/marketAdjustments.json'), 'utf8')).marketAvg || {}
-const sources = ['mikoPriceCeilings.json', 'jyesPriceCeilings.json']
+const sources = ['mikoPriceCeilings.json', 'jyesPriceCeilings.json', 'costcoPriceCeilings.json']
   .map(file => JSON.parse(fs.readFileSync(path.join(rootDir, 'src/data', file), 'utf8')))
-  .filter(source => source.meta?.scrapedAt && Date.now() - new Date(source.meta.scrapedAt).getTime() <= 14 * 24 * 60 * 60 * 1000)
+  .filter(source => {
+    const age = Date.now() - new Date(source.meta?.scrapedAt).getTime()
+    return Number.isFinite(age) && age >= 0 && age <= 14 * 24 * 60 * 60 * 1000
+  })
   .map(source => source.ceilings || {})
 
 const toHundredFloor = value => Math.floor(value / 100) * 100
