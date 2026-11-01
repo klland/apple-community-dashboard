@@ -13,6 +13,17 @@ import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Too
 import { getMarketPrice, trackSearchEvent } from '../lib/supabase'
 import { quantile } from '../lib/marketEvidence'
 
+const RETAIL_ONLY_PRODUCTS = new Set(['iphone-duo', 'homepod-mini-2'])
+const NEW_RETAIL_REFERENCES = {
+  'iphone-duo': { checkedAt: '2026-11-01T00:00:00+08:00', seller: '米可', url: 'https://www.miko3c.com/price/phone/iphone/', prices: { '256G': 74490, '512G': 81490, '1T': 96390, '2T': 118390 } },
+}
+function getNewRetailReference(product, storage) {
+  const ref = NEW_RETAIL_REFERENCES[product?.id]
+  const age = Date.now() - new Date(ref?.checkedAt).getTime()
+  if (!ref || age < 0 || age > 14 * 86400000 || !ref.prices[storage]) return null
+  return { ...ref, price: ref.prices[storage] }
+}
+
 const CATEGORY_ICONS = {
   '全部': Grid2x2,
   'iPhone': Smartphone,
@@ -671,6 +682,8 @@ export default function QueryPage() {
   const lowLiquidityRange = lowLiquidityIphone ? getLowLiquidityRange(displayAvgValue) : null
   const discount = !lowLiquidityIphone && displayAvgValue && displayRetail ? Math.round((1 - displayAvgValue / displayRetail) * 100) : null
   const isLiveMarketPrice = Boolean(liveAvg?.avg != null && !avgLoading)
+  const retailOnly = RETAIL_ONLY_PRODUCTS.has(selectedProduct?.id) && !isLiveMarketPrice
+  const newRetailReference = getNewRetailReference(selectedProduct, selectedStorage)
   const evidenceLabel = macEstimate?.marketAddOn > 0 ? '規格加值估價' : isLiveMarketPrice
     ? liveAvg.basis === 'confirmed_sales' ? '已審核成交行情' : '近期刊登行情'
     : '參考行情'
@@ -792,7 +805,9 @@ export default function QueryPage() {
                 const active = isEntrySelected(entry, selectedProduct)
                 const product = entry.type === 'product' ? entry.product : entry.variants[0]
                 const title = entry.type === 'product' ? product.name : entry.name
-                const subtitle = entry.type === 'product'
+                const subtitle = entry.type === 'product' && RETAIL_ONLY_PRODUCTS.has(product.id)
+                  ? (getNewRetailReference(product, product.storages[0]) ? `新品售價 ${formatMoney(getNewRetailReference(product, product.storages[0]).price)} 起` : '暫無新品售價')
+                  : entry.type === 'product'
                   ? isLowLiquidityIphone(product, product.marketAvg[product.storages[0]])
                     ? `低流動性 ${formatMarketValue(product, product.marketAvg[product.storages[0]])}`
                     : `參考估價 $${product.marketAvg[product.storages[0]]?.toLocaleString()}+`
@@ -839,10 +854,10 @@ export default function QueryPage() {
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <span className="text-[11px] px-2 py-0.5 rounded-full bg-white text-[#6e6e73] border border-[rgba(0,0,0,0.06)]">{selectedProduct.category}</span>
                       {monthsOld != null && <span className="text-[11px] px-2 py-0.5 rounded-full bg-white text-[#6e6e73] border border-[rgba(0,0,0,0.06)]">上市 {monthsOld} 個月</span>}
-                      {selectedProduct.referenceStatus === 'new_product_estimate' && !isLiveMarketPrice && <span className="text-[11px] px-2 py-0.5 rounded-full bg-white text-[#6e6e73] border border-[rgba(0,0,0,0.06)]">新品估價</span>}
+                      {selectedProduct.referenceStatus === 'new_product_estimate' && !isLiveMarketPrice && !retailOnly && <span className="text-[11px] px-2 py-0.5 rounded-full bg-white text-[#6e6e73] border border-[rgba(0,0,0,0.06)]">新品估價</span>}
                     </div>
                     <h2 className="text-[28px] font-semibold text-[#1d1d1f] tracking-tight">{selectedProduct.name}</h2>
-                    <p className="text-[13px] text-[#6e6e73] mt-1">{evidenceLabel} · 原廠參考售價</p>
+                    <p className="text-[13px] text-[#6e6e73] mt-1">{retailOnly ? '新品售價' : `${evidenceLabel} · 原廠參考售價`}</p>
                   </div>
                 </div>
 
@@ -963,6 +978,14 @@ export default function QueryPage() {
                   </div>
                 )}
 
+                {retailOnly ? (
+                  <div className="bg-[#f5f5f7] rounded-2xl p-4">
+                    <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">新品售價</p>
+                    {avgLoading ? <p>載入中…</p> : newRetailReference ? (
+                      <><p className="text-[22px] font-semibold">{formatMoney(newRetailReference.price)}</p><a className="text-[12px] text-[#0071e3]" href={newRetailReference.url} target="_blank" rel="noreferrer">{newRetailReference.seller}售價</a></>
+                    ) : <p className="text-[15px] text-[#6e6e73]">暫無新品售價</p>}
+                  </div>
+                ) : (<>
                 {/* KPI cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="bg-[#f5f5f7] rounded-2xl p-4">
@@ -1162,6 +1185,7 @@ export default function QueryPage() {
                 </div>
 
                 {/* 可選顏色 */}
+                </>)}
                 <div>
                   <p className="text-[11px] font-semibold text-[#6e6e73] mb-3 uppercase tracking-wider">可選顏色</p>
                   <div className="flex flex-wrap gap-2">
