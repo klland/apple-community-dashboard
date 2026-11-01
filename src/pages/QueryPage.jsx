@@ -996,10 +996,8 @@ export default function QueryPage() {
                       <p className="text-[10px] text-[#248a3d] mt-1">成交 {liveAvg.reportCount} 筆 · 刊登 {liveAvg.listingCount} 筆，分開採計</p>
                     )}
                     {isLiveMarketPrice && <p className="text-[10px] text-[#6e6e73] mt-1">批次日期 {new Date(liveAvg.publicationAt).toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei' })} · 正常無拆修</p>}
-                    {!avgLoading && liveAvg?.pendingCount > 0 && <p className="text-[10px] text-[#b36b00] mt-1">{liveAvg.pendingCount} 筆待審核，尚未計價</p>}
                     {!avgLoading && liveAvg?.coolingCount > 0 && <p className="text-[10px] text-[#b36b00] mt-1">{liveAvg.coolingCount} 筆已審核資料等待發布批次</p>}
                     {!avgLoading && liveAvg === false && <p className="text-[10px] text-[#b36b00] mt-1">市場資料讀取失敗，暫用模型估價</p>}
-                    {(marketCeiling || NEW_PRICE_SOURCE_STATUS.freshSourceCount > 0) && <p className="text-[10px] text-[#b36b00] mt-1">{marketCeiling ? `同規格新品上限 ${formatMoney(marketCeiling)}` : '此規格尚無可驗證新品上限'}</p>}
                   </div>
                   <div className="bg-[#e3f2fd] rounded-2xl p-4">
                     <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">{lowLiquidityIphone ? '市場狀態' : '參考折扣'}</p>
