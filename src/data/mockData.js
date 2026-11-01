@@ -5,6 +5,25 @@ import costcoPriceCeilings from './costcoPriceCeilings.json'
 
 // Apple 產品完整資料庫
 const PRODUCT_CATALOG = [
+  {
+    id: 'iphone-duo', name: 'iPhone Duo', category: 'iPhone',
+    storages: ['256G', '512G', '1T', '2T'], colors: ['星光白色', '夜空色'],
+    launchDate: '2026-10-23',
+    launchPrice: { '256G': 74900, '512G': 81900, '1T': 96900, '2T': 118900 },
+    basePrice: { '256G': 74900, '512G': 81900, '1T': 96900, '2T': 118900 },
+    marketAvg: { '256G': 67400, '512G': 73700, '1T': 87200, '2T': 107000 },
+    referenceStatus: 'new_product_estimate',
+    sourceUrl: 'https://www.apple.com/tw/shop/buy-iphone/iphone-duo', tradeInPrice: null,
+  },
+  {
+    id: 'homepod-mini-2', name: 'HomePod mini 2', category: '其他',
+    storages: ['標準版'], colors: ['粉紅色', '綠色', '藍色', '白色', '午夜色'],
+    launchDate: '2026-10-30', launchPrice: { '標準版': 4790 },
+    basePrice: { '標準版': 4790 }, marketAvg: { '標準版': 4300 },
+    referenceStatus: 'new_product_estimate',
+    sourceUrl: 'https://www.apple.com/tw/newsroom/2026/10/apple-announces-the-next-generation-of-homepod-mini/',
+    tradeInPrice: null,
+  },
   // September 2026 Taiwan releases. These are estimates, not observed trades.
   {
     id: 'iphone-18-pro-max', name: 'iPhone 18 Pro Max', category: 'iPhone',
