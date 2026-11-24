@@ -12,6 +12,7 @@ import { Smartphone, Laptop, Tablet, Watch, Headphones, Monitor, Grid2x2, Packag
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { getMarketPrice, trackSearchEvent } from '../lib/supabase'
 import { quantile } from '../lib/marketEvidence'
+import { PUBLISHED_LISTING_REFERENCES } from '../data/publishedListingReferences'
 
 const RETAIL_ONLY_PRODUCTS = new Set(['iphone-duo', 'homepod-mini-2'])
 
@@ -674,6 +675,7 @@ export default function QueryPage() {
   const discount = !lowLiquidityIphone && displayAvgValue && displayRetail ? Math.round((1 - displayAvgValue / displayRetail) * 100) : null
   const isLiveMarketPrice = Boolean(liveAvg?.avg != null && !avgLoading)
   const retailOnly = RETAIL_ONLY_PRODUCTS.has(selectedProduct?.id) && !isLiveMarketPrice
+  const listingReference = PUBLISHED_LISTING_REFERENCES[selectedProduct?.id]?.[selectedStorage]
   const evidenceLabel = macEstimate?.marketAddOn > 0 ? '規格加值估價' : isLiveMarketPrice
     ? liveAvg.basis === 'confirmed_sales' ? '已審核成交行情' : '近期刊登行情'
     : '參考行情'
@@ -969,11 +971,20 @@ export default function QueryPage() {
                 )}
 
                 {retailOnly ? (
-                  <div className="bg-[#f5f5f7] rounded-2xl p-4">
-                    <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">官網售價</p>
-                    {avgLoading ? <p>載入中…</p> : retail != null ? (
-                      <p className="text-[22px] font-semibold">{formatMoney(retail)}</p>
-                    ) : <p className="text-[15px] text-[#6e6e73]">暫無官網售價</p>}
+                  <div className={listingReference ? 'grid grid-cols-1 gap-3 sm:grid-cols-2' : undefined}>
+                    <div className="bg-[#f5f5f7] rounded-2xl p-4">
+                      <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">官網售價</p>
+                      {retail != null ? (
+                        <p className="text-[22px] font-semibold">{formatMoney(retail)}</p>
+                      ) : <p className="text-[15px] text-[#6e6e73]">暫無官網售價</p>}
+                    </div>
+                    {listingReference && (
+                      <div className="bg-[#f5f5f7] rounded-2xl p-4">
+                        <p className="text-[11px] text-[#6e6e73] mb-1 font-medium">二手刊登行情</p>
+                        <p className="text-[22px] font-semibold">{formatMoney(listingReference.low)} 至 {formatMoney(listingReference.high)}</p>
+                        <p className="mt-1 text-[11px] text-[#6e6e73]">Facebook 社團與 Marketplace · {listingReference.count} 筆開價 · {listingReference.observedOn}</p>
+                      </div>
+                    )}
                   </div>
                 ) : (<>
                 {/* KPI cards */}
