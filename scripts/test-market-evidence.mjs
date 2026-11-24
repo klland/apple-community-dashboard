@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { analyzeMarketEvidence, publicationCutoff } from '../src/lib/marketEvidence.js'
+import { formatDraftNote, getTransactionSource } from '../src/lib/transactionSources.js'
 
 const now = Date.parse('2026-10-03T12:00:00+08:00')
 const row = (price, i, changes = {}) => ({
@@ -26,6 +27,12 @@ assert.equal(analyzeMarketEvidence(rows.map(r => ({ ...r, price: NaN })), now).a
 const listings = rows.map(r => ({ ...r, source: 'post', price: r.price + 10000 }))
 assert.equal(analyzeMarketEvidence([...rows, ...listings], now).avg, 41000, 'listing prices must not change sales')
 assert.equal(analyzeMarketEvidence([...rows.slice(0, 2), ...listings], now).basis, 'asking_prices')
+const drafts = listings.map(r => ({ ...r, note: formatDraftNote('草稿備註') }))
+assert.equal(getTransactionSource(drafts[0]), 'draft')
+assert.equal(getTransactionSource({ source: 'post', note: '[社團刊登匯入／待審核／非成交價]' }), 'listing')
+assert.equal(getTransactionSource({ source: 'post', note: '[Marketplace刊登匯入／待審核／非成交價]' }), 'listing')
+assert.equal(getTransactionSource({ source: 'post', note: '舊貼文' }), 'unknown')
+assert.equal(analyzeMarketEvidence(drafts, now).listingCount, 0, 'drafts must never become asking-price evidence')
 assert.equal(analyzeMarketEvidence([...rows, row(100000, 99)], now).anomalyCount, 1)
 assert.equal(analyzeMarketEvidence(Array.from({ length: 5 }, (_, i) => row(39000, i)), now).avg, 39000)
 assert.equal(publicationCutoff(now), publicationCutoff(now - 3 * 86400000), 'weekly publication is stable')

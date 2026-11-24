@@ -28,6 +28,7 @@ import {
 import { supabase, getPopularSearches, getReports, getSearchAnalytics, updateReportStatus, deleteReport, reviewTransactionPrice } from '../lib/supabase'
 import { APPLE_PRODUCTS } from '../data/mockData'
 import { analyzeMarketEvidence, MIN_MARKET_SAMPLES } from '../lib/marketEvidence'
+import { getTransactionSource, TRANSACTION_SOURCE_LABELS } from '../lib/transactionSources'
 
 const ADMIN_KEY = 'klland'
 const PRICE_ANOMALY_THRESHOLD = 0.3
@@ -430,7 +431,7 @@ export default function AdminPage() {
       const key = `${row.model}__${row.storage || ''}`
       const avg = modelStorageAvg[key]
       const anomaly = Boolean(row.model && row.price && avg && Math.abs(Number(row.price) - avg) / avg > PRICE_ANOMALY_THRESHOLD)
-      return { ...row, category: getProductCategory(row.model), anomaly }
+      return { ...row, category: getProductCategory(row.model), sourceKind: getTransactionSource(row), anomaly }
     })
   }, [data, modelStorageAvg])
 
@@ -439,9 +440,9 @@ export default function AdminPage() {
     const min = filters.minPrice ? Number(filters.minPrice) : null
     const max = filters.maxPrice ? Number(filters.maxPrice) : null
     return enrichedData.filter(r => {
-      if (q && !`${r.model || ''} ${r.storage || ''} ${r.source || ''}`.toLowerCase().includes(q)) return false
+      if (q && !`${r.model || ''} ${r.storage || ''} ${TRANSACTION_SOURCE_LABELS[r.sourceKind]}`.toLowerCase().includes(q)) return false
       if (filters.storage && r.storage !== filters.storage) return false
-      if (filters.source && r.source !== filters.source) return false
+      if (filters.source && r.sourceKind !== filters.source) return false
       if (min !== null && Number(r.price) < min) return false
       if (max !== null && Number(r.price) > max) return false
       if (filters.fromDate && dateKey(r.created_at) < filters.fromDate) return false
@@ -527,7 +528,7 @@ export default function AdminPage() {
       return { entries, max }
     }
     return {
-      source: countBy(r => r.source === 'report' ? '成交回報' : r.source === 'post' ? '貼文產生器' : r.source || '未標記', 4),
+      source: countBy(r => TRANSACTION_SOURCE_LABELS[getTransactionSource(r)], 4),
       condition: countBy(r => r.condition, 6),
       location: countBy(r => r.location?.split(' ')[0], 6),
     }
@@ -551,7 +552,8 @@ export default function AdminPage() {
       .slice(0, 6)
     const anomalyCount = enrichedData.filter(row => row.anomaly).length
     const anomalyRate = data.length ? Math.round((anomalyCount / data.length) * 100) : 0
-    const realWeightStatus = `待審 ${data.filter(row => !['approved', 'rejected'].includes(row.price_review_status)).length} 筆；已核對 ${data.filter(row => row.price_review_status === 'approved').length} 筆`
+    const reports = data.filter(row => row.source === 'report')
+    const realWeightStatus = `成交回報待審 ${reports.filter(row => row.price_review_status === 'pending').length} 筆；已核對 ${reports.filter(row => row.price_review_status === 'approved').length} 筆`
     return { lowSample, anomalyRate, realWeightStatus }
   }, [data, enrichedData])
 
@@ -1020,7 +1022,7 @@ export default function AdminPage() {
             <Card>
               <SectionHeader
                 icon={Filter}
-                title="成交資料表"
+                title="價格資料表"
                 subtitle={`顯示 ${filteredData.length.toLocaleString('zh-TW')} / ${data.length.toLocaleString('zh-TW')} 筆`}
               />
               <div className="border-b border-[#f2f2f7] p-4">
@@ -1051,8 +1053,9 @@ export default function AdminPage() {
                   <Field label="來源">
                     <select value={filters.source} onChange={e => updateFilter('source', e.target.value)} className={inputClass()} aria-label="依來源篩選">
                       <option value="">全部來源</option>
-                      <option value="report">成交回報</option>
-                      <option value="post">貼文產生器</option>
+                      {Object.entries(TRANSACTION_SOURCE_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
+                      ))}
                     </select>
                   </Field>
                   <Field label="最低價">
@@ -1096,7 +1099,7 @@ export default function AdminPage() {
                         <td className="px-3 py-3 text-right font-semibold tabular-nums text-[#1d1d1f]">{formatMoney(row.price)}</td>
                         <td className="px-3 py-3">
                           <Pill tone={row.source === 'report' ? 'green' : row.source === 'post' ? 'blue' : 'neutral'}>
-                            {row.source === 'report' ? '成交回報' : row.source === 'post' ? '貼文' : row.source || '未標記'}
+                            {TRANSACTION_SOURCE_LABELS[row.sourceKind]}
                           </Pill>
                         </td>
                         <td className="px-3 py-3 text-[#424245]">{row.trade_method || '-'}</td>
@@ -1110,11 +1113,15 @@ export default function AdminPage() {
                           )}
                         </td>
                         <td className="px-3 py-3">
-                          <Pill tone={row.price_review_status === 'approved' ? 'green' : 'orange'}>{row.price_review_status === 'approved' ? '已核對' : row.price_review_status === 'rejected' ? '已排除' : '待審核'}</Pill>
-                          <p className="mt-1 max-w-[260px] whitespace-pre-wrap text-[11px] text-[#6e6e73]">{row.condition || '機況未核對'} · {row.note || '規格／證據未填寫'}</p>
+                          {row.sourceKind === 'report' ? (
+                            <Pill tone={row.price_review_status === 'approved' ? 'green' : 'orange'}>{row.price_review_status === 'approved' ? '已核對' : row.price_review_status === 'rejected' ? '已排除' : '待審核'}</Pill>
+                          ) : (
+                            <Pill tone="neutral">{row.sourceKind === 'listing' ? '已匯入 · 非成交價' : row.sourceKind === 'draft' ? '已存入 · 非刊登' : '來源未確認'}</Pill>
+                          )}
+                          <p className="mt-1 max-w-[260px] whitespace-pre-wrap [overflow-wrap:anywhere] text-[11px] text-[#6e6e73]">{row.condition || '機況未核對'} · {row.note || '規格／證據未填寫'}</p>
                         </td>
                         <td className="px-4 py-3 text-center">
-                          {['report', 'post'].includes(row.source) && <>
+                          {['report', 'listing'].includes(row.sourceKind) && <>
                             <button type="button" onClick={() => reviewPrice(row, 'approved')} disabled={!reviewSession?.user?.app_metadata?.pricing_admin || reviewing === row.id} title="核對規格與獨立來源後採計" aria-label={`採計 ${row.model}`} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[#248a3d] hover:bg-[#e8f5e9] disabled:opacity-40"><CheckCircle2 size={15} /></button>
                             <button type="button" onClick={() => reviewPrice(row, 'rejected')} disabled={!reviewSession?.user?.app_metadata?.pricing_admin || reviewing === row.id} title="排除計價，保留資料" aria-label={`排除 ${row.model}`} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[#b36b00] hover:bg-[#fffaf0] disabled:opacity-40"><XCircle size={15} /></button>
                           </>}

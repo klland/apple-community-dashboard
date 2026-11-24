@@ -1,3 +1,5 @@
+import { getTransactionSource } from './transactionSources.js'
+
 const DAY = 86400000
 export const MIN_MARKET_SAMPLES = 5
 
@@ -30,6 +32,7 @@ export function eligibleMarketRows(rows, now = Date.now()) {
     if (!Number.isFinite(reviewedAt) || reviewedAt > cutoff) return false
     if (row.price_review_status !== 'approved' || !row.spec_verified || !row.reporter_key) return false
     if (!['report', 'post'].includes(row.source) || !Number.isFinite(Number(row.price)) || Number(row.price) <= 0) return false
+    if (getTransactionSource(row) === 'draft') return false
     if (row.has_damage || row.condition !== '正常無拆修') return false
     const key = `${row.source}|${row.reporter_key}|${row.model}|${row.storage}`
     const latest = identities.get(key)
