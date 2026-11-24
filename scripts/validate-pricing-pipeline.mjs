@@ -90,4 +90,29 @@ validate(released, '2026-10-03T12:00:00+08:00')
 assert.equal(released.find(p => p.id === 'apple-watch-ultra-4').marketAvg['鈦金屬'], 24000)
 assert.equal(released.find(p => p.id === 'airpods-5').marketAvg['USB-C 充電盒'], 3800)
 assert.equal(released.find(p => p.id === 'airpods-5').marketAvg['無線充電盒'], 4300)
+const novemberReleases = {
+  'macbook-pro-14-m6': { '16G/1T': 64900 },
+  'macbook-pro-14-m5-pro-proled': { '24G/1T': 97900 },
+  'macbook-pro-16-m5-pro-proled': { '24G/1T': 114900 },
+  'macbook-pro-14-m5-max-proled': { '36G/2T': 152900 },
+  'macbook-pro-16-m5-max-proled': { '36G/2T': 159900 },
+  'imac-m6-10c': { '16G/256G': 49900 },
+  'imac-m6-12c': { '16G/256G': 57900 },
+  'ipad-mini-a20-pro-wifi': { '128G': 22900, '256G': 26400, '512G': 33400 },
+  'ipad-mini-a20-pro-cellular': { '128G': 27900, '256G': 31400, '512G': 38400 },
+  'apple-tv-4k-4': { '標準版': 9900 },
+}
+const november = new Map(evaluate('2026-11-24T12:00:00+08:00').map(p => [p.id, p]))
+for (const [id, prices] of Object.entries(novemberReleases)) {
+  const product = november.get(id)
+  assert(product, `${id}: missing release`)
+  assert(!released.some(p => p.id === id), `${id}: shown before release`)
+  assert.equal(product.referenceStatus, 'new_product_estimate')
+  assert.match(product.sourceUrl, /^https:\/\/www\.apple\.com\/tw\//)
+  assert.deepEqual(JSON.parse(JSON.stringify(product.launchPrice)), prices)
+}
+assert(november.get('imac-m6-12c').marketAvg['16G/256G'] > november.get('imac-m6-10c').marketAvg['16G/256G'])
+for (const storage of ['128G', '256G', '512G']) {
+  assert(november.get('ipad-mini-a20-pro-cellular').marketAvg[storage] > november.get('ipad-mini-a20-pro-wifi').marketAvg[storage])
+}
 console.log(`Pricing pipeline passed: ${now.length} models, ${variants} variants; expiry regression passed.`)

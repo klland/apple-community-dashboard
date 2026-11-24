@@ -4,7 +4,52 @@ import jyesPriceCeilings from './jyesPriceCeilings.json'
 import costcoPriceCeilings from './costcoPriceCeilings.json'
 
 // Apple 產品完整資料庫
+const november2026Releases = [
+  ['macbook-pro-14-m6', 'MacBook Pro 14吋 M6', 'MacBook', '16G/1T', 64900, '12 核心 CPU / 12 核心 GPU / Liquid Retina XDR', 'https://www.apple.com/tw/shop/buy-mac/macbook-pro/14-%E5%90%8B-m6'],
+  ['macbook-pro-14-m5-pro-proled', 'MacBook Pro 14吋 M5 Pro (PROLED XDR)', 'MacBook', '24G/1T', 97900, '15 核心 CPU / 16 核心 GPU / 標準玻璃', 'https://www.apple.com/tw/shop/buy-mac/macbook-pro-proled-xdr'],
+  ['macbook-pro-16-m5-pro-proled', 'MacBook Pro 16吋 M5 Pro (PROLED XDR)', 'MacBook', '24G/1T', 114900, '18 核心 CPU / 20 核心 GPU / 標準玻璃', 'https://www.apple.com/tw/shop/buy-mac/macbook-pro-proled-xdr'],
+  ['macbook-pro-14-m5-max-proled', 'MacBook Pro 14吋 M5 Max (PROLED XDR)', 'MacBook', '36G/2T', 152900, '18 核心 CPU / 32 核心 GPU / 標準玻璃', 'https://www.apple.com/tw/shop/buy-mac/macbook-pro-proled-xdr'],
+  ['macbook-pro-16-m5-max-proled', 'MacBook Pro 16吋 M5 Max (PROLED XDR)', 'MacBook', '36G/2T', 159900, '18 核心 CPU / 32 核心 GPU / 標準玻璃', 'https://www.apple.com/tw/shop/buy-mac/macbook-pro-proled-xdr'],
+  ['imac-m6-10c', 'iMac M6 (10 核心 GPU)', 'Mac', '16G/256G', 49900, '24 吋 / 10 核心 CPU / 10 核心 GPU / 標準玻璃 / 立架', 'https://www.apple.com/tw/shop/buy-mac/imac'],
+  ['imac-m6-12c', 'iMac M6 (12 核心 GPU)', 'Mac', '16G/256G', 57900, '24 吋 / 12 核心 CPU / 12 核心 GPU / 標準玻璃 / 立架', 'https://www.apple.com/tw/shop/buy-mac/imac'],
+].map(([id, name, category, storage, price, specLabel, sourceUrl]) => ({
+  id, name, category, storages: [storage], specLabel, sourceUrl,
+  colors: category === 'MacBook' ? ['太空黑色', '銀色'] : id === 'imac-m6-10c'
+    ? ['藍色', '粉紅色', '綠色', '銀色'] : ['藍色', '紫色', '粉紅色', '橙色', '黃色', '綠色', '銀色'],
+  ...(id === 'imac-m6-12c' ? { comparisonVariant: '12c-gpu' } : {}),
+  launchDate: '2026-11-06', launchPrice: { [storage]: price },
+}))
+
+for (const [id, label, prices] of [
+  ['ipad-mini-a20-pro-wifi', 'Wi-Fi', { '128G': 22900, '256G': 26400, '512G': 33400 }],
+  ['ipad-mini-a20-pro-cellular', 'Wi-Fi + 行動網路', { '128G': 27900, '256G': 31400, '512G': 38400 }],
+]) {
+  november2026Releases.push({
+    id, name: `iPad mini A20 Pro (${label})`, category: 'iPad',
+    storages: Object.keys(prices), colors: ['午夜色', '星光色'],
+    specLabel: `8.5 吋 OLED / ${label} / 標準玻璃`,
+    ...(id.endsWith('-cellular') ? { comparisonVariant: 'cellular' } : {}),
+    launchDate: '2026-11-06', launchPrice: prices,
+    sourceUrl: 'https://www.apple.com/tw/shop/buy-ipad/ipad-mini',
+  })
+}
+november2026Releases.push({
+  id: 'apple-tv-4k-4', name: 'Apple TV 4K 第4代', category: '其他',
+  storages: ['標準版'], colors: ['黑色'], specLabel: 'A19 晶片',
+  launchDate: '2026-11-13', launchPrice: { '標準版': 9900 },
+  sourceUrl: 'https://www.apple.com/tw/newsroom/2026/10/apple-unveils-the-new-apple-tv-4k/',
+})
+
 const PRODUCT_CATALOG = [
+  ...november2026Releases.map(product => ({
+    ...product,
+    basePrice: { ...product.launchPrice },
+    marketAvg: Object.fromEntries(Object.entries(product.launchPrice).map(
+      ([storage, price]) => [storage, Math.round(price * 0.9 / 100) * 100],
+    )),
+    referenceStatus: 'new_product_estimate',
+    tradeInPrice: null,
+  })),
   {
     id: 'iphone-duo', name: 'iPhone Duo', category: 'iPhone',
     storages: ['256G', '512G', '1T', '2T'], colors: ['星光白色', '夜空色'],
@@ -1934,6 +1979,8 @@ function enforceLatestProductDiscountFloors(products) {
 }
 
 function comparableStorageKey(product, storage) {
+  if (product.comparisonVariant) return `${product.comparisonVariant}:${storage}`
+
   if (product.category === 'Apple Watch') {
     const size = /^(\d+)mm$/.exec(storage)
     if (size) return Number(size[1]) <= 42 ? 'small' : 'large'

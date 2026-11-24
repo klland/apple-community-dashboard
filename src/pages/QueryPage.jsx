@@ -422,7 +422,8 @@ function buildProductEntries(products, options = {}) {
   }
 
   for (const group of groups.values()) {
-    group.variants.sort((a, b) => getVariantSortValue(b, options) - getVariantSortValue(a, options))
+    group.variants.sort((a, b) => getVariantSortValue(b, options) - getVariantSortValue(a, options)
+      || b.launchDate.localeCompare(a.launchDate))
   }
 
   if (options.iphoneGrouping) {
